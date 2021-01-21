@@ -88,6 +88,26 @@ COMPILE_SHADER s SHADER s
             message_consumer.GetMessageString(0));
 }
 
+TEST(CreateBuffer, NameAlreadyUsed) {
+  std::string program = R"(DECLARE_SHADER vert VERTEX
+#version 320 es
+void main() { }
+END
+
+CREATE_BUFFER vert SIZE_BYTES 8 INIT_TYPE float INIT_VALUES 1.0 2.0
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+          "6:15: Identifier 'vert' already used at 1:16",
+          message_consumer.GetMessageString(0));
+}
+
 TEST(CreateProgram, UnknownShader) {
   std::string program = R"(DECLARE_SHADER vert VERTEX
 #version 320 es
@@ -236,6 +256,38 @@ CREATE_PROGRAM prog SHADERS frag_compiled vert_compiled vert_compiled
       "13:57: Multiple vertex shaders provided to 'CREATE_PROGRAM'; "
       "already found 'vert_compiled' at 13:43",
       message_consumer.GetMessageString(0));
+}
+
+TEST(CreateSampler, NameAlreadyUsed) {
+  std::string program = R"(CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
+CREATE_SAMPLER name
+  )";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+          "2:16: Identifier 'name' already used at 1:25",
+          message_consumer.GetMessageString(0));
+}
+
+TEST(CreateEmptyTexture2D, NameAlreadyUsed) {
+  std::string program = R"(CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
+CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
+  )";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+          "2:25: Identifier 'name' already used at 1:25",
+          message_consumer.GetMessageString(0));
 }
 
 }  // namespace

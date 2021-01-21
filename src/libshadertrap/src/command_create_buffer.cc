@@ -23,11 +23,11 @@
 namespace shadertrap {
 
 CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                                         std::string buffer_identifier,
-                                         size_t size_bytes,
+                                         std::unique_ptr<Token> result_identifier,
+                                         uint32_t size_bytes,
                                          const std::vector<uint8_t>& byte_data)
     : Command(std::move(start_token)),
-      buffer_identifier_(std::move(buffer_identifier)),
+      result_identifier_(std::move(result_identifier)),
       size_bytes_(size_bytes),
       has_initial_data_(true),
       initial_data_type_(InitialDataType::kByte) {
@@ -37,11 +37,11 @@ CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
 }
 
 CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                                         std::string buffer_identifier,
-                                         size_t size_bytes,
+                                         std::unique_ptr<Token> result_identifier,
+                                         uint32_t size_bytes,
                                          const std::vector<float>& float_data)
     : Command(std::move(start_token)),
-      buffer_identifier_(std::move(buffer_identifier)),
+      result_identifier_(std::move(result_identifier)),
       size_bytes_(size_bytes),
       has_initial_data_(true),
       initial_data_type_(InitialDataType::kFloat) {
@@ -51,11 +51,11 @@ CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
 }
 
 CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                                         std::string buffer_identifier,
-                                         size_t size_bytes,
+                                         std::unique_ptr<Token> result_identifier,
+                                         uint32_t size_bytes,
                                          const std::vector<int32_t>& int_data)
     : Command(std::move(start_token)),
-      buffer_identifier_(std::move(buffer_identifier)),
+      result_identifier_(std::move(result_identifier)),
       size_bytes_(size_bytes),
       has_initial_data_(true),
       initial_data_type_(InitialDataType::kInt) {
@@ -65,11 +65,11 @@ CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
 }
 
 CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                                         std::string buffer_identifier,
-                                         size_t size_bytes,
+                                         std::unique_ptr<Token> result_identifier,
+                                         uint32_t size_bytes,
                                          const std::vector<uint32_t>& uint_data)
     : Command(std::move(start_token)),
-      buffer_identifier_(std::move(buffer_identifier)),
+      result_identifier_(std::move(result_identifier)),
       size_bytes_(size_bytes),
       has_initial_data_(true),
       initial_data_type_(InitialDataType::kUint) {

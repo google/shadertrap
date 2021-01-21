@@ -430,14 +430,14 @@ bool Executor::VisitCreateBuffer(CommandCreateBuffer* create_buffer) {
                 static_cast<GLuint>(create_buffer->GetSizeBytes()), nullptr,
                 GL_STREAM_DRAW);
   }
-  created_buffers_.insert({create_buffer->GetBufferIdentifier(), buffer});
+  created_buffers_.insert({create_buffer->GetResultIdentifier(), buffer});
   return true;
 }
 
 bool Executor::VisitCreateSampler(CommandCreateSampler* create_sampler) {
   GLuint sampler;
   GL_SAFECALL(glGenSamplers, 1, &sampler);
-  created_samplers_.insert({create_sampler->GetSamplerIdentifier(), sampler});
+  created_samplers_.insert({create_sampler->GetResultIdentifier(), sampler});
   return true;
 }
 

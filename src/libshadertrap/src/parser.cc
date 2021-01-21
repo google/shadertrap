@@ -464,7 +464,7 @@ bool Parser::ParseCommandCreateEmptyTexture2d() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandCreateEmptyTexture2D>(
-      std::move(start_token), result_identifier->GetText(), width, height));
+      std::move(start_token), std::move(result_identifier), width, height));
   return true;
 }
 
@@ -554,7 +554,7 @@ bool Parser::ParseCommandCreateBuffer() {
         byte_data.emplace_back(static_cast<uint8_t>(parsed_value));
       }
       parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
-          std::move(start_token), result_identifier->GetText(), size_bytes,
+          std::move(start_token), std::move(result_identifier), size_bytes,
           byte_data));
       break;
     }
@@ -570,7 +570,7 @@ bool Parser::ParseCommandCreateBuffer() {
         float_data.emplace_back(std::stof(value->GetText()));
       }
       parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
-          std::move(start_token), result_identifier->GetText(), size_bytes,
+          std::move(start_token), std::move(result_identifier), size_bytes,
           float_data));
       break;
     }
@@ -586,7 +586,7 @@ bool Parser::ParseCommandCreateBuffer() {
         int_data.emplace_back(std::stoi(value->GetText()));
       }
       parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
-          std::move(start_token), result_identifier->GetText(), size_bytes,
+          std::move(start_token), std::move(result_identifier), size_bytes,
           int_data));
       break;
     }
@@ -618,7 +618,7 @@ bool Parser::ParseCommandCreateBuffer() {
         uint_data.emplace_back(static_cast<uint32_t>(uint_value));
       }
       parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
-          std::move(start_token), result_identifier->GetText(), size_bytes,
+          std::move(start_token), std::move(result_identifier), size_bytes,
           uint_data));
       break;
     }
@@ -711,7 +711,7 @@ bool Parser::ParseCommandCreateSampler() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandCreateSampler>(
-      std::move(start_token), token->GetText()));
+      std::move(start_token), std::move(token)));
   return true;
 }
 
