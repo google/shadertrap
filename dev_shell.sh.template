@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+
+# Copyright 2020 The ShaderTrap Project Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -e
+set -u
+set -x
+
+# Check that it looks like we are in the repo root.
+test -f ./src/libshadertrap/src/shadertrap_program.cc
+test -f ./src/.clang-format
+test -f ./src/iwyu.imp
+
+SHADERTRAP_REPO_ROOT="$(pwd)"
+export SHADERTRAP_REPO_ROOT
+
+# If SHADERTRAP_SKIP_COMPILER_SET is unset:
+if test -z ${SHADERTRAP_SKIP_COMPILER_SET+x}; then
+  export CC=clang-11
+  export CXX=clang++-11
+fi
+
+cd temp/
+
+
+# Get clang-11, clang-format-11, clang-tidy-11.
+
+CLANG_FILE="clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz"
+CLANG_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.1/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz"
+CLANG_OUT="${CLANG_FILE%.tar.xz}"
+
+if test ! -f "${CLANG_FILE}.touch"; then
+  curl -sSLo "${CLANG_FILE}" "${CLANG_URL}"
+  tar xf "${CLANG_FILE}"
+  # Make some *-11 symlinks.
+  ln -s clang++ "${CLANG_OUT}/bin/clang++-11"
+  ln -s clang-format "${CLANG_OUT}/bin/clang-format-11"
+  ln -s clang-tidy "${CLANG_OUT}/bin/clang-tidy-11"
+  touch "${CLANG_FILE}.touch"
+  rm "${CLANG_FILE}"
+fi
+
+PATH="$(pwd)/${CLANG_OUT}/bin:${PATH}"
+export PATH
+
+
+# Get cppcheck.
+
+CCPCHECK_OUT="cppcheck-2.3"
+
+if test ! -f "${CCPCHECK_OUT}.touch"; then
+  git clone --branch 2.3 --depth 1 https://github.com/danmar/cppcheck.git "${CCPCHECK_OUT}"
+  pushd "${CCPCHECK_OUT}"
+    mkdir build
+    pushd build
+      cmake -G Ninja .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=./install
+      cmake --build . --config Release
+      cmake -P cmake_install.cmake --config Release
+    popd
+  popd
+  touch "${CCPCHECK_OUT}.touch"
+fi
+
+PATH="$(pwd)/${CCPCHECK_OUT}/build/install/bin:${PATH}"
+export PATH
+
+
+# Get cpplint.
+
+CPPLINT_OUT="ccplint-1.5.1"
+
+if test ! -f "${CPPLINT_OUT}.touch"; then
+  git clone --branch 1.5.1 --depth 1 https://github.com/cpplint/cpplint.git "${CPPLINT_OUT}"
+  pushd "${CPPLINT_OUT}"
+    # No build step.
+  popd
+  touch "${CPPLINT_OUT}.touch"
+fi
+
+CPPLINT_PY="$(pwd)/${CPPLINT_OUT}/cpplint.py"
+export CPPLINT_PY
+
+
+# Get include what you use.
+
+IWYU_OUT="iwyu-0.15"
+
+if test ! -f "${IWYU_OUT}.touch"; then
+  git clone --branch 0.15 --depth 1 https://github.com/include-what-you-use/include-what-you-use.git "${IWYU_OUT}"
+  pushd "${IWYU_OUT}"
+    mkdir build
+    pushd build
+      cmake -G Ninja .. -DCMAKE_BUILD_TYPE=Release "-DCMAKE_INSTALL_PREFIX=../../${CLANG_OUT}"
+      cmake --build . --config Release
+      cmake -P cmake_install.cmake --config Release
+    popd
+  popd
+  touch "${IWYU_OUT}.touch"
+fi
+# iwyu is installed alongside clang.
+
+
+# Get Android NDK.
+
+
+# If SHADERTRAP_SKIP_ANDROID_NDK is unset:
+if test -z ${SHADERTRAP_SKIP_ANDROID_NDK+x}; then
+
+  ANDROID_NDK_FILENAME="android-ndk-r21-linux-x86_64.zip"
+  ANDROID_NDK_OUT="android-ndk-r21"
+
+  if test ! -f "${ANDROID_NDK_OUT}.touch"; then
+    curl -sSLo "${ANDROID_NDK_FILENAME}" "https://dl.google.com/android/repository/${ANDROID_NDK_FILENAME}"
+    unzip -q "${ANDROID_NDK_FILENAME}"
+    rm "${ANDROID_NDK_FILENAME}"
+    test -d "${ANDROID_NDK_OUT}"
+    touch "${ANDROID_NDK_OUT}.touch"
+  fi
+
+  ANDROID_NDK_ROOT="$(pwd)/${ANDROID_NDK_OUT}"
+  export ANDROID_NDK_ROOT
+
+fi
+
+cd "${SHADERTRAP_REPO_ROOT}"
+
+PATH="${SHADERTRAP_REPO_ROOT}/scripts:${PATH}"
+export PATH
+
+# If SHADERTRAP_SKIP_BASH is unset:
+if test -z ${SHADERTRAP_SKIP_BASH+x}; then
+  bash
+fi

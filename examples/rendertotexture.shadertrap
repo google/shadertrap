@@ -1,0 +1,176 @@
+# Copyright 2020 The ShaderTrap Project Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+CREATE_EMPTY_TEXTURE_2D my_tex WIDTH 256 HEIGHT 256
+
+CREATE_SAMPLER my_sampler
+
+SET_TEXTURE_PARAMETER TEXTURE my_tex TEXTURE_MAG_FILTER NEAREST
+
+SET_SAMPLER_PARAMETER SAMPLER my_sampler TEXTURE_MIN_FILTER NEAREST
+
+DECLARE_SHADER texgen_frag FRAGMENT
+#version 320 es
+precision highp float;
+
+layout(location = 0) out vec4 _GLF_color;
+
+void main()
+{
+ _GLF_color = vec4(gl_FragCoord.x * (1.0 / 256.0),
+                   float((int(gl_FragCoord.x) ^ int(gl_FragCoord.y))) * (1.0 / 256.0),
+                   gl_FragCoord.y * (1.0 / 256.0),
+                   1.0);
+}
+END
+
+DECLARE_SHADER vertex_shader VERTEX
+#version 320 es
+layout(location = 0) in vec2 _GLF_vertexPosition;
+void main(void) {
+    gl_Position = vec4(_GLF_vertexPosition, 0.0, 1.0);
+}
+END
+
+DECLARE_SHADER fragment_shader FRAGMENT
+#version 320 es
+
+precision highp float;
+
+layout(location = 0) out vec4 _GLF_color;
+
+layout(location = 1) out vec4 _GLF_color2;
+
+layout(location = 0) uniform vec2 time;
+
+layout(binding = 1) uniform sampler2D tex;
+
+float ReallyApproxNormalizedAtan2(vec2 v)
+{
+    float pi2 = 1.0 / (355.0 / 113.0);
+
+    if (length(v) < 0.001)
+    {
+        return 0.0;
+    }
+
+    vec2 a = abs(v);
+
+    float z;
+    if (a.y > a.x)
+    {
+        z = a.x / a.y;
+    }
+    else
+    {
+        z = a.y / a.x;
+    }
+
+    float th = (0.97 - 0.19 * z * z) * z * pi2;
+
+    if (a.y < a.x)
+    {
+        th = 0.5 - th;
+    }
+
+    if (v.x < 0.0)
+    {
+        th = 1.0 - th;
+    }
+
+    if (v.y < 0.0)
+    {
+        th = -th;
+    }
+
+    return th;
+}
+
+vec2 polarize(vec2 coord)
+{
+    float pi = (355.0 / 113.0);
+    vec2 center = coord - vec2(0.5);
+    float dist = length(center);
+    float angle = ReallyApproxNormalizedAtan2(center);
+    return vec2(dist, angle);
+}
+
+void main()
+{
+    vec2 coord = gl_FragCoord.xy * (1.0 / 256.0);
+
+    vec2 coord1 = polarize(coord + vec2(20.0 / 256.0, -80.0 / 256.0));
+    vec2 coord2 = polarize(coord + vec2(-60.0 / 256.0, 40.0 / 256.0));
+    vec2 coord3 = polarize(coord);
+
+    coord = coord1 - coord2 + coord3;
+    coord = floor(coord * 256.0) / 256.0;
+    _GLF_color = time.x * vec4(texture(tex, coord).xyz, 1.0);
+    _GLF_color2 = vec4(1.0 - texture(tex, coord).xyz, 1.0);
+}
+END
+
+COMPILE_SHADER texgen_frag_compiled SHADER texgen_frag
+
+COMPILE_SHADER vert_compiled SHADER vertex_shader
+
+COMPILE_SHADER frag_compiled SHADER fragment_shader
+
+CREATE_PROGRAM texgen_program SHADERS vert_compiled texgen_frag_compiled
+
+CREATE_BUFFER quad_vertex_buffer SIZE_BYTES 48 INIT_TYPE float INIT_VALUES
+                           -1.0 -1.0
+                            -1.0 1.0
+                            1.0 -1.0
+                            1.0 1.0
+                            -1.0 1.0
+                            1.0 -1.0
+
+CREATE_BUFFER quad_index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+                           0 1 2 3 4 5
+
+RUN_GRAPHICS
+  PROGRAM texgen_program
+  VERTEX_DATA
+    [ 0 -> BUFFER quad_vertex_buffer OFFSET_BYTES 0 STRIDE_BYTES 8 DIMENSION 2 ]
+  INDEX_DATA quad_index_buffer
+  VERTEX_COUNT 6
+  TOPOLOGY TRIANGLES
+  FRAMEBUFFER_ATTACHMENTS
+    [ 0 -> my_tex ]
+
+CREATE_PROGRAM my_program SHADERS vert_compiled frag_compiled
+
+CREATE_RENDERBUFFER renderbuffer WIDTH 256 HEIGHT 256
+
+CREATE_RENDERBUFFER renderbuffer2 WIDTH 256 HEIGHT 256
+
+SET_UNIFORM PROGRAM my_program LOCATION 0 TYPE vec2 VALUES 5.0 0.0
+
+BIND_TEXTURE TEXTURE my_tex TEXTURE_UNIT 1
+BIND_SAMPLER SAMPLER my_sampler TEXTURE_UNIT 1
+
+RUN_GRAPHICS
+  PROGRAM my_program
+  VERTEX_DATA
+    [ 0 -> BUFFER quad_vertex_buffer OFFSET_BYTES 0 STRIDE_BYTES 8 DIMENSION 2 ]
+  INDEX_DATA quad_index_buffer
+  VERTEX_COUNT 6
+  TOPOLOGY TRIANGLES
+  FRAMEBUFFER_ATTACHMENTS
+    [ 0 -> renderbuffer,
+      1 -> renderbuffer2 ]
+
+DUMP_RENDERBUFFER RENDERBUFFER renderbuffer FILE "example_rendertotexture_1.png"
+DUMP_RENDERBUFFER RENDERBUFFER renderbuffer2 FILE "example_rendertotexture_2.png"

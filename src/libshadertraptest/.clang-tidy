@@ -1,0 +1,13 @@
+---
+Checks: >
+  -cert-err58-cpp,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -llvm-include-order,
+
+# We use clang-format to sort includes, and this disagrees
+# with clang-tidy when it comes to the gtest header.
+# -llvm-include-order
+
+InheritParentConfig: true
+...

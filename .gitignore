@@ -1,0 +1,32 @@
+
+/*build*/
+
+.DS_Store
+
+# IntelliJ.
+*.iml
+.idea/.name
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/workspace.xml
+.idea/dictionaries/*
+
+# Python
+*.pyc
+venv/
+
+# Temp.
+*~
+*.bak
+[._]*.s[a-w][a-z]
+
+# Debug files.
+.attach_pid*
+
+compile_commands.json
+.clang_complete
+.ycm_extra_conf.py*
+
+/.vscode/*
+/bazel-*/
