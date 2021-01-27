@@ -32,7 +32,8 @@ if(NOT TARGET gtest)
         OFF
         CACHE
         BOOL
-        "Builds the googlemock subproject")
+        "Builds the googlemock subproject"
+    )
 
     set(
         INSTALL_GTEST
@@ -40,8 +41,15 @@ if(NOT TARGET gtest)
         CACHE
         BOOL
         "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)"
-        )
+    )
+
+    set(
+        gtest_force_shared_crt
+        ON
+        CACHE
+        BOOL
+        "Use shared (DLL) run-time lib even when Google Test is built as static lib."
+    )
 
     add_subdirectory(${SHADERTRAP_GOOGLETEST_REPO_DIR} EXCLUDE_FROM_ALL)
 endif()
-

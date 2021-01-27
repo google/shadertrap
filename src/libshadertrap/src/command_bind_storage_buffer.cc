@@ -22,7 +22,7 @@ namespace shadertrap {
 
 CommandBindStorageBuffer::CommandBindStorageBuffer(
     std::unique_ptr<Token> start_token, std::string storage_buffer_identifier,
-    uint32_t binding)
+    size_t binding)
     : Command(std::move(start_token)),
       storage_buffer_identifier_(std::move(storage_buffer_identifier)),
       binding_(binding) {}

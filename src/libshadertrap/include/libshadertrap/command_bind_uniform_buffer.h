@@ -15,7 +15,7 @@
 #ifndef LIBSHADERTRAP_COMMAND_BIND_UNIFORM_BUFFER_H
 #define LIBSHADERTRAP_COMMAND_BIND_UNIFORM_BUFFER_H
 
-#include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -28,7 +28,7 @@ class CommandBindUniformBuffer : public Command {
  public:
   CommandBindUniformBuffer(std::unique_ptr<Token> start_token,
                            std::string uniform_buffer_identifier,
-                           uint32_t binding);
+                           size_t binding);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -36,11 +36,11 @@ class CommandBindUniformBuffer : public Command {
     return uniform_buffer_identifier_;
   }
 
-  uint32_t GetBinding() const { return binding_; }
+  size_t GetBinding() const { return binding_; }
 
  private:
   std::string uniform_buffer_identifier_;
-  uint32_t binding_;
+  size_t binding_;
 };
 
 }  // namespace shadertrap

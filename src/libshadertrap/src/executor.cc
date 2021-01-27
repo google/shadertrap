@@ -105,8 +105,9 @@ bool Executor::VisitAssertEqual(CommandAssertEqual* assert_equal) {
     data[index].resize(width[index] * height[index] * CHANNELS);
     GL_SAFECALL(glReadBuffer,
                 GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index));
-    GL_SAFECALL(glReadPixels, 0, 0, width[index], height[index], GL_RGBA,
-                GL_UNSIGNED_BYTE, data[index].data());
+    GL_SAFECALL(glReadPixels, 0, 0, static_cast<GLsizei>(width[index]),
+                static_cast<GLsizei>(height[index]), GL_RGBA, GL_UNSIGNED_BYTE,
+                data[index].data());
   }
 
   for (size_t y = 0; y < static_cast<size_t>(height[0]); y++) {
@@ -294,11 +295,11 @@ bool Executor::VisitAssertSimilarEmdHistogram(
                 data[index].data());
   }
 
-  const uint32_t num_bins = 256;
+  const size_t num_bins = 256;
 
   std::vector<std::vector<uint64_t>> histogram[2];
   for (auto index : {0, 1}) {
-    for (uint32_t channel = 0; channel < 4; channel++) {
+    for (size_t channel = 0; channel < 4; channel++) {
       histogram[index].emplace_back(std::vector<uint64_t>(num_bins, 0));
     }
     for (size_t y = 0; y < height[index]; y++) {
@@ -351,7 +352,8 @@ bool Executor::VisitAssertSimilarEmdHistogram(
 }
 
 bool Executor::VisitBindSampler(CommandBindSampler* bind_sampler) {
-  GL_SAFECALL(glBindSampler, bind_sampler->GetTextureUnit(),
+  GL_SAFECALL(glBindSampler,
+              static_cast<GLuint>(bind_sampler->GetTextureUnit()),
               created_samplers_.at(bind_sampler->GetSamplerIdentifier()));
   return true;
 }
@@ -360,13 +362,15 @@ bool Executor::VisitBindStorageBuffer(
     CommandBindStorageBuffer* bind_storage_buffer) {
   GL_SAFECALL(
       glBindBufferBase, GL_SHADER_STORAGE_BUFFER,
-      bind_storage_buffer->GetBinding(),
+      static_cast<GLuint>(bind_storage_buffer->GetBinding()),
       created_buffers_.at(bind_storage_buffer->GetStorageBufferIdentifier()));
   return true;
 }
 
 bool Executor::VisitBindTexture(CommandBindTexture* bind_texture) {
-  GL_SAFECALL(glActiveTexture, GL_TEXTURE0 + bind_texture->GetTextureUnit());
+  GL_SAFECALL(
+      glActiveTexture,
+      GL_TEXTURE0 + static_cast<GLenum>(bind_texture->GetTextureUnit()));
   GL_SAFECALL(glBindTexture, GL_TEXTURE_2D,
               created_textures_.at(bind_texture->GetTextureIdentifier()));
   return true;
@@ -375,7 +379,8 @@ bool Executor::VisitBindTexture(CommandBindTexture* bind_texture) {
 bool Executor::VisitBindUniformBuffer(
     CommandBindUniformBuffer* bind_uniform_buffer) {
   GL_SAFECALL(
-      glBindBufferBase, GL_UNIFORM_BUFFER, bind_uniform_buffer->GetBinding(),
+      glBindBufferBase, GL_UNIFORM_BUFFER,
+      static_cast<GLuint>(bind_uniform_buffer->GetBinding()),
       created_buffers_.at(bind_uniform_buffer->GetUniformBufferIdentifier()));
   return true;
 }
@@ -387,7 +392,7 @@ bool Executor::VisitCompileShader(CommandCompileShader* compile_shader) {
          "Identifier already in use for compiled shader.");
   CommandDeclareShader* shader_declaration =
       declared_shaders_.at(compile_shader->GetShaderIdentifier());
-  GLenum shader_kind;
+  GLenum shader_kind = GL_NONE;
   switch (shader_declaration->GetKind()) {
     case CommandDeclareShader::Kind::VERTEX:
       shader_kind = GL_VERTEX_SHADER;
@@ -417,11 +422,13 @@ bool Executor::VisitCreateBuffer(CommandCreateBuffer* create_buffer) {
   // We arbitrarily bind to the ARRAY_BUFFER target.
   GL_SAFECALL(glBindBuffer, GL_ARRAY_BUFFER, buffer);
   if (create_buffer->HasInitialData()) {
-    GL_SAFECALL(glBufferData, GL_ARRAY_BUFFER, create_buffer->GetSizeBytes(),
+    GL_SAFECALL(glBufferData, GL_ARRAY_BUFFER,
+                static_cast<GLuint>(create_buffer->GetSizeBytes()),
                 create_buffer->GetInitialData().data(), GL_STREAM_DRAW);
   } else {
-    GL_SAFECALL(glBufferData, GL_ARRAY_BUFFER, create_buffer->GetSizeBytes(),
-                nullptr, GL_STREAM_DRAW);
+    GL_SAFECALL(glBufferData, GL_ARRAY_BUFFER,
+                static_cast<GLuint>(create_buffer->GetSizeBytes()), nullptr,
+                GL_STREAM_DRAW);
   }
   created_buffers_.insert({create_buffer->GetBufferIdentifier(), buffer});
   return true;
@@ -440,9 +447,9 @@ bool Executor::VisitCreateEmptyTexture2D(
   GL_SAFECALL(glGenTextures, 1, &texture);
   GL_SAFECALL(glBindTexture, GL_TEXTURE_2D, texture);
   GL_SAFECALL(glTexImage2D, GL_TEXTURE_2D, 0, GL_RGBA,
-              create_empty_texture_2d->GetWidth(),
-              create_empty_texture_2d->GetHeight(), 0, GL_RGBA,
-              GL_UNSIGNED_BYTE, nullptr);
+              static_cast<GLsizei>(create_empty_texture_2d->GetWidth()),
+              static_cast<GLsizei>(create_empty_texture_2d->GetHeight()), 0,
+              GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
   created_textures_.insert(
       {create_empty_texture_2d->GetResultIdentifier(), texture});
   return true;
@@ -483,8 +490,8 @@ bool Executor::VisitCreateRenderbuffer(
   GL_SAFECALL(glBindRenderbuffer, GL_RENDERBUFFER, render_buffer);
 
   GL_SAFECALL(glRenderbufferStorage, GL_RENDERBUFFER, GL_RGBA8,
-              create_renderbuffer->GetWidth(),
-              create_renderbuffer->GetHeight());
+              static_cast<GLsizei>(create_renderbuffer->GetWidth()),
+              static_cast<GLsizei>(create_renderbuffer->GetHeight()));
   created_renderbuffers_.insert(
       {create_renderbuffer->GetResultIdentifier(), render_buffer});
   return true;
@@ -558,9 +565,10 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
   for (const auto& entry : vertex_data) {
     GL_SAFECALL(glBindBuffer, GL_ARRAY_BUFFER,
                 created_buffers_.at(entry.second.GetBufferIdentifier()));
-    GL_SAFECALL(glEnableVertexAttribArray, entry.first);
-    GL_SAFECALL(glVertexAttribPointer, entry.first, entry.second.GetDimension(),
-                GL_FLOAT, GL_FALSE, entry.second.GetStrideBytes(),
+    GL_SAFECALL(glEnableVertexAttribArray, static_cast<GLuint>(entry.first));
+    GL_SAFECALL(glVertexAttribPointer, static_cast<GLuint>(entry.first),
+                static_cast<GLsizei>(entry.second.GetDimension()), GL_FLOAT,
+                GL_FALSE, static_cast<GLsizei>(entry.second.GetStrideBytes()),
                 reinterpret_cast<void*>(entry.second.GetOffsetBytes()));
   }
 
@@ -573,14 +581,14 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
 
   auto framebuffer_attachments = run_graphics->GetFramebufferAttachments();
   assert(framebuffer_attachments.size() <= 32 && "Too many renderbuffers.");
-  uint32_t max_location = 0;
+  size_t max_location = 0;
   for (const auto& entry : framebuffer_attachments) {
     max_location = std::max(max_location, entry.first);
   }
   std::vector<GLenum> draw_buffers;
-  for (uint32_t i = 0; i <= max_location; i++) {
+  for (size_t i = 0; i <= max_location; i++) {
     if (framebuffer_attachments.count(i) > 0) {
-      GLenum color_attachment = GL_COLOR_ATTACHMENT0 + i;
+      GLenum color_attachment = GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(i);
       auto output_buffer = framebuffer_attachments.at(i);
       if (created_renderbuffers_.count(output_buffer) != 0) {
         GL_SAFECALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER, color_attachment,
@@ -604,7 +612,8 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
         status);
   }
 
-  GL_SAFECALL(glDrawBuffers, draw_buffers.size(), draw_buffers.data());
+  GL_SAFECALL(glDrawBuffers, static_cast<GLsizei>(draw_buffers.size()),
+              draw_buffers.data());
 
   GL_SAFECALL(glClearColor, 0.0F, 0.0F, 0.0F, 1.0F);
   GL_SAFECALL(glClear, GL_COLOR_BUFFER_BIT);
@@ -612,19 +621,20 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
   GL_SAFECALL(
       glBindBuffer, GL_ELEMENT_ARRAY_BUFFER,
       created_buffers_.at(run_graphics->GetIndexDataBufferIdentifier()));
-  GLenum topology;
+  GLenum topology = GL_NONE;
   switch (run_graphics->GetTopology()) {
     case CommandRunGraphics::Topology::kTriangles:
       topology = GL_TRIANGLES;
       break;
   }
-  GL_SAFECALL(glDrawElements, topology, run_graphics->GetVertexCount(),
+  GL_SAFECALL(glDrawElements, topology,
+              static_cast<GLsizei>(run_graphics->GetVertexCount()),
               GL_UNSIGNED_INT, reinterpret_cast<GLvoid*>(0));
 
   GL_SAFECALL_NO_ARGS(glFlush);
 
   for (const auto& entry : run_graphics->GetVertexData()) {
-    GL_SAFECALL(glDisableVertexAttribArray, entry.first);
+    GL_SAFECALL(glDisableVertexAttribArray, static_cast<GLuint>(entry.first));
   }
 
   GL_SAFECALL(glDeleteFramebuffers, 1, &framebuffer_object_id);
@@ -633,8 +643,7 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
 
 bool Executor::VisitSetSamplerOrTextureParameter(
     CommandSetSamplerOrTextureParameter* set_sampler_or_texture_parameter) {
-  GLenum parameter;
-  GLint parameter_value;
+  GLenum parameter = GL_NONE;
   switch (set_sampler_or_texture_parameter->GetParameter()) {
     case CommandSetSamplerOrTextureParameter::TextureParameter::kMagFilter:
       parameter = GL_TEXTURE_MAG_FILTER;
@@ -643,6 +652,7 @@ bool Executor::VisitSetSamplerOrTextureParameter(
       parameter = GL_TEXTURE_MIN_FILTER;
       break;
   }
+  GLint parameter_value = GL_NONE;
   switch (set_sampler_or_texture_parameter->GetParameterValue()) {
     case CommandSetSamplerOrTextureParameter::TextureParameterValue::kNearest:
       parameter_value = GL_NEAREST;
@@ -674,13 +684,14 @@ bool Executor::VisitSetSamplerOrTextureParameter(
 
 bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
   GLuint program = created_programs_.at(set_uniform->GetProgramIdentifier());
-  uint32_t uniform_location = set_uniform->GetLocation();
+  auto uniform_location = static_cast<GLint>(set_uniform->GetLocation());
   const UniformValue& uniform_value = set_uniform->GetValue();
   switch (uniform_value.GetElementType()) {
     case UniformValue::ElementType::kFloat:
       if (uniform_value.IsArray()) {
         GL_SAFECALL(glProgramUniform1fv, program, uniform_location,
-                    uniform_value.GetArraySize(), uniform_value.GetFloatData());
+                    static_cast<GLint>(uniform_value.GetArraySize()),
+                    uniform_value.GetFloatData());
       } else {
         GL_SAFECALL(glProgramUniform1f, program, uniform_location,
                     uniform_value.GetFloatData()[0]);
@@ -689,7 +700,8 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
     case UniformValue::ElementType::kVec2:
       if (uniform_value.IsArray()) {
         GL_SAFECALL(glProgramUniform2fv, program, uniform_location,
-                    uniform_value.GetArraySize(), uniform_value.GetFloatData());
+                    static_cast<GLsizei>(uniform_value.GetArraySize()),
+                    uniform_value.GetFloatData());
       } else {
         GL_SAFECALL(glProgramUniform2f, program, uniform_location,
                     uniform_value.GetFloatData()[0],
@@ -699,7 +711,8 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
     case UniformValue::ElementType::kVec3:
       if (uniform_value.IsArray()) {
         GL_SAFECALL(glProgramUniform3fv, program, uniform_location,
-                    uniform_value.GetArraySize(), uniform_value.GetFloatData());
+                    static_cast<GLsizei>(uniform_value.GetArraySize()),
+                    uniform_value.GetFloatData());
       } else {
         GL_SAFECALL(glProgramUniform3f, program, uniform_location,
                     uniform_value.GetFloatData()[0],
@@ -710,7 +723,8 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
     case UniformValue::ElementType::kVec4:
       if (uniform_value.IsArray()) {
         GL_SAFECALL(glProgramUniform4fv, program, uniform_location,
-                    uniform_value.GetArraySize(), uniform_value.GetFloatData());
+                    static_cast<GLsizei>(uniform_value.GetArraySize()),
+                    uniform_value.GetFloatData());
       } else {
         GL_SAFECALL(
             glProgramUniform4f, program, uniform_location,
@@ -721,7 +735,8 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
     case UniformValue::ElementType::kInt:
       if (uniform_value.IsArray()) {
         GL_SAFECALL(glProgramUniform1iv, program, uniform_location,
-                    uniform_value.GetArraySize(), uniform_value.GetIntData());
+                    static_cast<GLsizei>(uniform_value.GetArraySize()),
+                    uniform_value.GetIntData());
       } else {
         GL_SAFECALL(glProgramUniform1i, program, uniform_location,
                     uniform_value.GetIntData()[0]);

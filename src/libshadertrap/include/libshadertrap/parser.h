@@ -15,6 +15,7 @@
 #ifndef LIBSHADERTRAP_PARSER_H
 #define LIBSHADERTRAP_PARSER_H
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -96,7 +97,7 @@ class Parser {
 
   std::pair<bool, UniformValue> ProcessUniformValue(
       UniformValue::ElementType type,
-      const std::pair<bool, uint32_t>& maybe_array_size,
+      const std::pair<bool, size_t>& maybe_array_size,
       const std::vector<std::unique_ptr<Token>>& values);
 
   std::pair<bool, uint8_t> ParseUint8(const std::string& result_name);

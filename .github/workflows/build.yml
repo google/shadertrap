@@ -1,0 +1,127 @@
+# Copyright 2021 The ShaderTrap Project Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - macOS-latest
+        config:
+          - Debug
+          - Release
+        # Manually list various Linux configurations.
+        include:
+          # gcc-8
+          - os: ubuntu-16.04
+            config: Debug
+            linux_cc: gcc-8
+            linux_cxx: g++-8
+          - os: ubuntu-16.04
+            config: Release
+            linux_cc: gcc-8
+            linux_cxx: g++-8
+          # gcc-9
+          - os: ubuntu-16.04
+            config: Debug
+            linux_cc: gcc-9
+            linux_cxx: g++-9
+          - os: ubuntu-16.04
+            config: Release
+            linux_cc: gcc-9
+            linux_cxx: g++-9
+          # clang-6
+          - os: ubuntu-16.04
+            config: Debug
+            linux_cc: clang-6.0
+            linux_cxx: clang++-6.0
+          - os: ubuntu-16.04
+            config: Release
+            linux_cc: clang-6.0
+            linux_cxx: clang++-6.0
+          # clang-8
+          - os: ubuntu-16.04
+            config: Debug
+            linux_cc: clang-8
+            linux_cxx: clang++-8
+          - os: ubuntu-16.04
+            config: Release
+            linux_cc: clang-8
+            linux_cxx: clang++-8
+          # clang-9
+          - os: ubuntu-16.04
+            config: Debug
+            linux_cc: clang-9
+            linux_cxx: clang++-9
+          - os: ubuntu-16.04
+            config: Release
+            linux_cc: clang-9
+            linux_cxx: clang++-9
+          # Note: Clang 10 is tested via the dev_build workflow.
+
+    runs-on: ${{ matrix.os }}
+    env:
+      CONFIG: ${{ matrix.config }}
+      LINUX_CC: ${{ matrix.linux_cc }}
+      LINUX_CXX: ${{ matrix.linux_cxx }}
+    steps:
+
+      - name: get_actions
+        run: |
+          mkdir -p ./../.github/actions/
+          pushd ./../.github/actions/
+            git clone https://github.com/actions/setup-python.git
+            pushd setup-python/
+              git checkout v2
+            popd
+            git clone https://github.com/actions/checkout.git
+            pushd checkout/
+              git checkout v2
+            popd
+          popd
+        shell: bash
+
+      - name: checkout
+        uses: ./../.github/actions/checkout
+        with:
+          submodules: true
+
+      - name: setup_python
+        uses: ./../.github/actions/setup-python
+        with:
+          python-version: 3.6
+          architecture: x64
+
+      - name: build_step_nix
+        run: |
+          .github/workflows/build.sh
+        shell: bash
+        if: |
+          !startsWith(matrix.os, 'windows')
+
+      - name: build_step_windows
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          "C:\Program Files\Git\bin\bash.EXE" --noprofile --norc -e -o pipefail .github\workflows\build.sh
+        shell: cmd
+        if: |
+          startsWith(matrix.os, 'windows')

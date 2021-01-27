@@ -15,7 +15,7 @@
 #ifndef LIBSHADERTRAP_COMMAND_SET_UNIFORM_H
 #define LIBSHADERTRAP_COMMAND_SET_UNIFORM_H
 
-#include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -28,7 +28,7 @@ namespace shadertrap {
 class CommandSetUniform : public Command {
  public:
   CommandSetUniform(std::unique_ptr<Token> start_token,
-                    std::string program_identifier, uint32_t location,
+                    std::string program_identifier, size_t location,
                     UniformValue value);
 
   bool Accept(CommandVisitor* visitor) override;
@@ -37,13 +37,13 @@ class CommandSetUniform : public Command {
     return program_identifier_;
   }
 
-  uint32_t GetLocation() const { return location_; }
+  size_t GetLocation() const { return location_; }
 
   const UniformValue& GetValue() const { return value_; }
 
  private:
   std::string program_identifier_;
-  uint32_t location_;
+  size_t location_;
   UniformValue value_;
 };
 

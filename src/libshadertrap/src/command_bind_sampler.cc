@@ -22,7 +22,7 @@ namespace shadertrap {
 
 CommandBindSampler::CommandBindSampler(std::unique_ptr<Token> start_token,
                                        std::string sampler_identifier,
-                                       uint32_t texture_unit)
+                                       size_t texture_unit)
     : Command(std::move(start_token)),
       sampler_identifier_(std::move(sampler_identifier)),
       texture_unit_(texture_unit) {}

@@ -22,7 +22,7 @@ namespace shadertrap {
 
 CommandBindTexture::CommandBindTexture(std::unique_ptr<Token> start_token,
                                        std::string texture_identifier,
-                                       uint32_t texture_unit)
+                                       size_t texture_unit)
     : Command(std::move(start_token)),
       texture_identifier_(std::move(texture_identifier)),
       texture_unit_(texture_unit) {}

@@ -15,7 +15,7 @@
 #ifndef LIBSHADERTRAP_COMMAND_BIND_SAMPLER_H
 #define LIBSHADERTRAP_COMMAND_BIND_SAMPLER_H
 
-#include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -27,7 +27,7 @@ namespace shadertrap {
 class CommandBindSampler : public Command {
  public:
   CommandBindSampler(std::unique_ptr<Token> start_token,
-                     std::string sampler_identifier, uint32_t texture_unit_);
+                     std::string sampler_identifier, size_t texture_unit_);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -35,11 +35,11 @@ class CommandBindSampler : public Command {
     return sampler_identifier_;
   }
 
-  uint32_t GetTextureUnit() const { return texture_unit_; }
+  size_t GetTextureUnit() const { return texture_unit_; }
 
  private:
   std::string sampler_identifier_;
-  uint32_t texture_unit_;
+  size_t texture_unit_;
 };
 
 }  // namespace shadertrap

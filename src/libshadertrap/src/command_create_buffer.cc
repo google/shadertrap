@@ -24,7 +24,7 @@ namespace shadertrap {
 
 CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
                                          std::string buffer_identifier,
-                                         uint32_t size_bytes,
+                                         size_t size_bytes,
                                          const std::vector<uint8_t>& byte_data)
     : Command(std::move(start_token)),
       buffer_identifier_(std::move(buffer_identifier)),
@@ -38,7 +38,7 @@ CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
 
 CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
                                          std::string buffer_identifier,
-                                         uint32_t size_bytes,
+                                         size_t size_bytes,
                                          const std::vector<float>& float_data)
     : Command(std::move(start_token)),
       buffer_identifier_(std::move(buffer_identifier)),
@@ -52,7 +52,7 @@ CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
 
 CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
                                          std::string buffer_identifier,
-                                         uint32_t size_bytes,
+                                         size_t size_bytes,
                                          const std::vector<int32_t>& int_data)
     : Command(std::move(start_token)),
       buffer_identifier_(std::move(buffer_identifier)),
@@ -66,7 +66,7 @@ CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
 
 CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
                                          std::string buffer_identifier,
-                                         uint32_t size_bytes,
+                                         size_t size_bytes,
                                          const std::vector<uint32_t>& uint_data)
     : Command(std::move(start_token)),
       buffer_identifier_(std::move(buffer_identifier)),

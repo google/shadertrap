@@ -14,8 +14,8 @@
 
 #include "libshadertrap/parser.h"
 
-#include "gtest/gtest.h"
 #include "libshadertraptest/collecting_message_consumer.h"
+#include "libshadertraptest/gtest.h"
 
 namespace shadertrap {
 namespace {

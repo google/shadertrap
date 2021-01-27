@@ -22,9 +22,9 @@ namespace shadertrap {
 
 CommandRunGraphics::CommandRunGraphics(
     std::unique_ptr<Token> start_token, std::string program_identifier,
-    std::unordered_map<uint32_t, VertexAttributeInfo> vertex_data,
-    std::string index_data_buffer_identifier, uint32_t vertex_count,
-    Topology topology, std::unordered_map<uint32_t, std::string> output_buffers)
+    std::unordered_map<size_t, VertexAttributeInfo> vertex_data,
+    std::string index_data_buffer_identifier, size_t vertex_count,
+    Topology topology, std::unordered_map<size_t, std::string> output_buffers)
     : Command(std::move(start_token)),
       program_identifier_(std::move(program_identifier)),
       vertex_data_(std::move(vertex_data)),

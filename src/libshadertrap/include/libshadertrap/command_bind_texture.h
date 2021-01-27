@@ -15,7 +15,7 @@
 #ifndef LIBSHADERTRAP_COMMAND_BIND_TEXTURE_H
 #define LIBSHADERTRAP_COMMAND_BIND_TEXTURE_H
 
-#include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -27,7 +27,7 @@ namespace shadertrap {
 class CommandBindTexture : public Command {
  public:
   CommandBindTexture(std::unique_ptr<Token> start_token,
-                     std::string texture_identifier, uint32_t texture_unit);
+                     std::string texture_identifier, size_t texture_unit);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -35,11 +35,11 @@ class CommandBindTexture : public Command {
     return texture_identifier_;
   }
 
-  uint32_t GetTextureUnit() const { return texture_unit_; }
+  size_t GetTextureUnit() const { return texture_unit_; }
 
  private:
   std::string texture_identifier_;
-  uint32_t texture_unit_;
+  size_t texture_unit_;
 };
 
 }  // namespace shadertrap

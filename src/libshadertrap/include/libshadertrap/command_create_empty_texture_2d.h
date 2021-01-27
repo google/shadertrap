@@ -15,7 +15,7 @@
 #ifndef LIBSHADERTRAP_COMMAND_CREATE_EMPTY_TEXTURE_2D_H
 #define LIBSHADERTRAP_COMMAND_CREATE_EMPTY_TEXTURE_2D_H
 
-#include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -27,21 +27,21 @@ namespace shadertrap {
 class CommandCreateEmptyTexture2D : public Command {
  public:
   CommandCreateEmptyTexture2D(std::unique_ptr<Token> start_token,
-                              std::string result_identifier, uint32_t width,
-                              uint32_t height);
+                              std::string result_identifier, size_t width,
+                              size_t height);
 
   bool Accept(CommandVisitor* visitor) override;
 
   const std::string& GetResultIdentifier() const { return result_identifier_; }
 
-  uint32_t GetWidth() const { return width_; }
+  size_t GetWidth() const { return width_; }
 
-  uint32_t GetHeight() const { return height_; }
+  size_t GetHeight() const { return height_; }
 
  private:
   std::string result_identifier_;
-  uint32_t width_;
-  uint32_t height_;
+  size_t width_;
+  size_t height_;
 };
 
 }  // namespace shadertrap

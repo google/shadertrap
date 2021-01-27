@@ -148,10 +148,10 @@ bool Parser::ParseCommandAssertPixels() {
   uint8_t expected_b;
   uint8_t expected_a;
   std::string renderbuffer_identifier;
-  uint32_t rectangle_x;
-  uint32_t rectangle_y;
-  uint32_t rectangle_width;
-  uint32_t rectangle_height;
+  size_t rectangle_x;
+  size_t rectangle_y;
+  size_t rectangle_width;
+  size_t rectangle_height;
   if (!ParseParameters({{Token::Type::kKeywordExpected,
                          [this, &expected_r, &expected_g, &expected_b,
                           &expected_a]() -> bool {
@@ -270,7 +270,7 @@ bool Parser::ParseCommandAssertSimilarEmdHistogram() {
 bool Parser::ParseCommandBindSampler() {
   auto start_token = tokenizer_->NextToken();
   std::string sampler_identifier;
-  uint32_t texture_unit;
+  size_t texture_unit;
   if (!ParseParameters(
           {{Token::Type::kKeywordSampler,
             [this, &sampler_identifier]() -> bool {
@@ -303,7 +303,7 @@ bool Parser::ParseCommandBindSampler() {
 bool Parser::ParseCommandBindStorageBuffer() {
   auto start_token = tokenizer_->NextToken();
   std::string buffer_identifier;
-  uint32_t binding;
+  size_t binding;
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffer,
             [this, &buffer_identifier]() -> bool {
@@ -336,7 +336,7 @@ bool Parser::ParseCommandBindStorageBuffer() {
 bool Parser::ParseCommandBindTexture() {
   auto start_token = tokenizer_->NextToken();
   std::string texture_identifier;
-  uint32_t texture_unit;
+  size_t texture_unit;
   if (!ParseParameters(
           {{Token::Type::kKeywordTexture,
             [this, &texture_identifier]() -> bool {
@@ -369,7 +369,7 @@ bool Parser::ParseCommandBindTexture() {
 bool Parser::ParseCommandBindUniformBuffer() {
   auto start_token = tokenizer_->NextToken();
   std::string buffer_identifier;
-  uint32_t binding;
+  size_t binding;
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffer,
             [this, &buffer_identifier]() -> bool {
@@ -441,8 +441,8 @@ bool Parser::ParseCommandCreateEmptyTexture2d() {
                                    result_identifier->GetText() + "'");
     return false;
   }
-  uint32_t width;
-  uint32_t height;
+  size_t width;
+  size_t height;
   if (!ParseParameters(
           {{Token::Type::kKeywordWidth,
             [this, &width]() -> bool {
@@ -478,7 +478,7 @@ bool Parser::ParseCommandCreateBuffer() {
             result_identifier->GetText() + "'");
     return false;
   }
-  uint32_t size_bytes;
+  size_t size_bytes;
   std::vector<std::unique_ptr<Token>> values;
   CommandCreateBuffer::InitialDataType type;
   if (!ParseParameters(
@@ -521,8 +521,8 @@ bool Parser::ParseCommandCreateBuffer() {
             }}})) {
     return false;
   }
-  uint32_t element_size =
-      type == CommandCreateBuffer::InitialDataType::kByte ? 1 : 4;
+  size_t element_size =
+      type == CommandCreateBuffer::InitialDataType::kByte ? 1U : 4U;
   if (size_bytes != element_size * values.size()) {
     std::stringstream stringstream;
     stringstream << "Size mismatch: buffer '" << result_identifier->GetText()
@@ -570,8 +570,8 @@ bool Parser::ParseCommandCreateBuffer() {
         float_data.emplace_back(std::stof(value->GetText()));
       }
       parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
-          std::move(start_token), result_identifier->GetText(),
-          static_cast<uint32_t>(size_bytes), float_data));
+          std::move(start_token), result_identifier->GetText(), size_bytes,
+          float_data));
       break;
     }
     case CommandCreateBuffer::InitialDataType::kInt: {
@@ -586,8 +586,8 @@ bool Parser::ParseCommandCreateBuffer() {
         int_data.emplace_back(std::stoi(value->GetText()));
       }
       parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
-          std::move(start_token), result_identifier->GetText(),
-          static_cast<uint32_t>(size_bytes), int_data));
+          std::move(start_token), result_identifier->GetText(), size_bytes,
+          int_data));
       break;
     }
     default: {
@@ -618,8 +618,8 @@ bool Parser::ParseCommandCreateBuffer() {
         uint_data.emplace_back(static_cast<uint32_t>(uint_value));
       }
       parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
-          std::move(start_token), result_identifier->GetText(),
-          static_cast<uint32_t>(size_bytes), uint_data));
+          std::move(start_token), result_identifier->GetText(), size_bytes,
+          uint_data));
       break;
     }
   }
@@ -673,8 +673,8 @@ bool Parser::ParseCommandCreateRenderbuffer() {
             result_identifier->GetText() + "'");
     return false;
   }
-  uint32_t width;
-  uint32_t height;
+  size_t width;
+  size_t height;
   if (!ParseParameters(
           {{Token::Type::kKeywordWidth,
             [this, &width]() -> bool {
@@ -719,11 +719,11 @@ bool Parser::ParseCommandRunGraphics() {
   auto start_token = tokenizer_->NextToken();
 
   std::string program_identifier;
-  std::unordered_map<uint32_t, VertexAttributeInfo> vertex_data;
+  std::unordered_map<size_t, VertexAttributeInfo> vertex_data;
   std::string index_data_buffer_identifier;
-  uint32_t vertex_count;
+  size_t vertex_count;
   CommandRunGraphics::Topology topology;
-  std::unordered_map<uint32_t, std::string> framebuffer_attachments;
+  std::unordered_map<size_t, std::string> framebuffer_attachments;
 
   if (!ParseParameters(
           {{Token::Type::kKeywordProgram,
@@ -849,8 +849,7 @@ bool Parser::ParseCommandRunGraphics() {
                   return false;
                 }
                 framebuffer_attachments.insert(
-                    {static_cast<uint32_t>(maybe_location.second),
-                     token->GetText()});
+                    {maybe_location.second, token->GetText()});
                 token = tokenizer_->PeekNextToken();
                 if (token->GetText() == ",") {
                   tokenizer_->NextToken();
@@ -963,8 +962,10 @@ bool Parser::ParseCommandSetTextureOrSamplerParameter() {
   bool got_target_identifier = false;
   std::string target_identifier;
   bool got_parameter = false;
-  CommandSetSamplerOrTextureParameter::TextureParameter parameter;
-  CommandSetSamplerOrTextureParameter::TextureParameterValue parameter_value;
+  CommandSetSamplerOrTextureParameter::TextureParameter parameter =
+      CommandSetSamplerOrTextureParameter::TextureParameter::kMagFilter;
+  CommandSetSamplerOrTextureParameter::TextureParameterValue parameter_value =
+      CommandSetSamplerOrTextureParameter::TextureParameterValue::kNearest;
 
   while (true) {
     auto token = tokenizer_->PeekNextToken();
@@ -1064,9 +1065,9 @@ bool Parser::ParseCommandSetTextureOrSamplerParameter() {
 bool Parser::ParseCommandSetUniform() {
   auto start_token = tokenizer_->NextToken();
   std::string program_identifier;
-  uint32_t location;
+  size_t location;
   UniformValue::ElementType type;
-  std::pair<bool, uint32_t> maybe_array_size;
+  std::pair<bool, size_t> maybe_array_size;
   std::vector<std::unique_ptr<Token>> values;
   if (!ParseParameters(
           {{Token::Type::kKeywordProgram,
@@ -1149,8 +1150,7 @@ bool Parser::ParseCommandSetUniform() {
                 if (!maybe_size.first) {
                   return false;
                 }
-                maybe_array_size = {
-                    true, static_cast<uint32_t>(maybe_array_size.second)};
+                maybe_array_size = {true, maybe_array_size.second};
                 token = tokenizer_->NextToken();
                 if (token->GetText() != "]") {
                   message_consumer_->Message(
@@ -1158,7 +1158,7 @@ bool Parser::ParseCommandSetUniform() {
                       "Expected ']', got '" + token->GetText() + "'");
                 }
               } else {
-                maybe_array_size = {false, 0};
+                maybe_array_size = {false, 0U};
               }
               return true;
             }},
@@ -1176,15 +1176,15 @@ bool Parser::ParseCommandSetUniform() {
   if (!maybe_uniform_value.first) {
     return false;
   }
-  parsed_commands_.push_back(MakeUnique<CommandSetUniform>(
-      std::move(start_token), program_identifier,
-      static_cast<uint32_t>(location), maybe_uniform_value.second));
+  parsed_commands_.push_back(
+      MakeUnique<CommandSetUniform>(std::move(start_token), program_identifier,
+                                    location, maybe_uniform_value.second));
   return true;
 }
 
 std::pair<bool, UniformValue> Parser::ProcessUniformValue(
     UniformValue::ElementType type,
-    const std::pair<bool, uint32_t>& maybe_array_size,
+    const std::pair<bool, size_t>& maybe_array_size,
     const std::vector<std::unique_ptr<Token>>& values) {
   std::pair<bool, UniformValue> failure_result{
       false,
@@ -1291,9 +1291,9 @@ bool Parser::ParseParameters(
 
 std::pair<bool, VertexAttributeInfo> Parser::ParseVertexAttributeInfo() {
   std::string buffer_identifier;
-  uint32_t offset_bytes;
-  uint32_t stride_bytes;
-  uint32_t dimension;
+  size_t offset_bytes;
+  size_t stride_bytes;
+  size_t dimension;
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffer,
             [this, &buffer_identifier]() -> bool {
@@ -1346,7 +1346,7 @@ std::pair<bool, uint8_t> Parser::ParseUint8(const std::string& result_name) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError, token.get(),
         "Expected integer " + result_name + ", got '" + token->GetText() + "'");
-    return {false, 0};
+    return {false, static_cast<uint8_t>(0U)};
   }
   int64_t result = std::stol(token->GetText());
   if (result < 0 || result > UINT8_MAX) {
@@ -1354,7 +1354,7 @@ std::pair<bool, uint8_t> Parser::ParseUint8(const std::string& result_name) {
                                "Expected integer " + result_name +
                                    " in the range [0, 255], got '" +
                                    token->GetText() + "'");
-    return {false, 0};
+    return {false, static_cast<uint8_t>(0U)};
   }
   return {true, static_cast<uint8_t>(result)};
 }
@@ -1365,20 +1365,20 @@ std::pair<bool, uint32_t> Parser::ParseUint32(const std::string& result_name) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError, token.get(),
         "Expected integer " + result_name + ", got '" + token->GetText() + "'");
-    return {false, 0};
+    return {false, 0U};
   }
   int64_t result = std::stol(token->GetText());
   if (result < 0) {
     message_consumer_->Message(MessageConsumer::Severity::kError, token.get(),
                                "Expected non-negative integer " + result_name +
                                    ", got '" + token->GetText() + "'");
-    return {false, 0};
+    return {false, 0U};
   }
   if (result > UINT32_MAX) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError, token.get(),
         "Value '" + token->GetText() + "' is out of range");
-    return {false, 0};
+    return {false, 0U};
   }
   return {true, static_cast<uint32_t>(result)};
 }
