@@ -20,11 +20,13 @@
 
 namespace shadertrap {
 
-CommandAssertPixels::CommandAssertPixels(
-    std::unique_ptr<Token> start_token, uint8_t expected_r, uint8_t expected_g,
-    uint8_t expected_b, uint8_t expected_a, std::string renderbuffer_identifier,
-    uint32_t rectangle_x, uint32_t rectangle_y, uint32_t rectangle_width,
-    uint32_t rectangle_height)
+CommandAssertPixels::CommandAssertPixels(std::unique_ptr<Token> start_token,
+                                         uint8_t expected_r, uint8_t expected_g,
+                                         uint8_t expected_b, uint8_t expected_a,
+                                         std::string renderbuffer_identifier,
+                                         size_t rectangle_x, size_t rectangle_y,
+                                         size_t rectangle_width,
+                                         size_t rectangle_height)
     : Command(std::move(start_token)),
       expected_r_(expected_r),
       expected_g_(expected_g),

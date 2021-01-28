@@ -19,7 +19,6 @@ project(shadertrap
     DESCRIPTION "ShaderTrap"
     LANGUAGES CXX)
 
-
 # Note: this is not an option; it is used to set the default value for some options below.
 # It is set to ON if shadertrap is the root project being built, and OFF otherwise.
 set(SHADERTRAP_PROJECT_IS_ROOT OFF)
@@ -58,13 +57,7 @@ option(
 
 
 # TODO(paulthomson): Remove this eventually.
-if(ANDROID)
-    find_library(SHADERTRAP_ANDROID_EGL_LIB_PATH EGL)
-else()
-    find_package(OpenGL)
-endif()
-
-
+find_library(SHADERTRAP_EGL_LIB_PATH NAMES EGL libEGL)
 
 if(SHADERTRAP_PROJECT_IS_ROOT)
 
@@ -128,10 +121,11 @@ endif()
 
 ## Third party targets.
 
+add_subdirectory(third_party/EGL-Registry EXCLUDE_FROM_ALL)
+
 # TODO(paulthomson): Probably remove this and use a different loading strategy/library.
 add_subdirectory(third_party/glad EXCLUDE_FROM_ALL)
 
-# TODO(paulthomson): Use git submodule.
 add_subdirectory(third_party/lodepng EXCLUDE_FROM_ALL)
 
 add_subdirectory(third_party/googletest)
@@ -187,6 +181,8 @@ if(SHADERTRAP_WARNING_SUPPRESSIONS)
             /wd4710  # warning C4710: 'x': function not inlined (informational)
             /wd4996  # warning C4996: 'getenv': This function or variable may be unsafe.
             /wd5045  # warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
+            /wd4061  # warning C4061: enumerator 'identifier' in switch of enum 'enumeration' is not explicitly handled by a case label
+            /wd4868  # warning C4868: compiler may not enforce left-to-right evaluation order in braced initializer list
         )
     else()
         add_compile_options(

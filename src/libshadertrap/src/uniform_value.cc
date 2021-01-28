@@ -18,14 +18,14 @@
 
 UniformValue::UniformValue(ElementType element_type,
                            const std::vector<int32_t>& int_data)
-    : element_type_(element_type), maybe_array_size_(false, 0) {
+    : element_type_(element_type), maybe_array_size_(false, 0U) {
   data_.resize(sizeof(int32_t) * int_data.size());
   memcpy(data_.data(), int_data.data(), data_.size());
 }
 
 UniformValue::UniformValue(ElementType element_type,
                            const std::vector<int32_t>& int_data,
-                           uint32_t array_size)
+                           size_t array_size)
     : element_type_(element_type), maybe_array_size_(true, array_size) {
   data_.resize(sizeof(int32_t) * int_data.size());
   memcpy(data_.data(), int_data.data(), data_.size());
@@ -33,14 +33,14 @@ UniformValue::UniformValue(ElementType element_type,
 
 UniformValue::UniformValue(ElementType element_type,
                            const std::vector<uint32_t>& uint_data)
-    : element_type_(element_type), maybe_array_size_(false, 0) {
+    : element_type_(element_type), maybe_array_size_(false, 0U) {
   data_.resize(sizeof(uint32_t) * uint_data.size());
   memcpy(data_.data(), uint_data.data(), data_.size());
 }
 
 UniformValue::UniformValue(ElementType element_type,
                            const std::vector<uint32_t>& uint_data,
-                           uint32_t array_size)
+                           size_t array_size)
     : element_type_(element_type), maybe_array_size_(true, array_size) {
   data_.resize(sizeof(uint32_t) * uint_data.size());
   memcpy(data_.data(), uint_data.data(), data_.size());
@@ -48,14 +48,14 @@ UniformValue::UniformValue(ElementType element_type,
 
 UniformValue::UniformValue(ElementType element_type,
                            const std::vector<float>& float_data)
-    : element_type_(element_type), maybe_array_size_(false, 0) {
+    : element_type_(element_type), maybe_array_size_(false, 0U) {
   data_.resize(sizeof(float) * float_data.size());
   memcpy(data_.data(), float_data.data(), data_.size());
 }
 
 UniformValue::UniformValue(ElementType element_type,
                            const std::vector<float>& float_data,
-                           uint32_t array_size)
+                           size_t array_size)
     : element_type_(element_type), maybe_array_size_(true, array_size) {
   data_.resize(sizeof(float) * float_data.size());
   memcpy(data_.data(), float_data.data(), data_.size());

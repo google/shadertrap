@@ -15,6 +15,7 @@
 #ifndef LIBSHADERTRAP_COMMAND_CREATE_BUFFER_H
 #define LIBSHADERTRAP_COMMAND_CREATE_BUFFER_H
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -30,26 +31,26 @@ class CommandCreateBuffer : public Command {
   enum class InitialDataType { kByte, kFloat, kInt, kUint, kNone };
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::string buffer_identifier, uint32_t size_bytes,
+                      std::string buffer_identifier, size_t size_bytes,
                       const std::vector<uint8_t>& byte_data);
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::string buffer_identifier, uint32_t size_bytes,
+                      std::string buffer_identifier, size_t size_bytes,
                       const std::vector<float>& float_data);
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::string buffer_identifier, uint32_t size_bytes,
+                      std::string buffer_identifier, size_t size_bytes,
                       const std::vector<int32_t>& int_data);
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::string buffer_identifier, uint32_t size_bytes,
+                      std::string buffer_identifier, size_t size_bytes,
                       const std::vector<uint32_t>& uint_data);
 
   bool Accept(CommandVisitor* visitor) override;
 
   const std::string& GetBufferIdentifier() const { return buffer_identifier_; }
 
-  uint32_t GetSizeBytes() const { return size_bytes_; }
+  size_t GetSizeBytes() const { return size_bytes_; }
 
   bool HasInitialData() const { return has_initial_data_; }
 
@@ -59,7 +60,7 @@ class CommandCreateBuffer : public Command {
 
  private:
   std::string buffer_identifier_;
-  uint32_t size_bytes_;
+  size_t size_bytes_;
   bool has_initial_data_;
   std::vector<uint8_t> initial_data_;
   InitialDataType initial_data_type_;

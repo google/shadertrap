@@ -15,6 +15,7 @@
 #ifndef LIBSHADERTRAP_COMMAND_ASSERT_PIXELS_H
 #define LIBSHADERTRAP_COMMAND_ASSERT_PIXELS_H
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -29,8 +30,8 @@ class CommandAssertPixels : public Command {
   CommandAssertPixels(std::unique_ptr<Token> start_token, uint8_t expected_r,
                       uint8_t expected_g, uint8_t expected_b,
                       uint8_t expected_a, std::string renderbuffer_identifier,
-                      uint32_t rectangle_x, uint32_t rectangle_y,
-                      uint32_t rectangle_width, uint32_t rectangle_height);
+                      size_t rectangle_x, size_t rectangle_y,
+                      size_t rectangle_width, size_t rectangle_height);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -46,13 +47,13 @@ class CommandAssertPixels : public Command {
     return renderbuffer_identifier_;
   }
 
-  uint32_t GetRectangleX() const { return rectangle_x_; }
+  size_t GetRectangleX() const { return rectangle_x_; }
 
-  uint32_t GetRectangleY() const { return rectangle_y_; }
+  size_t GetRectangleY() const { return rectangle_y_; }
 
-  uint32_t GetRectangleWidth() const { return rectangle_width_; }
+  size_t GetRectangleWidth() const { return rectangle_width_; }
 
-  uint32_t GetRectangleHeight() const { return rectangle_height_; }
+  size_t GetRectangleHeight() const { return rectangle_height_; }
 
  private:
   uint8_t expected_r_;
@@ -60,10 +61,10 @@ class CommandAssertPixels : public Command {
   uint8_t expected_b_;
   uint8_t expected_a_;
   std::string renderbuffer_identifier_;
-  uint32_t rectangle_x_;
-  uint32_t rectangle_y_;
-  uint32_t rectangle_width_;
-  uint32_t rectangle_height_;
+  size_t rectangle_x_;
+  size_t rectangle_y_;
+  size_t rectangle_width_;
+  size_t rectangle_height_;
 };
 
 }  // namespace shadertrap

@@ -16,7 +16,6 @@
 #define LIBSHADERTRAP_COMMAND_RUN_GRAPHICS_H
 
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -33,10 +32,10 @@ class CommandRunGraphics : public Command {
 
   CommandRunGraphics(
       std::unique_ptr<Token> start_token, std::string program_identifier,
-      std::unordered_map<uint32_t, VertexAttributeInfo> vertex_data,
-      std::string index_data_buffer_identifier, uint32_t vertex_count,
+      std::unordered_map<size_t, VertexAttributeInfo> vertex_data,
+      std::string index_data_buffer_identifier, size_t vertex_count,
       Topology topology,
-      std::unordered_map<uint32_t, std::string> output_buffers);
+      std::unordered_map<size_t, std::string> output_buffers);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -44,8 +43,7 @@ class CommandRunGraphics : public Command {
     return program_identifier_;
   }
 
-  const std::unordered_map<uint32_t, VertexAttributeInfo>& GetVertexData()
-      const {
+  const std::unordered_map<size_t, VertexAttributeInfo>& GetVertexData() const {
     return vertex_data_;
   }
 
@@ -57,18 +55,18 @@ class CommandRunGraphics : public Command {
 
   Topology GetTopology() const { return topology_; }
 
-  const std::unordered_map<uint32_t, std::string>& GetFramebufferAttachments()
+  const std::unordered_map<size_t, std::string>& GetFramebufferAttachments()
       const {
     return framebuffer_attachments_;
   }
 
  private:
   std::string program_identifier_;
-  std::unordered_map<uint32_t, VertexAttributeInfo> vertex_data_;
+  std::unordered_map<size_t, VertexAttributeInfo> vertex_data_;
   std::string index_data_buffer_identifier_;
   size_t vertex_count_;
   Topology topology_;
-  std::unordered_map<uint32_t, std::string> framebuffer_attachments_;
+  std::unordered_map<size_t, std::string> framebuffer_attachments_;
 };
 
 }  // namespace shadertrap

@@ -4,3 +4,6 @@
 [submodule "third_party/googletest/googletest"]
 	path = third_party/googletest/googletest
 	url = https://github.com/google/googletest.git
+[submodule "third_party/EGL-Registry/EGL-Registry"]
+	path = third_party/EGL-Registry/EGL-Registry
+	url = https://github.com/KhronosGroup/EGL-Registry.git

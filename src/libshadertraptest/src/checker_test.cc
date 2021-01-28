@@ -16,9 +16,9 @@
 
 #include <memory>
 
-#include "gtest/gtest.h"
 #include "libshadertrap/parser.h"
 #include "libshadertraptest/collecting_message_consumer.h"
+#include "libshadertraptest/gtest.h"
 
 namespace shadertrap {
 namespace {
@@ -46,7 +46,7 @@ END
   ASSERT_TRUE(parser.Parse());
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
-  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ("9:16: Identifier 's' already used at 1:16",
             message_consumer.GetMessageString(0));
 }
@@ -60,7 +60,7 @@ TEST(CompileShader, UnknownShader) {
   ASSERT_TRUE(parser.Parse());
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
-  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
       "1:30: Identifier 'nonexistent' does not correspond to a declared shader",
       message_consumer.GetMessageString(0));
@@ -83,7 +83,7 @@ COMPILE_SHADER s SHADER s
   ASSERT_TRUE(parser.Parse());
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
-  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ("9:16: Identifier 's' already used at 1:16",
             message_consumer.GetMessageString(0));
 }
@@ -110,7 +110,7 @@ CREATE_PROGRAM prog SHADERS vert_compiled mysampler frag_compiled
   ASSERT_TRUE(parser.Parse());
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
-  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
       "14:43: Identifier 'mysampler' does not correspond to a compiled shader",
       message_consumer.GetMessageString(0));
@@ -137,7 +137,7 @@ CREATE_PROGRAM frag_compiled SHADERS vert_compiled frag_compiled
   ASSERT_TRUE(parser.Parse());
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
-  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ("13:16: Identifier 'frag_compiled' already used at 12:16",
             message_consumer.GetMessageString(0));
 }
@@ -157,7 +157,7 @@ CREATE_PROGRAM prog SHADERS vert_compiled
   ASSERT_TRUE(parser.Parse());
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
-  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ("7:1: No fragment shader provided for 'CREATE_PROGRAM' command",
             message_consumer.GetMessageString(0));
 }
@@ -177,7 +177,7 @@ CREATE_PROGRAM prog SHADERS frag_compiled
   ASSERT_TRUE(parser.Parse());
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
-  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ("7:1: No vertex shader provided for 'CREATE_PROGRAM' command",
             message_consumer.GetMessageString(0));
 }
@@ -203,7 +203,7 @@ CREATE_PROGRAM prog SHADERS vert_compiled frag_compiled frag_compiled
   ASSERT_TRUE(parser.Parse());
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
-  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
       "13:57: Multiple fragment shaders provided to 'CREATE_PROGRAM'; "
       "already found 'frag_compiled' at 13:43",
@@ -231,7 +231,7 @@ CREATE_PROGRAM prog SHADERS frag_compiled vert_compiled vert_compiled
   ASSERT_TRUE(parser.Parse());
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
-  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
       "13:57: Multiple vertex shaders provided to 'CREATE_PROGRAM'; "
       "already found 'vert_compiled' at 13:43",

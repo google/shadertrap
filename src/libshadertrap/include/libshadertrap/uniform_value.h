@@ -49,16 +49,16 @@ class UniformValue {
 
   UniformValue(ElementType element_type, const std::vector<float>& float_data);
   UniformValue(ElementType element_type, const std::vector<float>& float_data,
-               uint32_t array_size);
+               size_t array_size);
 
   UniformValue(ElementType element_type, const std::vector<int32_t>& int_data);
   UniformValue(ElementType element_type, const std::vector<int32_t>& int_data,
-               uint32_t array_size);
+               size_t array_size);
 
   UniformValue(ElementType element_type,
                const std::vector<uint32_t>& uint_data);
   UniformValue(ElementType element_type, const std::vector<uint32_t>& uint_data,
-               uint32_t array_size);
+               size_t array_size);
 
   ElementType GetElementType() const { return element_type_; }
 

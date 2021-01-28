@@ -1,4 +1,4 @@
-# Copyright 2021 The ShaderTrap Project Authors
+# Copyright 2020 The ShaderTrap Project Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,16 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(SHADERTRAP_WARNING_SUPPRESSIONS)
-    if(MSVC)
-        add_compile_options(
-                /wd5039
-        )
-    else()
-    endif()
-endif()
+cmake_minimum_required(VERSION 3.13)
 
-add_executable(shadertrap
-        src/main.cc
-)
-target_link_libraries(shadertrap PRIVATE egl_headers glad libshadertrap ${SHADERTRAP_EGL_LIB_PATH})
+project(egl_headers C)
+
+add_library(egl_headers INTERFACE)
+
+target_include_directories(egl_headers SYSTEM INTERFACE EGL-Registry/api)

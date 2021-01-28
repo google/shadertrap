@@ -23,6 +23,7 @@ endif()
 
 add_executable(libshadertraptest
         include_private/include/libshadertraptest/collecting_message_consumer.h
+        include_private/include/libshadertraptest/gtest.h
 
         src/checker_test.cc
         src/collecting_message_consumer.cc
