@@ -18,7 +18,7 @@ set -e
 set -u
 set -x
 
-if [ -z "${SHADERTRAP_SKIP_CHECK_COMPILE_COMMANDS}" ]
+if [ -z "${SHADERTRAP_SKIP_CHECK_COMPILE_COMMANDS+x}" ]
 then
   check_clang_tidy.sh "${1}"
   check_cppcheck.sh "${1}"
