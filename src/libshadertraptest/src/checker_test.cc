@@ -103,9 +103,8 @@ CREATE_BUFFER vert SIZE_BYTES 8 INIT_TYPE float INIT_VALUES 1.0 2.0
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ(
-          "6:15: Identifier 'vert' already used at 1:16",
-          message_consumer.GetMessageString(0));
+  ASSERT_EQ("6:15: Identifier 'vert' already used at 1:16",
+            message_consumer.GetMessageString(0));
 }
 
 TEST(CreateProgram, UnknownShader) {
@@ -269,9 +268,8 @@ CREATE_SAMPLER name
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ(
-          "2:16: Identifier 'name' already used at 1:25",
-          message_consumer.GetMessageString(0));
+  ASSERT_EQ("2:16: Identifier 'name' already used at 1:25",
+            message_consumer.GetMessageString(0));
 }
 
 TEST(CreateEmptyTexture2D, NameAlreadyUsed) {
@@ -285,9 +283,8 @@ CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ(
-          "2:25: Identifier 'name' already used at 1:25",
-          message_consumer.GetMessageString(0));
+  ASSERT_EQ("2:25: Identifier 'name' already used at 1:25",
+            message_consumer.GetMessageString(0));
 }
 
 }  // namespace

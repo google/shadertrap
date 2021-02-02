@@ -81,14 +81,16 @@ bool Checker::VisitCompileShader(CommandCompileShader* compile_shader) {
 }
 
 bool Checker::VisitCreateBuffer(CommandCreateBuffer* command_create_buffer) {
-  if (!CheckIdentifierIsFresh(command_create_buffer->GetResultIdentifierToken())) {
+  if (!CheckIdentifierIsFresh(
+          command_create_buffer->GetResultIdentifierToken())) {
     return false;
   }
   return true;
 }
 
 bool Checker::VisitCreateSampler(CommandCreateSampler* command_create_sampler) {
-  if (!CheckIdentifierIsFresh(command_create_sampler->GetResultIdentifierToken())) {
+  if (!CheckIdentifierIsFresh(
+          command_create_sampler->GetResultIdentifierToken())) {
     return false;
   }
   return true;
@@ -96,7 +98,8 @@ bool Checker::VisitCreateSampler(CommandCreateSampler* command_create_sampler) {
 
 bool Checker::VisitCreateEmptyTexture2D(
     CommandCreateEmptyTexture2D* command_create_empty_texture_2d) {
-  if (!CheckIdentifierIsFresh(command_create_empty_texture_2d->GetResultIdentifierToken())) {
+  if (!CheckIdentifierIsFresh(
+          command_create_empty_texture_2d->GetResultIdentifierToken())) {
     return false;
   }
   return true;

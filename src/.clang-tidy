@@ -34,7 +34,14 @@ Checks: >
   -modernize-avoid-c-arrays,
   -bugprone-exception-escape,
 
+  -readability-simplify-boolean-expr,
+
 # Some comments for the above:
+
+# -readability-simplify-boolean-expr: it's quite common to implement a method
+#  as a series of checks with returns, with a final return true at the end.
+#  This check forces the final "if(c) { return false} return true;" to be
+#  turned into "return !c", which isn't always clearer.
 
 # Too many false-positives.
 # -hicpp-signed-bitwise,

@@ -22,10 +22,10 @@
 
 namespace shadertrap {
 
-CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                                         std::unique_ptr<Token> result_identifier,
-                                         uint32_t size_bytes,
-                                         const std::vector<uint8_t>& byte_data)
+CommandCreateBuffer::CommandCreateBuffer(
+    std::unique_ptr<Token> start_token,
+    std::unique_ptr<Token> result_identifier, size_t size_bytes,
+    const std::vector<uint8_t>& byte_data)
     : Command(std::move(start_token)),
       result_identifier_(std::move(result_identifier)),
       size_bytes_(size_bytes),
@@ -36,10 +36,10 @@ CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
   memcpy(initial_data_.data(), byte_data.data(), size_bytes);
 }
 
-CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                                         std::unique_ptr<Token> result_identifier,
-                                         uint32_t size_bytes,
-                                         const std::vector<float>& float_data)
+CommandCreateBuffer::CommandCreateBuffer(
+    std::unique_ptr<Token> start_token,
+    std::unique_ptr<Token> result_identifier, size_t size_bytes,
+    const std::vector<float>& float_data)
     : Command(std::move(start_token)),
       result_identifier_(std::move(result_identifier)),
       size_bytes_(size_bytes),
@@ -50,10 +50,10 @@ CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
   memcpy(initial_data_.data(), float_data.data(), size_bytes);
 }
 
-CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                                         std::unique_ptr<Token> result_identifier,
-                                         uint32_t size_bytes,
-                                         const std::vector<int32_t>& int_data)
+CommandCreateBuffer::CommandCreateBuffer(
+    std::unique_ptr<Token> start_token,
+    std::unique_ptr<Token> result_identifier, size_t size_bytes,
+    const std::vector<int32_t>& int_data)
     : Command(std::move(start_token)),
       result_identifier_(std::move(result_identifier)),
       size_bytes_(size_bytes),
@@ -64,10 +64,10 @@ CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
   memcpy(initial_data_.data(), int_data.data(), size_bytes);
 }
 
-CommandCreateBuffer::CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                                         std::unique_ptr<Token> result_identifier,
-                                         uint32_t size_bytes,
-                                         const std::vector<uint32_t>& uint_data)
+CommandCreateBuffer::CommandCreateBuffer(
+    std::unique_ptr<Token> start_token,
+    std::unique_ptr<Token> result_identifier, size_t size_bytes,
+    const std::vector<uint32_t>& uint_data)
     : Command(std::move(start_token)),
       result_identifier_(std::move(result_identifier)),
       size_bytes_(size_bytes),

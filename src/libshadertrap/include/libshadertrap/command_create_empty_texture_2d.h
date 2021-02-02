@@ -27,8 +27,8 @@ namespace shadertrap {
 class CommandCreateEmptyTexture2D : public Command {
  public:
   CommandCreateEmptyTexture2D(std::unique_ptr<Token> start_token,
-                              std::unique_ptr<Token> result_identifier, uint32_t width,
-                              uint32_t height);
+                              std::unique_ptr<Token> result_identifier,
+                              size_t width, size_t height);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -46,8 +46,8 @@ class CommandCreateEmptyTexture2D : public Command {
 
  private:
   std::unique_ptr<Token> result_identifier_;
-  uint32_t width_;
-  uint32_t height_;
+  size_t width_;
+  size_t height_;
 };
 
 }  // namespace shadertrap

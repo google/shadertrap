@@ -31,19 +31,20 @@ class CommandCreateBuffer : public Command {
   enum class InitialDataType { kByte, kFloat, kInt, kUint, kNone };
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::unique_ptr<Token> result_identifier, uint32_t size_bytes,
-                      const std::vector<uint8_t>& byte_data);
+                      std::unique_ptr<Token> result_identifier,
+                      size_t size_bytes, const std::vector<uint8_t>& byte_data);
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::unique_ptr<Token> result_identifier, uint32_t size_bytes,
-                      const std::vector<float>& float_data);
+                      std::unique_ptr<Token> result_identifier,
+                      size_t size_bytes, const std::vector<float>& float_data);
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::unique_ptr<Token> result_identifier, uint32_t size_bytes,
-                      const std::vector<int32_t>& int_data);
+                      std::unique_ptr<Token> result_identifier,
+                      size_t size_bytes, const std::vector<int32_t>& int_data);
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::unique_ptr<Token> result_identifier, uint32_t size_bytes,
+                      std::unique_ptr<Token> result_identifier,
+                      size_t size_bytes,
                       const std::vector<uint32_t>& uint_data);
 
   bool Accept(CommandVisitor* visitor) override;
@@ -66,7 +67,7 @@ class CommandCreateBuffer : public Command {
 
  private:
   std::unique_ptr<Token> result_identifier_;
-  uint32_t size_bytes_;
+  size_t size_bytes_;
   bool has_initial_data_;
   std::vector<uint8_t> initial_data_;
   InitialDataType initial_data_type_;

@@ -20,8 +20,9 @@
 
 namespace shadertrap {
 
-CommandCreateSampler::CommandCreateSampler(std::unique_ptr<Token> start_token,
-                                           std::unique_ptr<Token> result_identifier)
+CommandCreateSampler::CommandCreateSampler(
+    std::unique_ptr<Token> start_token,
+    std::unique_ptr<Token> result_identifier)
     : Command(std::move(start_token)),
       result_identifier_(std::move(result_identifier)) {}
 
