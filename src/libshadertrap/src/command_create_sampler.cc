@@ -20,10 +20,11 @@
 
 namespace shadertrap {
 
-CommandCreateSampler::CommandCreateSampler(std::unique_ptr<Token> start_token,
-                                           std::string sampler_identifier)
+CommandCreateSampler::CommandCreateSampler(
+    std::unique_ptr<Token> start_token,
+    std::unique_ptr<Token> result_identifier)
     : Command(std::move(start_token)),
-      sampler_identifier_(std::move(sampler_identifier)) {}
+      result_identifier_(std::move(result_identifier)) {}
 
 bool CommandCreateSampler::Accept(CommandVisitor* visitor) {
   return visitor->VisitCreateSampler(this);

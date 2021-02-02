@@ -31,24 +31,31 @@ class CommandCreateBuffer : public Command {
   enum class InitialDataType { kByte, kFloat, kInt, kUint, kNone };
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::string buffer_identifier, size_t size_bytes,
-                      const std::vector<uint8_t>& byte_data);
+                      std::unique_ptr<Token> result_identifier,
+                      size_t size_bytes, const std::vector<uint8_t>& byte_data);
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::string buffer_identifier, size_t size_bytes,
-                      const std::vector<float>& float_data);
+                      std::unique_ptr<Token> result_identifier,
+                      size_t size_bytes, const std::vector<float>& float_data);
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::string buffer_identifier, size_t size_bytes,
-                      const std::vector<int32_t>& int_data);
+                      std::unique_ptr<Token> result_identifier,
+                      size_t size_bytes, const std::vector<int32_t>& int_data);
 
   CommandCreateBuffer(std::unique_ptr<Token> start_token,
-                      std::string buffer_identifier, size_t size_bytes,
+                      std::unique_ptr<Token> result_identifier,
+                      size_t size_bytes,
                       const std::vector<uint32_t>& uint_data);
 
   bool Accept(CommandVisitor* visitor) override;
 
-  const std::string& GetBufferIdentifier() const { return buffer_identifier_; }
+  const std::string& GetResultIdentifier() const {
+    return result_identifier_->GetText();
+  }
+
+  const Token* GetResultIdentifierToken() const {
+    return result_identifier_.get();
+  }
 
   size_t GetSizeBytes() const { return size_bytes_; }
 
@@ -59,7 +66,7 @@ class CommandCreateBuffer : public Command {
   InitialDataType GetInitialDataType() const { return initial_data_type_; }
 
  private:
-  std::string buffer_identifier_;
+  std::unique_ptr<Token> result_identifier_;
   size_t size_bytes_;
   bool has_initial_data_;
   std::vector<uint8_t> initial_data_;

@@ -25,17 +25,21 @@ namespace shadertrap {
 
 class CommandCreateSampler : public Command {
  public:
-  explicit CommandCreateSampler(std::unique_ptr<Token> start_token,
-                                std::string sampler_identifier);
+  CommandCreateSampler(std::unique_ptr<Token> start_token,
+                       std::unique_ptr<Token> result_identifier);
 
   bool Accept(CommandVisitor* visitor) override;
 
-  const std::string& GetSamplerIdentifier() const {
-    return sampler_identifier_;
+  const std::string& GetResultIdentifier() const {
+    return result_identifier_->GetText();
+  }
+
+  const Token* GetResultIdentifierToken() const {
+    return result_identifier_.get();
   }
 
  private:
-  std::string sampler_identifier_;
+  std::unique_ptr<Token> result_identifier_;
 };
 
 }  // namespace shadertrap

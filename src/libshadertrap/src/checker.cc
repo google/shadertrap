@@ -64,8 +64,7 @@ bool Checker::VisitBindUniformBuffer(
 }
 
 bool Checker::VisitCompileShader(CommandCompileShader* compile_shader) {
-  if (!CheckIdentifierIsFresh(compile_shader->GetResultIdentifier(),
-                              compile_shader->GetResultIdentifierToken())) {
+  if (!CheckIdentifierIsFresh(compile_shader->GetResultIdentifierToken())) {
     return false;
   }
   if (declared_shaders_.count(compile_shader->GetShaderIdentifier()) == 0) {
@@ -82,25 +81,33 @@ bool Checker::VisitCompileShader(CommandCompileShader* compile_shader) {
 }
 
 bool Checker::VisitCreateBuffer(CommandCreateBuffer* command_create_buffer) {
-  (void)command_create_buffer;
+  if (!CheckIdentifierIsFresh(
+          command_create_buffer->GetResultIdentifierToken())) {
+    return false;
+  }
   return true;
 }
 
 bool Checker::VisitCreateSampler(CommandCreateSampler* command_create_sampler) {
-  (void)command_create_sampler;
+  if (!CheckIdentifierIsFresh(
+          command_create_sampler->GetResultIdentifierToken())) {
+    return false;
+  }
   return true;
 }
 
 bool Checker::VisitCreateEmptyTexture2D(
     CommandCreateEmptyTexture2D* command_create_empty_texture_2d) {
-  (void)command_create_empty_texture_2d;
+  if (!CheckIdentifierIsFresh(
+          command_create_empty_texture_2d->GetResultIdentifierToken())) {
+    return false;
+  }
   return true;
 }
 
 bool Checker::VisitCreateProgram(CommandCreateProgram* create_program) {
   bool result = true;
-  if (!CheckIdentifierIsFresh(create_program->GetResultIdentifier(),
-                              create_program->GetResultIdentifierToken())) {
+  if (!CheckIdentifierIsFresh(create_program->GetResultIdentifierToken())) {
     result = false;
   } else {
     created_programs_.insert(
@@ -176,8 +183,7 @@ bool Checker::VisitCreateRenderbuffer(
 }
 
 bool Checker::VisitDeclareShader(CommandDeclareShader* declare_shader) {
-  if (!CheckIdentifierIsFresh(declare_shader->GetResultIdentifier(),
-                              declare_shader->GetResultIdentifierToken())) {
+  if (!CheckIdentifierIsFresh(declare_shader->GetResultIdentifierToken())) {
     return false;
   }
   // TODO(afd): Invoke glslang to check that the shader is valid.
@@ -209,16 +215,15 @@ bool Checker::VisitSetUniform(CommandSetUniform* command_set_uniform) {
   return true;
 }
 
-bool Checker::CheckIdentifierIsFresh(const std::string& identifier,
-                                     const Token* identifier_token) {
-  if (used_identifiers_.count(identifier) > 0) {
+bool Checker::CheckIdentifierIsFresh(const Token* identifier) {
+  if (used_identifiers_.count(identifier->GetText()) > 0) {
     message_consumer_->Message(
-        MessageConsumer::Severity::kError, identifier_token,
-        "Identifier '" + identifier + "' already used at " +
-            used_identifiers_.at(identifier)->GetLocationString());
+        MessageConsumer::Severity::kError, identifier,
+        "Identifier '" + identifier->GetText() + "' already used at " +
+            used_identifiers_.at(identifier->GetText())->GetLocationString());
     return false;
   }
-  used_identifiers_.insert({identifier, identifier_token});
+  used_identifiers_.insert({identifier->GetText(), identifier});
   return true;
 }
 

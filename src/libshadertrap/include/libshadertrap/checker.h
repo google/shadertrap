@@ -90,8 +90,7 @@ class Checker : public CommandVisitor {
 
   bool VisitSetUniform(CommandSetUniform* set_uniform) override;
 
-  bool CheckIdentifierIsFresh(const std::string& identifier,
-                              const Token* identifier_token);
+  bool CheckIdentifierIsFresh(const Token* identifier_token);
 
  private:
   MessageConsumer* message_consumer_;
