@@ -30,6 +30,7 @@
 #include "libshadertrap/command_create_sampler.h"
 #include "libshadertrap/command_declare_shader.h"
 #include "libshadertrap/command_dump_renderbuffer.h"
+#include "libshadertrap/command_run_compute.h"
 #include "libshadertrap/command_run_graphics.h"
 #include "libshadertrap/command_set_sampler_or_texture_parameter.h"
 #include "libshadertrap/command_set_uniform.h"
@@ -88,6 +89,8 @@ class CommandVisitor {
 
   virtual bool VisitDumpRenderbuffer(
       CommandDumpRenderbuffer* dump_renderbuffer) = 0;
+
+  virtual bool VisitRunCompute(CommandRunCompute* run_compute) = 0;
 
   virtual bool VisitRunGraphics(CommandRunGraphics* run_graphics) = 0;
 

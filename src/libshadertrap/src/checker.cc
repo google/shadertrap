@@ -22,7 +22,8 @@ Checker::Checker(MessageConsumer* message_consumer)
     : message_consumer_(message_consumer) {}
 
 bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
-  // TODO(afd): Both arguments must be renderbuffers
+  // TODO(afd): Either both arguments must be renderbuffers or both arguments
+  //  must be buffers
   // TODO(afd): Both arguments must have the same dimensions
   (void)command_assert_equal;
   return true;
@@ -115,6 +116,7 @@ bool Checker::VisitCreateProgram(CommandCreateProgram* create_program) {
   }
   const Token* compiled_vert_shader = nullptr;
   const Token* compiled_frag_shader = nullptr;
+  const Token* compiled_comp_shader = nullptr;
   for (size_t index = 0; index < create_program->GetNumCompiledShaders();
        index++) {
     const auto* compiled_shader_identifier =
@@ -158,20 +160,55 @@ bool Checker::VisitCreateProgram(CommandCreateProgram* create_program) {
             compiled_vert_shader = compiled_shader_identifier;
           }
           break;
+        case CommandDeclareShader::Kind::COMPUTE:
+          if (compiled_comp_shader != nullptr) {
+            message_consumer_->Message(
+                MessageConsumer::Severity::kError, compiled_shader_identifier,
+                "Multiple compute shaders provided to 'CREATE_PROGRAM'; "
+                "already "
+                "found '" +
+                    compiled_comp_shader->GetText() + "' at " +
+                    compiled_comp_shader->GetLocationString());
+            result = false;
+          } else {
+            compiled_comp_shader = compiled_shader_identifier;
+          }
+          break;
       }
     }
   }
-  if (compiled_frag_shader == nullptr) {
-    message_consumer_->Message(
-        MessageConsumer::Severity::kError, create_program->GetStartToken(),
-        "No fragment shader provided for 'CREATE_PROGRAM' command");
-    result = false;
-  }
-  if (compiled_vert_shader == nullptr) {
-    message_consumer_->Message(
-        MessageConsumer::Severity::kError, create_program->GetStartToken(),
-        "No vertex shader provided for 'CREATE_PROGRAM' command");
-    result = false;
+  if (compiled_comp_shader != nullptr) {
+    if (compiled_frag_shader != nullptr) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, compiled_comp_shader,
+          "A compute shader cannot be used in 'CREATE_PROGRAM' with another "
+          "kind of shader; found fragment shader '" +
+              compiled_frag_shader->GetText() + "' at " +
+              compiled_frag_shader->GetLocationString());
+      result = false;
+    }
+    if (compiled_vert_shader != nullptr) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, compiled_comp_shader,
+          "A compute shader cannot be used in 'CREATE_PROGRAM' with another "
+          "kind of shader; found vertex shader '" +
+              compiled_vert_shader->GetText() + "' at " +
+              compiled_vert_shader->GetLocationString());
+      result = false;
+    }
+  } else {
+    if (compiled_frag_shader == nullptr) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, create_program->GetStartToken(),
+          "No fragment shader provided for 'CREATE_PROGRAM' command");
+      result = false;
+    }
+    if (compiled_vert_shader == nullptr) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, create_program->GetStartToken(),
+          "No vertex shader provided for 'CREATE_PROGRAM' command");
+      result = false;
+    }
   }
   return result;
 }
@@ -198,7 +235,14 @@ bool Checker::VisitDumpRenderbuffer(
   return true;
 }
 
+bool Checker::VisitRunCompute(CommandRunCompute* command_run_compute) {
+  // TODO(afd): Check that the given program is a compute program.
+  (void)command_run_compute;
+  return true;
+}
+
 bool Checker::VisitRunGraphics(CommandRunGraphics* command_run_graphics) {
+  // TODO(afd): Check that the given program is a graphics program.
   (void)command_run_graphics;
   return true;
 }

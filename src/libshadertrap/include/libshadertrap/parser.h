@@ -89,6 +89,8 @@ class Parser {
 
   bool ParseCommandDumpRenderbuffer();
 
+  bool ParseCommandRunCompute();
+
   bool ParseCommandRunGraphics();
 
   bool ParseCommandSetTextureOrSamplerParameter();

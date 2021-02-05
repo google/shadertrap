@@ -257,6 +257,86 @@ CREATE_PROGRAM prog SHADERS frag_compiled vert_compiled vert_compiled
       message_consumer.GetMessageString(0));
 }
 
+TEST(CreateProgram, MultipleComputeShaders) {
+  std::string program = R"(DECLARE_SHADER comp COMPUTE
+#version 320 es
+void main() { }
+END
+
+COMPILE_SHADER comp_compiled SHADER comp
+CREATE_PROGRAM prog SHADERS comp_compiled comp_compiled
+  )";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "7:43: Multiple compute shaders provided to 'CREATE_PROGRAM'; "
+      "already found 'comp_compiled' at 7:29",
+      message_consumer.GetMessageString(0));
+}
+
+TEST(CreateProgram, ComputeAndFragmentShaders) {
+  std::string program = R"(DECLARE_SHADER comp COMPUTE
+#version 320 es
+void main() { }
+END
+
+DECLARE_SHADER frag FRAGMENT
+#version 320 es
+void main() { }
+END
+
+COMPILE_SHADER comp_compiled SHADER comp
+COMPILE_SHADER frag_compiled SHADER frag
+CREATE_PROGRAM prog SHADERS frag_compiled comp_compiled
+  )";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "13:43: A compute shader cannot be used in 'CREATE_PROGRAM' with another "
+      "kind of shader; "
+      "found fragment shader 'frag_compiled' at 13:29",
+      message_consumer.GetMessageString(0));
+}
+
+TEST(CreateProgram, ComputeAndVertexShaders) {
+  std::string program = R"(DECLARE_SHADER comp COMPUTE
+#version 320 es
+void main() { }
+END
+
+DECLARE_SHADER vert VERTEX
+#version 320 es
+void main() { }
+END
+
+COMPILE_SHADER comp_compiled SHADER comp
+COMPILE_SHADER vert_compiled SHADER vert
+CREATE_PROGRAM prog SHADERS comp_compiled vert_compiled
+  )";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "13:29: A compute shader cannot be used in 'CREATE_PROGRAM' with another "
+      "kind of shader; "
+      "found vertex shader 'vert_compiled' at 13:43",
+      message_consumer.GetMessageString(0));
+}
+
 TEST(CreateSampler, NameAlreadyUsed) {
   std::string program = R"(CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
 CREATE_SAMPLER name

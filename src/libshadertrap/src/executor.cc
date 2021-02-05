@@ -39,110 +39,11 @@ Executor::Executor(MessageConsumer* message_consumer)
     : message_consumer_(message_consumer) {}
 
 bool Executor::VisitAssertEqual(CommandAssertEqual* assert_equal) {
-  GLuint renderbuffers[2];
-  renderbuffers[0] =
-      created_renderbuffers_.at(assert_equal->GetBufferIdentifier1());
-  renderbuffers[1] =
-      created_renderbuffers_.at(assert_equal->GetBufferIdentifier2());
-
-  size_t width[2] = {0, 0};
-  size_t height[2] = {0, 0};
-
-  for (auto index : {0, 1}) {
-    {
-      GLint temp_width;
-      GL_SAFECALL(glBindRenderbuffer, GL_RENDERBUFFER, renderbuffers[index]);
-      GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
-                  GL_RENDERBUFFER_WIDTH, &temp_width);
-      width[index] = static_cast<size_t>(temp_width);
-    }
-    {
-      GLint temp_height;
-      GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
-                  GL_RENDERBUFFER_HEIGHT, &temp_height);
-      height[index] = static_cast<size_t>(temp_height);
-    }
+  if (created_renderbuffers_.count(assert_equal->GetBufferIdentifier1()) != 0) {
+    return CheckEqualRenderbuffers(assert_equal);
   }
-
-  if (width[0] != width[1]) {
-    std::stringstream stringstream;
-    stringstream << "The widths of " << assert_equal->GetBufferIdentifier1()
-                 << " and " << assert_equal->GetBufferIdentifier2()
-                 << " do not match: " << width[0] << " vs. " << width[1];
-    message_consumer_->Message(MessageConsumer::Severity::kError, nullptr,
-                               stringstream.str());
-    return false;
-  }
-
-  if (height[0] != height[1]) {
-    std::stringstream stringstream;
-    stringstream << "The heights of " << assert_equal->GetBufferIdentifier1()
-                 << " and " << assert_equal->GetBufferIdentifier2()
-                 << " do not match: " << height[0] << " vs. " << height[1];
-    message_consumer_->Message(MessageConsumer::Severity::kError, nullptr,
-                               stringstream.str());
-    return false;
-  }
-
-  GLuint framebuffer_object_id;
-  GL_SAFECALL(glGenFramebuffers, 1, &framebuffer_object_id);
-  GL_SAFECALL(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer_object_id);
-  for (auto index : {0, 1}) {
-    GL_SAFECALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER,
-                GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index),
-                GL_RENDERBUFFER, renderbuffers[index]);
-  }
-  GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-  if (status != GL_FRAMEBUFFER_COMPLETE) {
-    crash(
-        "Problem with OpenGL framebuffer after specifying color render buffer: "
-        "n%xn",
-        status);
-  }
-
-  std::vector<std::uint8_t> data[2];
-  for (auto index : {0, 1}) {
-    data[index].resize(width[index] * height[index] * CHANNELS);
-    GL_SAFECALL(glReadBuffer,
-                GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index));
-    GL_SAFECALL(glReadPixels, 0, 0, static_cast<GLsizei>(width[index]),
-                static_cast<GLsizei>(height[index]), GL_RGBA, GL_UNSIGNED_BYTE,
-                data[index].data());
-  }
-
-  for (size_t y = 0; y < static_cast<size_t>(height[0]); y++) {
-    for (size_t x = 0; x < static_cast<size_t>(width[0]); x++) {
-      size_t offset = (static_cast<size_t>(height[0]) - y - 1) *
-                          static_cast<size_t>(width[0]) * 4 +
-                      x * 4;
-      bool all_match = true;
-      for (size_t component = 0; component < 4; component++) {
-        if (data[0][offset + component] != data[1][offset + component]) {
-          all_match = false;
-          break;
-        }
-      }
-      if (!all_match) {
-        std::stringstream stringstream;
-        stringstream << "Pixel mismatch at position (" << x << ", " << y
-                     << "): " << assert_equal->GetBufferIdentifier1() << "["
-                     << x << "][" << y << "] == ("
-                     << static_cast<uint32_t>(data[0][offset]) << ", "
-                     << static_cast<uint32_t>(data[0][offset + 1]) << ", "
-                     << static_cast<uint32_t>(data[0][offset + 2]) << ", "
-                     << static_cast<uint32_t>(data[0][offset + 3]) << "), vs. "
-                     << assert_equal->GetBufferIdentifier2() << "[" << x << "]["
-                     << y << "] == (" << static_cast<uint32_t>(data[1][offset])
-                     << ", " << static_cast<uint32_t>(data[1][offset + 1])
-                     << ", " << static_cast<uint32_t>(data[1][offset + 2])
-                     << ", " << static_cast<uint32_t>(data[1][offset + 3])
-                     << ")";
-        message_consumer_->Message(MessageConsumer::Severity::kError, nullptr,
-                                   stringstream.str());
-      }
-    }
-  }
-  return true;
+  assert(created_buffers_.count(assert_equal->GetBufferIdentifier1()) != 0);
+  return CheckEqualBuffers(assert_equal);
 }
 
 bool Executor::VisitAssertPixels(CommandAssertPixels* assert_pixels) {
@@ -210,7 +111,8 @@ bool Executor::VisitAssertPixels(CommandAssertPixels* assert_pixels) {
                      << static_cast<uint32_t>(a) << ") at "
                      << assert_pixels->GetRenderbufferIdentifier() << "[" << x
                      << "][" << y << "]";
-        message_consumer_->Message(MessageConsumer::Severity::kError, nullptr,
+        message_consumer_->Message(MessageConsumer::Severity::kError,
+                                   assert_pixels->GetStartToken(),
                                    stringstream.str());
       }
     }
@@ -252,7 +154,8 @@ bool Executor::VisitAssertSimilarEmdHistogram(
                  << " and "
                  << assert_similar_emd_histogram->GetBufferIdentifier2()
                  << " do not match: " << width[0] << " vs. " << width[1];
-    message_consumer_->Message(MessageConsumer::Severity::kError, nullptr,
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               assert_similar_emd_histogram->GetStartToken(),
                                stringstream.str());
     return false;
   }
@@ -264,7 +167,8 @@ bool Executor::VisitAssertSimilarEmdHistogram(
                  << " and "
                  << assert_similar_emd_histogram->GetBufferIdentifier2()
                  << " do not match: " << height[0] << " vs. " << height[1];
-    message_consumer_->Message(MessageConsumer::Severity::kError, nullptr,
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               assert_similar_emd_histogram->GetStartToken(),
                                stringstream.str());
     return false;
   }
@@ -343,7 +247,8 @@ bool Executor::VisitAssertSimilarEmdHistogram(
   if (max_emd >
       static_cast<double>(assert_similar_emd_histogram->GetTolerance())) {
     message_consumer_->Message(
-        MessageConsumer::Severity::kError, nullptr,
+        MessageConsumer::Severity::kError,
+        assert_similar_emd_histogram->GetStartToken(),
         "Histogram EMD value of " + std::to_string(max_emd) +
             " is greater than tolerance of " +
             std::to_string(assert_similar_emd_histogram->GetTolerance()));
@@ -399,6 +304,9 @@ bool Executor::VisitCompileShader(CommandCompileShader* compile_shader) {
       break;
     case CommandDeclareShader::Kind::FRAGMENT:
       shader_kind = GL_FRAGMENT_SHADER;
+      break;
+    case CommandDeclareShader::Kind::COMPUTE:
+      shader_kind = GL_COMPUTE_SHADER;
       break;
   }
   GLuint shader = glCreateShader(shader_kind);
@@ -557,8 +465,23 @@ bool Executor::VisitDumpRenderbuffer(
   return true;
 }
 
+bool Executor::VisitRunCompute(CommandRunCompute* run_compute) {
+  GL_SAFECALL(glMemoryBarrier, GL_ALL_BARRIER_BITS);
+
+  GL_SAFECALL(glUseProgram,
+              created_programs_.at(run_compute->GetProgramIdentifier()));
+
+  GL_SAFECALL(glDispatchCompute,
+              static_cast<GLuint>(run_compute->GetNumGroupsX()),
+              static_cast<GLuint>(run_compute->GetNumGroupsY()),
+              static_cast<GLuint>(run_compute->GetNumGroupsZ()));
+
+  GL_SAFECALL_NO_ARGS(glFlush);
+
+  return true;
+}
+
 bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
-  // Conservative; can probably be removed.
   GL_SAFECALL(glMemoryBarrier, GL_ALL_BARRIER_BITS);
 
   auto vertex_data = run_graphics->GetVertexData();
@@ -747,6 +670,197 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
       break;
   }
   return true;
+}
+
+bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
+  assert(created_renderbuffers_.count(assert_equal->GetBufferIdentifier1()) !=
+             0 &&
+         "Expected a renderbuffer");
+  assert(created_renderbuffers_.count(assert_equal->GetBufferIdentifier2()) !=
+             0 &&
+         "Expected a renderbuffer");
+
+  GLuint renderbuffers[2];
+  renderbuffers[0] =
+      created_renderbuffers_.at(assert_equal->GetBufferIdentifier1());
+  renderbuffers[1] =
+      created_renderbuffers_.at(assert_equal->GetBufferIdentifier2());
+
+  size_t width[2] = {0, 0};
+  size_t height[2] = {0, 0};
+
+  for (auto index : {0, 1}) {
+    {
+      GLint temp_width;
+      GL_SAFECALL(glBindRenderbuffer, GL_RENDERBUFFER, renderbuffers[index]);
+      GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
+                  GL_RENDERBUFFER_WIDTH, &temp_width);
+      width[index] = static_cast<size_t>(temp_width);
+    }
+    {
+      GLint temp_height;
+      GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
+                  GL_RENDERBUFFER_HEIGHT, &temp_height);
+      height[index] = static_cast<size_t>(temp_height);
+    }
+  }
+
+  if (width[0] != width[1]) {
+    std::stringstream stringstream;
+    stringstream << "The widths of " << assert_equal->GetBufferIdentifier1()
+                 << " and " << assert_equal->GetBufferIdentifier2()
+                 << " do not match: " << width[0] << " vs. " << width[1];
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               assert_equal->GetStartToken(),
+                               stringstream.str());
+    return false;
+  }
+
+  if (height[0] != height[1]) {
+    std::stringstream stringstream;
+    stringstream << "The heights of " << assert_equal->GetBufferIdentifier1()
+                 << " and " << assert_equal->GetBufferIdentifier2()
+                 << " do not match: " << height[0] << " vs. " << height[1];
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               assert_equal->GetStartToken(),
+                               stringstream.str());
+    return false;
+  }
+
+  GLuint framebuffer_object_id;
+  GL_SAFECALL(glGenFramebuffers, 1, &framebuffer_object_id);
+  GL_SAFECALL(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer_object_id);
+  for (auto index : {0, 1}) {
+    GL_SAFECALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER,
+                GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index),
+                GL_RENDERBUFFER, renderbuffers[index]);
+  }
+  GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if (status != GL_FRAMEBUFFER_COMPLETE) {
+    crash(
+        "Problem with OpenGL framebuffer after specifying color render buffer: "
+        "n%xn",
+        status);
+  }
+
+  std::vector<std::uint8_t> data[2];
+  for (auto index : {0, 1}) {
+    data[index].resize(width[index] * height[index] * CHANNELS);
+    GL_SAFECALL(glReadBuffer,
+                GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index));
+    GL_SAFECALL(glReadPixels, 0, 0, static_cast<GLsizei>(width[index]),
+                static_cast<GLsizei>(height[index]), GL_RGBA, GL_UNSIGNED_BYTE,
+                data[index].data());
+  }
+
+  bool result = true;
+  for (size_t y = 0; y < static_cast<size_t>(height[0]); y++) {
+    for (size_t x = 0; x < static_cast<size_t>(width[0]); x++) {
+      size_t offset = (static_cast<size_t>(height[0]) - y - 1) *
+                          static_cast<size_t>(width[0]) * 4 +
+                      x * 4;
+      bool all_match = true;
+      for (size_t component = 0; component < 4; component++) {
+        if (data[0][offset + component] != data[1][offset + component]) {
+          all_match = false;
+          break;
+        }
+      }
+      if (!all_match) {
+        std::stringstream stringstream;
+        stringstream << "Pixel mismatch at position (" << x << ", " << y
+                     << "): " << assert_equal->GetBufferIdentifier1() << "["
+                     << x << "][" << y << "] == ("
+                     << static_cast<uint32_t>(data[0][offset]) << ", "
+                     << static_cast<uint32_t>(data[0][offset + 1]) << ", "
+                     << static_cast<uint32_t>(data[0][offset + 2]) << ", "
+                     << static_cast<uint32_t>(data[0][offset + 3]) << "), vs. "
+                     << assert_equal->GetBufferIdentifier2() << "[" << x << "]["
+                     << y << "] == (" << static_cast<uint32_t>(data[1][offset])
+                     << ", " << static_cast<uint32_t>(data[1][offset + 1])
+                     << ", " << static_cast<uint32_t>(data[1][offset + 2])
+                     << ", " << static_cast<uint32_t>(data[1][offset + 3])
+                     << ")";
+        message_consumer_->Message(MessageConsumer::Severity::kError,
+                                   assert_equal->GetStartToken(),
+                                   stringstream.str());
+        result = false;
+      }
+    }
+  }
+  return result;
+}
+
+bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
+  assert(created_buffers_.count(assert_equal->GetBufferIdentifier1()) != 0 &&
+         "Expected a buffer");
+  assert(created_buffers_.count(assert_equal->GetBufferIdentifier2()) != 0 &&
+         "Expected a buffer");
+
+  GLuint buffers[2];
+  buffers[0] = created_buffers_.at(assert_equal->GetBufferIdentifier1());
+  buffers[1] = created_buffers_.at(assert_equal->GetBufferIdentifier2());
+
+  GLint64 buffer_size[2]{0, 0};
+  for (auto index : {0, 1}) {
+    GL_SAFECALL(glBindBuffer, GL_ARRAY_BUFFER, buffers[index]);
+    GL_SAFECALL(glGetBufferParameteri64v, GL_ARRAY_BUFFER, GL_BUFFER_SIZE,
+                &buffer_size[index]);
+  }
+
+  if (buffer_size[0] != buffer_size[1]) {
+    std::stringstream stringstream;
+    stringstream << "The lengths of " << assert_equal->GetBufferIdentifier1()
+                 << " and " << assert_equal->GetBufferIdentifier2()
+                 << " do not match: " << buffer_size[0] << " vs. "
+                 << buffer_size[1];
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               assert_equal->GetStartToken(),
+                               stringstream.str());
+    return false;
+  }
+
+  uint8_t* mapped_buffer[2]{nullptr, nullptr};
+  for (auto index : {0, 1}) {
+    GL_SAFECALL(glBindBuffer, GL_ARRAY_BUFFER, buffers[index]);
+    mapped_buffer[index] = static_cast<uint8_t*>(glMapBufferRange(
+        GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size[index]),
+        GL_MAP_READ_BIT));
+    if (mapped_buffer[index] == nullptr) {
+      // TODO(afd): If index == 1 should we unmap buffers[0] before returning?
+      // Or are we OK so long as we eventually destroy that buffer?
+      GL_CHECKERR("glMapBufferRange");
+      return false;
+    }
+  }
+
+  bool result = true;
+  for (size_t index = 0; index < static_cast<size_t>(buffer_size[0]); index++) {
+    // We only get here if the calls to glMapBufferRange succeeded, in which
+    // case the contents of |mapped_buffer| cannot be null.
+    uint8_t value_1 =
+        mapped_buffer[0][index];  // NOLINT(clang-analyzer-core.NullDereference)
+    uint8_t value_2 =
+        mapped_buffer[1][index];  // NOLINT(clang-analyzer-core.NullDereference)
+    if (value_1 != value_2) {
+      std::stringstream stringstream;
+      stringstream << "Byte mismatch at index " << index << ": "
+                   << assert_equal->GetBufferIdentifier1() << "[" << index
+                   << "] == " << static_cast<uint32_t>(value_1) << ", "
+                   << assert_equal->GetBufferIdentifier2() << "[" << index
+                   << "] == " << static_cast<uint32_t>(value_2);
+      message_consumer_->Message(MessageConsumer::Severity::kError,
+                                 assert_equal->GetStartToken(),
+                                 stringstream.str());
+      result = false;
+    }
+  }
+
+  for (auto index : {0, 1}) {
+    GL_SAFECALL(glBindBuffer, GL_ARRAY_BUFFER, buffers[index]);
+    GL_SAFECALL(glUnmapBuffer, GL_ARRAY_BUFFER);
+  }
+  return result;
 }
 
 }  // namespace shadertrap

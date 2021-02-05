@@ -34,6 +34,7 @@
 #include "libshadertrap/command_create_sampler.h"
 #include "libshadertrap/command_declare_shader.h"
 #include "libshadertrap/command_dump_renderbuffer.h"
+#include "libshadertrap/command_run_compute.h"
 #include "libshadertrap/command_run_graphics.h"
 #include "libshadertrap/command_set_sampler_or_texture_parameter.h"
 #include "libshadertrap/command_set_uniform.h"
@@ -81,6 +82,8 @@ class CompoundVisitor : public CommandVisitor {
 
   bool VisitDumpRenderbuffer(
       CommandDumpRenderbuffer* dump_renderbuffer) override;
+
+  bool VisitRunCompute(CommandRunCompute* run_compute) override;
 
   bool VisitRunGraphics(CommandRunGraphics* run_graphics) override;
 

@@ -25,7 +25,7 @@ namespace shadertrap {
 
 class CommandDeclareShader : public Command {
  public:
-  enum class Kind { VERTEX, FRAGMENT };
+  enum class Kind { VERTEX, FRAGMENT, COMPUTE };
 
   CommandDeclareShader(std::unique_ptr<Token> start_token,
                        std::unique_ptr<Token> result_identifier, Kind kind,
