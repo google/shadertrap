@@ -35,6 +35,7 @@
 #include "libshadertrap/command_create_sampler.h"
 #include "libshadertrap/command_declare_shader.h"
 #include "libshadertrap/command_dump_renderbuffer.h"
+#include "libshadertrap/command_run_compute.h"
 #include "libshadertrap/command_run_graphics.h"
 #include "libshadertrap/command_set_sampler_or_texture_parameter.h"
 #include "libshadertrap/command_set_uniform.h"
@@ -92,6 +93,8 @@ bool Parser::ParseCommand() {
       return ParseCommandDeclareShader();
     case Token::Type::kKeywordDumpRenderbuffer:
       return ParseCommandDumpRenderbuffer();
+    case Token::Type::kKeywordRunCompute:
+      return ParseCommandRunCompute();
     case Token::Type::kKeywordRunGraphics:
       return ParseCommandRunGraphics();
     case Token::Type::kKeywordSetSamplerParameter:
@@ -715,6 +718,63 @@ bool Parser::ParseCommandCreateSampler() {
   return true;
 }
 
+bool Parser::ParseCommandRunCompute() {
+  auto start_token = tokenizer_->NextToken();
+
+  std::string program_identifier;
+  size_t num_groups_x;
+  size_t num_groups_y;
+  size_t num_groups_z;
+
+  if (!ParseParameters(
+          {{Token::Type::kKeywordProgram,
+            [this, &program_identifier]() -> bool {
+              auto token = tokenizer_->NextToken();
+              if (!token->IsIdentifier()) {
+                message_consumer_->Message(MessageConsumer::Severity::kError,
+                                           token.get(),
+                                           "Expected an identifier for the "
+                                           "compute program to be run, got '" +
+                                               token->GetText() + "'");
+                return false;
+              }
+              program_identifier = token->GetText();
+              return true;
+            }},
+           {Token::Type::kKeywordNumGroupsX,
+            [this, &num_groups_x]() -> bool {
+              auto maybe_num_groups_x = ParseUint32("number of groups");
+              if (!maybe_num_groups_x.first) {
+                return false;
+              }
+              num_groups_x = maybe_num_groups_x.second;
+              return true;
+            }},
+           {Token::Type::kKeywordNumGroupsY,
+            [this, &num_groups_y]() -> bool {
+              auto maybe_num_groups_y = ParseUint32("number of groups");
+              if (!maybe_num_groups_y.first) {
+                return false;
+              }
+              num_groups_y = maybe_num_groups_y.second;
+              return true;
+            }},
+           {Token::Type::kKeywordNumGroupsZ, [this, &num_groups_z]() -> bool {
+              auto maybe_num_groups_z = ParseUint32("number of groups");
+              if (!maybe_num_groups_z.first) {
+                return false;
+              }
+              num_groups_z = maybe_num_groups_z.second;
+              return true;
+            }}})) {
+    return false;
+  }
+  parsed_commands_.push_back(
+      MakeUnique<CommandRunCompute>(std::move(start_token), program_identifier,
+                                    num_groups_x, num_groups_y, num_groups_z));
+  return true;
+}
+
 bool Parser::ParseCommandRunGraphics() {
   auto start_token = tokenizer_->NextToken();
 
@@ -730,10 +790,11 @@ bool Parser::ParseCommandRunGraphics() {
             [this, &program_identifier]() -> bool {
               auto token = tokenizer_->NextToken();
               if (!token->IsIdentifier()) {
-                message_consumer_->Message(
-                    MessageConsumer::Severity::kError, token.get(),
-                    "Expected an identifier for the program to be run, got '" +
-                        token->GetText() + "'");
+                message_consumer_->Message(MessageConsumer::Severity::kError,
+                                           token.get(),
+                                           "Expected an identifier for the "
+                                           "graphics program to be run, got '" +
+                                               token->GetText() + "'");
                 return false;
               }
               program_identifier = token->GetText();
@@ -884,12 +945,13 @@ bool Parser::ParseCommandDeclareShader() {
   }
   auto shader_kind = tokenizer_->NextToken();
   if (shader_kind->GetType() != Token::Type::kKeywordVertex &&
-      shader_kind->GetType() != Token::Type::kKeywordFragment) {
-    message_consumer_->Message(MessageConsumer::Severity::kError,
-                               shader_kind.get(),
-                               "Expected 'VERTEX' or 'FRAGMENT' to specify "
-                               "which kind of shader this is, got '" +
-                                   shader_kind->GetText() + "'");
+      shader_kind->GetType() != Token::Type::kKeywordFragment &&
+      shader_kind->GetType() != Token::Type::kKeywordCompute) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, shader_kind.get(),
+        "Expected 'VERTEX', 'FRAGMENT' or 'COMPUTE' to specify "
+        "which kind of shader this is, got '" +
+            shader_kind->GetText() + "'");
     return false;
   }
   tokenizer_->SkipWhitespace();
@@ -908,11 +970,25 @@ bool Parser::ParseCommandDeclareShader() {
     stringstream << tokenizer_->SkipLine();
   }
   tokenizer_->NextToken();
+  CommandDeclareShader::Kind declare_shader_kind =
+      CommandDeclareShader::Kind::VERTEX;
+  switch (shader_kind->GetType()) {
+    case Token::Type::kKeywordVertex:
+      declare_shader_kind = CommandDeclareShader::Kind::VERTEX;
+      break;
+    case Token::Type::kKeywordFragment:
+      declare_shader_kind = CommandDeclareShader::Kind::FRAGMENT;
+      break;
+    case Token::Type::kKeywordCompute:
+      declare_shader_kind = CommandDeclareShader::Kind::COMPUTE;
+      break;
+    default:
+      assert(false && "Unexpected token type.");
+      break;
+  }
+
   parsed_commands_.push_back(MakeUnique<CommandDeclareShader>(
-      std::move(start_token), std::move(result_identifier),
-      shader_kind->GetType() == Token::Type::kKeywordVertex
-          ? CommandDeclareShader::Kind::VERTEX
-          : CommandDeclareShader::Kind::FRAGMENT,
+      std::move(start_token), std::move(result_identifier), declare_shader_kind,
       stringstream.str()));
   return true;
 }

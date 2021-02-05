@@ -1,0 +1,44 @@
+# Copyright 2021 The ShaderTrap Project Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+CREATE_BUFFER ssbo SIZE_BYTES 4 INIT_TYPE uint INIT_VALUES 1
+
+CREATE_BUFFER expected SIZE_BYTES 4 INIT_TYPE uint INIT_VALUES 42
+
+BIND_STORAGE_BUFFER BUFFER ssbo BINDING 0
+
+DECLARE_SHADER shader COMPUTE
+#version 320 es
+
+layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
+
+layout(binding = 0) buffer ssbo {
+  uint data;
+};
+
+void main() {
+  data += 41u;
+}
+END
+
+COMPILE_SHADER shader_compiled SHADER shader
+CREATE_PROGRAM compute_prog SHADERS shader_compiled
+
+RUN_COMPUTE
+    PROGRAM compute_prog
+    NUM_GROUPS_X 1
+    NUM_GROUPS_Y 1
+    NUM_GROUPS_Z 1
+
+ASSERT_EQUAL BUFFER1 expected BUFFER2 ssbo

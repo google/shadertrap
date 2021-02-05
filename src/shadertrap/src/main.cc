@@ -41,16 +41,16 @@ class ConsoleMessageConsumer : public shadertrap::MessageConsumer {
                const std::string& message) override {
     switch (severity) {
       case MessageConsumer::Severity::kError:
-        std::cout << "ERROR";
+        std::cerr << "ERROR";
         break;
     }
-    std::cout << " at ";
+    std::cerr << " at ";
     if (token == nullptr) {
-      std::cout << "unknown location";
+      std::cerr << "unknown location";
     } else {
-      std::cout << token->GetLocationString();
+      std::cerr << token->GetLocationString();
     }
-    std::cout << ": " << message << std::endl;
+    std::cerr << ": " << message << std::endl;
   }
 };
 
@@ -160,7 +160,9 @@ int main(int argc, const char** argv) {
       shadertrap::MakeUnique<shadertrap::Executor>(&message_consumer));
   shadertrap::CompoundVisitor checker_and_executor(std::move(temp));
   if (!checker_and_executor.VisitCommands(shadertrap_program.get())) {
+    std::cerr << "Errors occurred during execution." << std::endl;
     return 1;
   }
+  std::cerr << "SUCCESS!" << std::endl;
   return 0;
 }

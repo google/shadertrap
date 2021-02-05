@@ -35,6 +35,7 @@
 #include "libshadertrap/command_create_sampler.h"
 #include "libshadertrap/command_declare_shader.h"
 #include "libshadertrap/command_dump_renderbuffer.h"
+#include "libshadertrap/command_run_compute.h"
 #include "libshadertrap/command_run_graphics.h"
 #include "libshadertrap/command_set_sampler_or_texture_parameter.h"
 #include "libshadertrap/command_set_uniform.h"
@@ -83,6 +84,8 @@ class Executor : public CommandVisitor {
   bool VisitDumpRenderbuffer(
       CommandDumpRenderbuffer* dump_renderbuffer) override;
 
+  bool VisitRunCompute(CommandRunCompute* run_compute) override;
+
   bool VisitRunGraphics(CommandRunGraphics* run_graphics) override;
 
   bool VisitSetSamplerOrTextureParameter(
@@ -92,6 +95,10 @@ class Executor : public CommandVisitor {
   bool VisitSetUniform(CommandSetUniform* set_uniform) override;
 
  private:
+  bool CheckEqualBuffers(CommandAssertEqual* assert_equal);
+
+  bool CheckEqualRenderbuffers(CommandAssertEqual* assert_equal);
+
   MessageConsumer* message_consumer_;
   std::map<std::string, CommandDeclareShader*> declared_shaders_;
   std::map<std::string, GLuint> created_buffers_;

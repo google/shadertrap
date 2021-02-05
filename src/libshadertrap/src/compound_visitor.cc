@@ -97,6 +97,10 @@ bool CompoundVisitor::VisitDumpRenderbuffer(
   return ApplyVisitors(dump_renderbuffer);
 }
 
+bool CompoundVisitor::VisitRunCompute(CommandRunCompute* run_compute) {
+  return ApplyVisitors(run_compute);
+}
+
 bool CompoundVisitor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
   return ApplyVisitors(run_graphics);
 }
