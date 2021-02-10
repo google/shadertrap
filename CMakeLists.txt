@@ -35,6 +35,13 @@ set(
     PATH
     "Path to a https://github.com/google/googletest repo.")
 
+set(
+        SHADERTRAP_GLSLANG_REPO_DIR
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/glslang/glslang
+        CACHE
+        PATH
+        "Path to a https://github.com/KhronosGroup/glslang repo.")
+
 option(
         SHADERTRAP_USE_LLVM_LIBCPP
         "Use LLVM's libc++ when using Clang, plus various other LLVM options, but only if shadertrap is the root project."
@@ -129,6 +136,8 @@ add_subdirectory(third_party/glad EXCLUDE_FROM_ALL)
 add_subdirectory(third_party/lodepng EXCLUDE_FROM_ALL)
 
 add_subdirectory(third_party/googletest)
+
+add_subdirectory(third_party/glslang)
 
 
 ## The targets that follow are all shadertrap targets.

@@ -23,7 +23,7 @@ namespace shadertrap {
 
 class MessageConsumer {
  public:
-  enum class Severity { kError };
+  enum class Severity { kError, kWarning };
 
   MessageConsumer() = default;
 

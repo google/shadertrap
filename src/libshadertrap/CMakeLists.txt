@@ -81,8 +81,8 @@ add_library(libshadertrap STATIC
         src/tokenizer.cc
         src/uniform_value.cc
         src/vertex_attribute_info.cc
-)
+        include/libshadertrap/glslang.h)
 
 target_include_directories(libshadertrap PUBLIC include PRIVATE include_private/include)
-target_link_libraries(libshadertrap PRIVATE glad lodepng)
+target_link_libraries(libshadertrap PRIVATE glad glslang lodepng)
 target_compile_features(libshadertrap PUBLIC cxx_std_11)

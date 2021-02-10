@@ -14,9 +14,127 @@
 
 #include "libshadertrap/checker.h"
 
+#include <cctype>
 #include <cstddef>
+#include <initializer_list>
+#include <type_traits>
+#include <utility>
+
+#include "libshadertrap/make_unique.h"
 
 namespace shadertrap {
+
+namespace {
+
+const TBuiltInResource kDefaultTBuiltInResource = {
+    /* .MaxLights = */ 32,
+    /* .MaxClipPlanes = */ 6,
+    /* .MaxTextureUnits = */ 32,
+    /* .MaxTextureCoords = */ 32,
+    /* .MaxVertexAttribs = */ 64,
+    /* .MaxVertexUniformComponents = */ 4096,
+    /* .MaxVaryingFloats = */ 64,
+    /* .MaxVertexTextureImageUnits = */ 32,
+    /* .MaxCombinedTextureImageUnits = */ 80,
+    /* .MaxTextureImageUnits = */ 32,
+    /* .MaxFragmentUniformComponents = */ 4096,
+    /* .MaxDrawBuffers = */ 32,
+    /* .MaxVertexUniformVectors = */ 128,
+    /* .MaxVaryingVectors = */ 8,
+    /* .MaxFragmentUniformVectors = */ 16,
+    /* .MaxVertexOutputVectors = */ 16,
+    /* .MaxFragmentInputVectors = */ 15,
+    /* .MinProgramTexelOffset = */ -8,
+    /* .MaxProgramTexelOffset = */ 7,
+    /* .MaxClipDistances = */ 8,
+    /* .MaxComputeWorkGroupCountX = */ 65535,
+    /* .MaxComputeWorkGroupCountY = */ 65535,
+    /* .MaxComputeWorkGroupCountZ = */ 65535,
+    /* .MaxComputeWorkGroupSizeX = */ 1024,
+    /* .MaxComputeWorkGroupSizeY = */ 1024,
+    /* .MaxComputeWorkGroupSizeZ = */ 64,
+    /* .MaxComputeUniformComponents = */ 1024,
+    /* .MaxComputeTextureImageUnits = */ 16,
+    /* .MaxComputeImageUniforms = */ 8,
+    /* .MaxComputeAtomicCounters = */ 8,
+    /* .MaxComputeAtomicCounterBuffers = */ 1,
+    /* .MaxVaryingComponents = */ 60,
+    /* .MaxVertexOutputComponents = */ 64,
+    /* .MaxGeometryInputComponents = */ 64,
+    /* .MaxGeometryOutputComponents = */ 128,
+    /* .MaxFragmentInputComponents = */ 128,
+    /* .MaxImageUnits = */ 8,
+    /* .MaxCombinedImageUnitsAndFragmentOutputs = */ 8,
+    /* .MaxCombinedShaderOutputResources = */ 8,
+    /* .MaxImageSamples = */ 0,
+    /* .MaxVertexImageUniforms = */ 0,
+    /* .MaxTessControlImageUniforms = */ 0,
+    /* .MaxTessEvaluationImageUniforms = */ 0,
+    /* .MaxGeometryImageUniforms = */ 0,
+    /* .MaxFragmentImageUniforms = */ 8,
+    /* .MaxCombinedImageUniforms = */ 8,
+    /* .MaxGeometryTextureImageUnits = */ 16,
+    /* .MaxGeometryOutputVertices = */ 256,
+    /* .MaxGeometryTotalOutputComponents = */ 1024,
+    /* .MaxGeometryUniformComponents = */ 1024,
+    /* .MaxGeometryVaryingComponents = */ 64,
+    /* .MaxTessControlInputComponents = */ 128,
+    /* .MaxTessControlOutputComponents = */ 128,
+    /* .MaxTessControlTextureImageUnits = */ 16,
+    /* .MaxTessControlUniformComponents = */ 1024,
+    /* .MaxTessControlTotalOutputComponents = */ 4096,
+    /* .MaxTessEvaluationInputComponents = */ 128,
+    /* .MaxTessEvaluationOutputComponents = */ 128,
+    /* .MaxTessEvaluationTextureImageUnits = */ 16,
+    /* .MaxTessEvaluationUniformComponents = */ 1024,
+    /* .MaxTessPatchComponents = */ 120,
+    /* .MaxPatchVertices = */ 32,
+    /* .MaxTessGenLevel = */ 64,
+    /* .MaxViewports = */ 16,
+    /* .MaxVertexAtomicCounters = */ 0,
+    /* .MaxTessControlAtomicCounters = */ 0,
+    /* .MaxTessEvaluationAtomicCounters = */ 0,
+    /* .MaxGeometryAtomicCounters = */ 0,
+    /* .MaxFragmentAtomicCounters = */ 8,
+    /* .MaxCombinedAtomicCounters = */ 8,
+    /* .MaxAtomicCounterBindings = */ 1,
+    /* .MaxVertexAtomicCounterBuffers = */ 0,
+    /* .MaxTessControlAtomicCounterBuffers = */ 0,
+    /* .MaxTessEvaluationAtomicCounterBuffers = */ 0,
+    /* .MaxGeometryAtomicCounterBuffers = */ 0,
+    /* .MaxFragmentAtomicCounterBuffers = */ 1,
+    /* .MaxCombinedAtomicCounterBuffers = */ 1,
+    /* .MaxAtomicCounterBufferSize = */ 16384,
+    /* .MaxTransformFeedbackBuffers = */ 4,
+    /* .MaxTransformFeedbackInterleavedComponents = */ 64,
+    /* .MaxCullDistances = */ 8,
+    /* .MaxCombinedClipAndCullDistances = */ 8,
+    /* .MaxSamples = */ 4,
+    /* .maxMeshOutputVerticesNV = */ 256,
+    /* .maxMeshOutputPrimitivesNV = */ 512,
+    /* .maxMeshWorkGroupSizeX_NV = */ 32,
+    /* .maxMeshWorkGroupSizeY_NV = */ 1,
+    /* .maxMeshWorkGroupSizeZ_NV = */ 1,
+    /* .maxTaskWorkGroupSizeX_NV = */ 32,
+    /* .maxTaskWorkGroupSizeY_NV = */ 1,
+    /* .maxTaskWorkGroupSizeZ_NV = */ 1,
+    /* .maxMeshViewCountNV = */ 4,
+    /* .maxDualSourceDrawBuffersEXT = */ 1,
+
+    /* .limits = */
+    {
+        /* .nonInductiveForLoops = */ true,
+        /* .whileLoops = */ true,
+        /* .doWhileLoops = */ true,
+        /* .generalUniformIndexing = */ true,
+        /* .generalAttributeMatrixVectorIndexing = */ true,
+        /* .generalVaryingIndexing = */ true,
+        /* .generalSamplerIndexing = */ true,
+        /* .generalVariableIndexing = */ true,
+        /* .generalConstantMatrixVectorIndexing = */ true,
+    }};
+
+}  // namespace
 
 Checker::Checker(MessageConsumer* message_consumer)
     : message_consumer_(message_consumer) {}
@@ -210,7 +328,27 @@ bool Checker::VisitCreateProgram(CommandCreateProgram* create_program) {
       result = false;
     }
   }
-  return result;
+  if (!result) {
+    return false;
+  }
+
+  auto glslang_program = MakeUnique<glslang::TProgram>();
+  for (size_t i = 0; i < create_program->GetNumCompiledShaders(); i++) {
+    CommandCompileShader* compile_shader_command =
+        compiled_shaders_.at(create_program->GetCompiledShaderIdentifier(i));
+    glslang_program->addShader(
+        glslang_shaders_.at(compile_shader_command->GetShaderIdentifier())
+            .get());
+  }
+  if (!glslang_program->link(EShMsgDefault)) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, create_program->GetStartToken(),
+        "Linking of program '" + create_program->GetResultIdentifier() +
+            "' using glslang failed. Line numbers in the following output are "
+            "offsets from the start of the provided shader text string:\n" +
+            std::string(glslang_program->getInfoLog()));
+  }
+  return true;
 }
 
 bool Checker::VisitCreateRenderbuffer(
@@ -223,9 +361,38 @@ bool Checker::VisitDeclareShader(CommandDeclareShader* declare_shader) {
   if (!CheckIdentifierIsFresh(declare_shader->GetResultIdentifierToken())) {
     return false;
   }
-  // TODO(afd): Invoke glslang to check that the shader is valid.
+  EShLanguage shader_stage = EShLanguage::EShLangVertex;
+  switch (declare_shader->GetKind()) {
+    case CommandDeclareShader::Kind::VERTEX:
+      shader_stage = EShLanguage::EShLangVertex;
+      break;
+    case CommandDeclareShader::Kind::FRAGMENT:
+      shader_stage = EShLanguage::EShLangFragment;
+      break;
+    case CommandDeclareShader::Kind::COMPUTE:
+      shader_stage = EShLanguage::EShLangCompute;
+      break;
+  }
+  auto glslang_shader = MakeUnique<glslang::TShader>(shader_stage);
+  const auto* shader_text = declare_shader->GetShaderText().c_str();
+  const int shader_text_length =
+      static_cast<int>(declare_shader->GetShaderText().size());
+  glslang_shader->setStringsWithLengths(&shader_text, &shader_text_length, 1);
+  const int kGlslVersion100 = 100;
+  if (!glslang_shader->parse(&kDefaultTBuiltInResource, kGlslVersion100, false,
+                             EShMsgDefault)) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, declare_shader->GetStartToken(),
+        "Validation of shader '" + declare_shader->GetResultIdentifier() +
+            "' using glslang failed with the following messages:\n" +
+            FixLinesInGlslangOutput(std::string(glslang_shader->getInfoLog()),
+                                    declare_shader->GetShaderStartLine() - 1));
+    return false;
+  }
   declared_shaders_.insert(
       {declare_shader->GetResultIdentifier(), declare_shader});
+  glslang_shaders_.insert(
+      {declare_shader->GetResultIdentifier(), std::move(glslang_shader)});
   return true;
 }
 
@@ -269,6 +436,89 @@ bool Checker::CheckIdentifierIsFresh(const Token* identifier) {
   }
   used_identifiers_.insert({identifier->GetText(), identifier});
   return true;
+}
+
+std::string Checker::FixLinesInGlslangOutput(const std::string& glslang_output,
+                                             size_t line_offset) {
+  std::string result;
+  size_t pos = 0;
+  bool is_line_start = true;
+  // Look through all of the glslang output
+  while (pos < glslang_output.size()) {
+    if (!is_line_start) {
+      // We are not at the start of a line, so we should pass this character
+      // through to |result|. However, if it's an end of line character we
+      // note that we now are at the start of a line.
+      if (glslang_output[pos] == '\n') {
+        is_line_start = true;
+      }
+      result.push_back(glslang_output[pos]);
+      pos++;
+    } else {
+      // We are at the start of a line, so we see whether this line starts with
+      // a glslang message.
+      // We first note that we're no longer at the start of a line. If the line
+      // happens to be empty -- i.e., to just contain a '\n' character -- that's
+      // OK; we will process that character on the next loop iteration.
+      is_line_start = false;
+      bool found_message_prefix = false;
+      // Check whether the line starts with one of the known message prefixes.
+      for (std::string prefix :
+           {"WARNING: ", "ERROR: ", "INTERNAL ERROR: ", "UNIMPLEMENTED: ",
+            "NOTE: ", "UNKNOWN ERROR: "}) {
+        if (glslang_output.substr(pos, std::string(prefix).length()) ==
+            prefix) {
+          result.append(prefix);
+          pos += prefix.length();
+          found_message_prefix = true;
+          break;
+        }
+      }
+      if (found_message_prefix) {
+        // The line starts with a known prefix, so we need to check whether it's
+        // followed by text matching the pattern "\d+:(\d+)", which we want to
+        // replace with "line $1".
+        if (pos < glslang_output.length() &&
+            std::isdigit(glslang_output[pos]) != 0) {
+          // If we do find that the upcoming characters match the patern of
+          // interest then we want to ignore the first group of digits and the
+          // colon, but if the pattern is only partially matched then we should
+          // output them, so we save them up in a temporary.
+          std::string characters_to_ignore_if_pattern_is_matched;
+          bool pattern_is_matched = false;
+          while (pos < glslang_output.length() &&
+                 std::isdigit(glslang_output[pos]) != 0) {
+            characters_to_ignore_if_pattern_is_matched.push_back(
+                glslang_output[pos]);
+            pos++;
+          }
+          if (pos < glslang_output.length() && glslang_output[pos] == ':') {
+            characters_to_ignore_if_pattern_is_matched.push_back(
+                glslang_output[pos]);
+            pos++;
+            if (pos < glslang_output.length() &&
+                std::isdigit(glslang_output[pos]) != 0) {
+              std::string line_digits;
+              while (pos < glslang_output.length() &&
+                     std::isdigit(glslang_output[pos]) != 0) {
+                line_digits.push_back(glslang_output[pos]);
+                pos++;
+              }
+              pattern_is_matched = true;
+              result.append(
+                  "line " +
+                  std::to_string(static_cast<size_t>(std::stoi(line_digits)) +
+                                 line_offset));
+            }
+          }
+          if (!pattern_is_matched) {
+            result.append(characters_to_ignore_if_pattern_is_matched);
+          }
+        }
+      }
+    }
+  }
+  return result;
 }
 
 }  // namespace shadertrap

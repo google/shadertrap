@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(SHADERTRAP_WARNING_SUPPRESSIONS)
-    if(MSVC)
-        add_compile_options(
-                /wd5039
-        )
-    else()
-    endif()
+cmake_minimum_required(VERSION 3.13)
+
+##
+## Project: glslang
+##
+## Provides targets: glslang.
+##
+if(NOT IS_DIRECTORY ${SHADERTRAP_GLSLANG_REPO_DIR})
+    message(
+            FATAL_ERROR
+            "Could not find googletest-distribution at ${SHADERTRAP_GLSLANG_REPO_DIR}. "
+            "Try fetching submodules or set SHADERTRAP_GOOGLETEST_REPO_DIR.")
 endif()
 
-add_executable(shadertrap
-        src/main.cc
-)
-target_link_libraries(shadertrap PRIVATE egl_headers glad glslang libshadertrap ${SHADERTRAP_EGL_LIB_PATH})
+add_subdirectory(${SHADERTRAP_GLSLANG_REPO_DIR} EXCLUDE_FROM_ALL)

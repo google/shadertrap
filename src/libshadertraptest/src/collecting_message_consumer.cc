@@ -21,4 +21,18 @@ void CollectingMessageConsumer::Message(Severity severity, const Token* token,
   messages_.emplace_back(severity, token->GetLocationString() + ": " + message);
 }
 
+std::string CollectingMessageConsumer::GetMessageString(size_t index) {
+  auto message = messages_.at(index);
+  std::string result;
+  switch (message.first) {
+    case MessageConsumer::Severity::kWarning:
+      result = "WARNING";
+      break;
+    case MessageConsumer::Severity::kError:
+      result = "ERROR";
+      break;
+  }
+  return std::string(result + ": " + message.second);
+}
+
 }  // namespace shadertrap

@@ -15,6 +15,7 @@
 #ifndef LIBSHADERTRAP_COMMAND_DECLARE_SHADER_H
 #define LIBSHADERTRAP_COMMAND_DECLARE_SHADER_H
 
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -29,7 +30,7 @@ class CommandDeclareShader : public Command {
 
   CommandDeclareShader(std::unique_ptr<Token> start_token,
                        std::unique_ptr<Token> result_identifier, Kind kind,
-                       std::string shader_text);
+                       std::string shader_text, size_t shader_start_line);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -43,12 +44,15 @@ class CommandDeclareShader : public Command {
 
   const std::string& GetShaderText() const { return shader_text_; }
 
-  Kind GetKind() { return kind_; }
+  Kind GetKind() const { return kind_; }
+
+  size_t GetShaderStartLine() const { return shader_start_line_; }
 
  private:
   std::unique_ptr<Token> result_identifier_;
   Kind kind_;
   std::string shader_text_;
+  size_t shader_start_line_;
 };
 
 }  // namespace shadertrap

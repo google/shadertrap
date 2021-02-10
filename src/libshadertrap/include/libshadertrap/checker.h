@@ -15,6 +15,8 @@
 #ifndef LIBSHADERTRAP_CHECKER_H
 #define LIBSHADERTRAP_CHECKER_H
 
+#include <cstddef>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -38,6 +40,7 @@
 #include "libshadertrap/command_set_sampler_or_texture_parameter.h"
 #include "libshadertrap/command_set_uniform.h"
 #include "libshadertrap/command_visitor.h"
+#include "libshadertrap/glslang.h"
 #include "libshadertrap/message_consumer.h"
 #include "libshadertrap/token.h"
 
@@ -96,11 +99,22 @@ class Checker : public CommandVisitor {
   bool CheckIdentifierIsFresh(const Token* identifier_token);
 
  private:
+  // |glslang_output| is output from glslang, which may contain error messages
+  // that use irrelevant file identifiers, and line numbers relative to the
+  // beginning of the shader string that was parsed. This strips away the
+  // irrelevant file identifiers and increments line numbers by |line_offset|
+  // so that they are relative to the start of the ShaderTrap file being
+  // processed.
+  static std::string FixLinesInGlslangOutput(const std::string& glslang_output,
+                                             size_t line_offset);
+
   MessageConsumer* message_consumer_;
   std::unordered_map<std::string, const Token*> used_identifiers_;
   std::unordered_map<std::string, CommandDeclareShader*> declared_shaders_;
   std::unordered_map<std::string, CommandCompileShader*> compiled_shaders_;
   std::unordered_map<std::string, CommandCreateProgram*> created_programs_;
+  std::unordered_map<std::string, std::unique_ptr<glslang::TShader>>
+      glslang_shaders_;
 };
 
 }  // namespace shadertrap
