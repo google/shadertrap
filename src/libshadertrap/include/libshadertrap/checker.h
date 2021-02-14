@@ -113,6 +113,12 @@ class Checker : public CommandVisitor {
   std::unordered_map<std::string, CommandDeclareShader*> declared_shaders_;
   std::unordered_map<std::string, CommandCompileShader*> compiled_shaders_;
   std::unordered_map<std::string, CommandCreateProgram*> created_programs_;
+  std::unordered_map<std::string, CommandCreateBuffer*> created_buffers_;
+  std::unordered_map<std::string, CommandCreateRenderbuffer*>
+      created_renderbuffers_;
+  std::unordered_map<std::string, CommandCreateSampler*> created_samplers_;
+  std::unordered_map<std::string, CommandCreateEmptyTexture2D*>
+      created_textures_;
   std::unordered_map<std::string, std::unique_ptr<glslang::TShader>>
       glslang_shaders_;
 };

@@ -20,9 +20,10 @@
 
 namespace shadertrap {
 
-CommandAssertEqual::CommandAssertEqual(std::unique_ptr<Token> start_token,
-                                       std::string buffer_identifier_1,
-                                       std::string buffer_identifier_2)
+CommandAssertEqual::CommandAssertEqual(
+    std::unique_ptr<Token> start_token,
+    std::unique_ptr<Token> buffer_identifier_1,
+    std::unique_ptr<Token> buffer_identifier_2)
     : Command(std::move(start_token)),
       buffer_identifier_1_(std::move(buffer_identifier_1)),
       buffer_identifier_2_(std::move(buffer_identifier_2)) {}

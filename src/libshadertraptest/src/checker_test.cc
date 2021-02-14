@@ -418,6 +418,25 @@ CREATE_PROGRAM prog SHADERS comp_compiled vert_compiled
       message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, CreateRenderbufferNameAlreadyUsed) {
+  std::string program = R"(DECLARE_SHADER vert VERTEX
+#version 320 es
+void main() { }
+END
+
+CREATE_RENDERBUFFER vert WIDTH 24 HEIGHT 24
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 6:21: Identifier 'vert' already used at 1:16",
+            message_consumer.GetMessageString(0));
+}
+
 TEST_F(CheckerTestFixture, CreateSamplerNameAlreadyUsed) {
   std::string program = R"(CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
 CREATE_SAMPLER name
@@ -448,25 +467,130 @@ CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
             message_consumer.GetMessageString(0));
 }
 
-TEST_F(CheckerTestFixture, AssertEqualDifferentSizedRenderbuffers) { FAIL(); }
+TEST_F(CheckerTestFixture, AssertEqualDifferentWidthRenderbuffers) {
+  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 1 HEIGHT 1
+CREATE_RENDERBUFFER buf2 WIDTH 2 HEIGHT 1
+ASSERT_EQUAL BUFFER1 buf1 BUFFER2 buf2
+)";
 
-TEST_F(CheckerTestFixture, AssertEqualDifferentSizedBuffers) { FAIL(); }
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:35: width 2 of 'buf2' does not match width 1 of 'buf1' at 3:22",
+      message_consumer.GetMessageString(0));
+}
 
-TEST_F(CheckerTestFixture, AssertEqualBufferVsRenderbuffer) { FAIL(); }
+TEST_F(CheckerTestFixture, AssertEqualDifferentHeightRenderbuffers) {
+  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 1 HEIGHT 1
+CREATE_RENDERBUFFER buf2 WIDTH 1 HEIGHT 2
+ASSERT_EQUAL BUFFER1 buf1 BUFFER2 buf2
+)";
 
-TEST_F(CheckerTestFixture, AssertEqualBadFistArgument) { FAIL(); }
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:35: height 2 of 'buf2' does not match height 1 of 'buf1' at "
+      "3:22",
+      message_consumer.GetMessageString(0));
+}
 
-TEST_F(CheckerTestFixture, AssertEqualBadSecondArgument) { FAIL(); }
+TEST_F(CheckerTestFixture, AssertEqualDifferentSizedBuffers) {
+  std::string program =
+      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_TYPE uint INIT_VALUES 0
+CREATE_BUFFER buf2 SIZE_BYTES 8 INIT_TYPE uint INIT_VALUES 0 0
+ASSERT_EQUAL BUFFER2 buf2 BUFFER1 buf1
+)";
 
-TEST_F(CheckerTestFixture, AssertPixelsNotRenderbuffer) { FAIL(); }
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:22: size (in bytes) 8 of 'buf2' does not match size (in bytes) "
+      "4 of 'buf1' at 3:35",
+      message_consumer.GetMessageString(0));
+}
 
-TEST_F(CheckerTestFixture, AssertPixelsOutOfRangeX) { FAIL(); }
+TEST_F(CheckerTestFixture, AssertEqualBufferVsRenderbuffer) {
+  std::string program =
+      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_TYPE uint INIT_VALUES 0
+CREATE_RENDERBUFFER buf2 WIDTH 1 HEIGHT 1
+ASSERT_EQUAL BUFFER2 buf2 BUFFER1 buf1
+)";
 
-TEST_F(CheckerTestFixture, AssertPixelsOutOfRangeY) { FAIL(); }
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:22: 'buf1' at 3:35 is a buffer, so 'buf2' must also be a "
+      "buffer",
+      message_consumer.GetMessageString(0));
+}
 
-TEST_F(CheckerTestFixture, TODO) { FAIL(); }
+TEST_F(CheckerTestFixture, AssertEqualBadFistArgument) {
+  std::string program = R"(CREATE_RENDERBUFFER buf2 WIDTH 24 HEIGHT 24
+ASSERT_EQUAL BUFFER1 buf1 BUFFER2 buf2
+)";
 
-TEST_F(CheckerTestFixture, TODO) { FAIL(); }
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 2:22: 'buf1' must be a buffer or renderbuffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, AssertEqualBadSecondArgumentRenderbuffer) {
+  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
+CREATE_SAMPLER buf2
+ASSERT_EQUAL BUFFER1 buf1 BUFFER2 buf2
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:35: 'buf1' at 3:22 is a renderbuffer, so 'buf2' must also be a "
+      "renderbuffer",
+      message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, AssertEqualBadSecondArgumentBuffer) {
+  std::string program =
+      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_TYPE int INIT_VALUES 0
+CREATE_SAMPLER buf2
+ASSERT_EQUAL BUFFER2 buf2 BUFFER1 buf1
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:22: 'buf1' at 3:35 is a buffer, so 'buf2' must also be a "
+      "buffer",
+      message_consumer.GetMessageString(0));
+}
 
 }  // namespace
 }  // namespace shadertrap

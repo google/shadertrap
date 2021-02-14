@@ -140,10 +140,71 @@ Checker::Checker(MessageConsumer* message_consumer)
     : message_consumer_(message_consumer) {}
 
 bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
-  // TODO(afd): Either both arguments must be renderbuffers or both arguments
-  //  must be buffers
-  // TODO(afd): Both arguments must have the same dimensions
-  (void)command_assert_equal;
+  const auto& operand1 = command_assert_equal->GetBufferIdentifier1();
+  const auto& operand2 = command_assert_equal->GetBufferIdentifier2();
+  const auto* operand1_token =
+      command_assert_equal->GetBufferIdentifier1Token();
+  const auto* operand2_token =
+      command_assert_equal->GetBufferIdentifier2Token();
+
+  if (created_buffers_.count(operand1) != 0) {
+    if (created_buffers_.count(operand2) == 0) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, operand2_token,
+          "'" + operand1 + "' at " + operand1_token->GetLocationString() +
+              " is a buffer, so '" + operand2 + "' must also be a buffer");
+      return false;
+    }
+    auto* buffer1 = created_buffers_.at(operand1);
+    auto* buffer2 = created_buffers_.at(operand2);
+    if (buffer1->GetSizeBytes() != buffer2->GetSizeBytes()) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, operand2_token,
+          "size (in bytes) " + std::to_string(buffer2->GetSizeBytes()) +
+              " of '" + operand2 + "' does not match size (in bytes) " +
+              std::to_string(buffer1->GetSizeBytes()) + " of '" + operand1 +
+              "' at " + operand1_token->GetLocationString());
+      return false;
+    }
+  } else if (created_renderbuffers_.count(operand1) != 0) {
+    if (created_renderbuffers_.count(operand2) == 0) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, operand2_token,
+          "'" + operand1 + "' at " + operand1_token->GetLocationString() +
+              " is a renderbuffer, so '" + operand2 +
+              "' must also be a renderbuffer");
+      return false;
+    }
+    bool dimensions_match = true;
+    auto* renderbuffer1 = created_renderbuffers_.at(operand1);
+    auto* renderbuffer2 = created_renderbuffers_.at(operand2);
+    if (renderbuffer1->GetWidth() != renderbuffer2->GetWidth()) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, operand2_token,
+          "width " + std::to_string(renderbuffer2->GetWidth()) + " of '" +
+              operand2 + "' does not match width " +
+              std::to_string(renderbuffer1->GetWidth()) + " of '" + operand1 +
+              "' at " + operand1_token->GetLocationString());
+      dimensions_match = false;
+    }
+    if (renderbuffer1->GetHeight() != renderbuffer2->GetHeight()) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, operand2_token,
+          "height " + std::to_string(renderbuffer2->GetHeight()) + " of '" +
+              operand2 + "' does not match height " +
+              std::to_string(renderbuffer1->GetHeight()) + " of '" + operand1 +
+              "' at " + operand1_token->GetLocationString());
+      dimensions_match = false;
+    }
+    if (!dimensions_match) {
+      return false;
+    }
+  } else {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, operand1_token,
+        "'" + operand1 + "' must be a buffer or renderbuffer");
+    return false;
+  }
   return true;
 }
 
@@ -210,6 +271,8 @@ bool Checker::VisitCreateBuffer(CommandCreateBuffer* command_create_buffer) {
           command_create_buffer->GetResultIdentifierToken())) {
     return false;
   }
+  created_buffers_.insert(
+      {command_create_buffer->GetResultIdentifier(), command_create_buffer});
   return true;
 }
 
@@ -218,6 +281,8 @@ bool Checker::VisitCreateSampler(CommandCreateSampler* command_create_sampler) {
           command_create_sampler->GetResultIdentifierToken())) {
     return false;
   }
+  created_samplers_.insert(
+      {command_create_sampler->GetResultIdentifier(), command_create_sampler});
   return true;
 }
 
@@ -227,6 +292,9 @@ bool Checker::VisitCreateEmptyTexture2D(
           command_create_empty_texture_2d->GetResultIdentifierToken())) {
     return false;
   }
+  created_textures_.insert(
+      {command_create_empty_texture_2d->GetResultIdentifier(),
+       command_create_empty_texture_2d});
   return true;
 }
 
@@ -359,7 +427,13 @@ bool Checker::VisitCreateProgram(CommandCreateProgram* create_program) {
 
 bool Checker::VisitCreateRenderbuffer(
     CommandCreateRenderbuffer* command_create_renderbuffer) {
-  (void)command_create_renderbuffer;
+  if (!CheckIdentifierIsFresh(
+          command_create_renderbuffer->GetResultIdentifierToken())) {
+    return false;
+  }
+  created_renderbuffers_.insert(
+      {command_create_renderbuffer->GetResultIdentifier(),
+       command_create_renderbuffer});
   return true;
 }
 

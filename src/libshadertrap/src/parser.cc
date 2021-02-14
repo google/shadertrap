@@ -111,8 +111,8 @@ bool Parser::ParseCommand() {
 
 bool Parser::ParseCommandAssertEqual() {
   auto start_token = tokenizer_->NextToken();
-  std::string buffer_identifier_1;
-  std::string buffer_identifier_2;
+  std::unique_ptr<Token> buffer_identifier_1;
+  std::unique_ptr<Token> buffer_identifier_2;
   if (!ParseParameters({{Token::Type::kKeywordBuffer1,
                          [this, &buffer_identifier_1]() -> bool {
                            auto token = tokenizer_->NextToken();
@@ -122,7 +122,7 @@ bool Parser::ParseCommandAssertEqual() {
                                  "Expected identifier for first renderbuffer "
                                  "to be compared");
                            }
-                           buffer_identifier_1 = token->GetText();
+                           buffer_identifier_1 = std::move(token);
                            return true;
                          }},
                         {Token::Type::kKeywordBuffer2,
@@ -134,13 +134,14 @@ bool Parser::ParseCommandAssertEqual() {
                                  "Expected identifier for second renderbuffer "
                                  "to be compared");
                            }
-                           buffer_identifier_2 = token->GetText();
+                           buffer_identifier_2 = std::move(token);
                            return true;
                          }}})) {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandAssertEqual>(
-      std::move(start_token), buffer_identifier_1, buffer_identifier_2));
+      std::move(start_token), std::move(buffer_identifier_1),
+      std::move(buffer_identifier_2)));
   return true;
 }
 
@@ -699,7 +700,7 @@ bool Parser::ParseCommandCreateRenderbuffer() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandCreateRenderbuffer>(
-      std::move(start_token), result_identifier->GetText(), width, height));
+      std::move(start_token), std::move(result_identifier), width, height));
   return true;
 }
 
