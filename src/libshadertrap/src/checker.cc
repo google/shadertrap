@@ -156,28 +156,34 @@ bool Checker::VisitAssertPixels(CommandAssertPixels* command_assert_pixels) {
 
 bool Checker::VisitAssertSimilarEmdHistogram(
     CommandAssertSimilarEmdHistogram* command_assert_similar_emd_histogram) {
+  // TODO(afd): Both arguments must be renderbuffers
+  // TODO(afd): Both arguments must have the same dimensions
   (void)command_assert_similar_emd_histogram;
   return true;
 }
 
 bool Checker::VisitBindSampler(CommandBindSampler* command_bind_sampler) {
+  // TODO(afd): Check that the given sampler exists.
   (void)command_bind_sampler;
   return true;
 }
 
 bool Checker::VisitBindStorageBuffer(
     CommandBindStorageBuffer* command_bind_storage_buffer) {
+  // TODO(afd): Check that the given buffer exists.
   (void)command_bind_storage_buffer;
   return true;
 }
 
 bool Checker::VisitBindTexture(CommandBindTexture* command_bind_texture) {
+  // TODO(afd): Check that the given texture exists.
   (void)command_bind_texture;
   return true;
 }
 
 bool Checker::VisitBindUniformBuffer(
     CommandBindUniformBuffer* command_bind_uniform_buffer) {
+  // TODO(afd): Check that the given buffer exists.
   (void)command_bind_uniform_buffer;
   return true;
 }
@@ -398,6 +404,7 @@ bool Checker::VisitDeclareShader(CommandDeclareShader* declare_shader) {
 
 bool Checker::VisitDumpRenderbuffer(
     CommandDumpRenderbuffer* command_dump_renderbuffer) {
+  // TODO(afd): The given buffer must be a renderbuffer.
   (void)command_dump_renderbuffer;
   return true;
 }
@@ -417,11 +424,13 @@ bool Checker::VisitRunGraphics(CommandRunGraphics* command_run_graphics) {
 bool Checker::VisitSetSamplerOrTextureParameter(
     CommandSetSamplerOrTextureParameter*
         command_set_sampler_or_texture_parameter) {
+  // TODO(afd): The sampler or texture must exist.
   (void)command_set_sampler_or_texture_parameter;
   return true;
 }
 
 bool Checker::VisitSetUniform(CommandSetUniform* command_set_uniform) {
+  // TODO(afd): The program must exist. The uniform index must be valid.
   (void)command_set_uniform;
   return true;
 }

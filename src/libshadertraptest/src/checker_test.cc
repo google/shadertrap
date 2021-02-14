@@ -448,5 +448,25 @@ CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
             message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, AssertEqualDifferentSizedRenderbuffers) { FAIL(); }
+
+TEST_F(CheckerTestFixture, AssertEqualDifferentSizedBuffers) { FAIL(); }
+
+TEST_F(CheckerTestFixture, AssertEqualBufferVsRenderbuffer) { FAIL(); }
+
+TEST_F(CheckerTestFixture, AssertEqualBadFistArgument) { FAIL(); }
+
+TEST_F(CheckerTestFixture, AssertEqualBadSecondArgument) { FAIL(); }
+
+TEST_F(CheckerTestFixture, AssertPixelsNotRenderbuffer) { FAIL(); }
+
+TEST_F(CheckerTestFixture, AssertPixelsOutOfRangeX) { FAIL(); }
+
+TEST_F(CheckerTestFixture, AssertPixelsOutOfRangeY) { FAIL(); }
+
+TEST_F(CheckerTestFixture, TODO) { FAIL(); }
+
+TEST_F(CheckerTestFixture, TODO) { FAIL(); }
+
 }  // namespace
 }  // namespace shadertrap
