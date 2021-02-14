@@ -151,7 +151,7 @@ bool Parser::ParseCommandAssertPixels() {
   uint8_t expected_g;
   uint8_t expected_b;
   uint8_t expected_a;
-  std::string renderbuffer_identifier;
+  std::unique_ptr<Token> renderbuffer_identifier;
   size_t rectangle_x;
   size_t rectangle_y;
   size_t rectangle_width;
@@ -190,7 +190,7 @@ bool Parser::ParseCommandAssertPixels() {
                                  "Expected renderbuffer identifier");
                              return false;
                            }
-                           renderbuffer_identifier = token->GetText();
+                           renderbuffer_identifier = std::move(token);
                            return true;
                          }},
                         {Token::Type::kKeywordRectangle,
@@ -222,8 +222,8 @@ bool Parser::ParseCommandAssertPixels() {
   }
   parsed_commands_.push_back(MakeUnique<CommandAssertPixels>(
       std::move(start_token), expected_r, expected_g, expected_b, expected_a,
-      renderbuffer_identifier, rectangle_x, rectangle_y, rectangle_width,
-      rectangle_height));
+      std::move(renderbuffer_identifier), rectangle_x, rectangle_y,
+      rectangle_width, rectangle_height));
   return true;
 }
 

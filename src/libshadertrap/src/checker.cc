@@ -209,9 +209,16 @@ bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
 }
 
 bool Checker::VisitAssertPixels(CommandAssertPixels* command_assert_pixels) {
-  // TODO(afd): first argument must be a renderbuffer
+  if (created_renderbuffers_.count(
+          command_assert_pixels->GetRenderbufferIdentifier()) == 0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_assert_pixels->GetRenderbufferIdentifierToken(),
+        "'" + command_assert_pixels->GetRenderbufferIdentifier() +
+            "' is not a renderbuffer");
+    return false;
+  }
   // TODO(afd): the rectangle must be in-bounds
-  (void)command_assert_pixels;
   return true;
 }
 

@@ -592,5 +592,21 @@ ASSERT_EQUAL BUFFER2 buf2 BUFFER1 buf1
       message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, AssertPixelsNotRenderbuffer) {
+  std::string program =
+      R"(CREATE_BUFFER buf SIZE_BYTES 4 INIT_TYPE int INIT_VALUES 0
+ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 0 0 2 2 EXPECTED 0 0 0 0
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 2:28: 'buf' is not a renderbuffer",
+            message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap
