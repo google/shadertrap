@@ -1022,7 +1022,7 @@ bool Parser::ParseCommandDeclareShader() {
 
 bool Parser::ParseCommandDumpRenderbuffer() {
   auto start_token = tokenizer_->NextToken();
-  std::string renderbuffer_identifier;
+  std::unique_ptr<Token> renderbuffer_identifier;
   std::string filename;
   if (!ParseParameters(
           {{Token::Type::kKeywordRenderbuffer,
@@ -1035,7 +1035,7 @@ bool Parser::ParseCommandDumpRenderbuffer() {
                         token->GetText() + "'");
                 return false;
               }
-              renderbuffer_identifier = token->GetText();
+              renderbuffer_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordFile, [this, &filename]() -> bool {
@@ -1054,7 +1054,7 @@ bool Parser::ParseCommandDumpRenderbuffer() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandDumpRenderbuffer>(
-      std::move(start_token), renderbuffer_identifier, filename));
+      std::move(start_token), std::move(renderbuffer_identifier), filename));
   return true;
 }
 
@@ -1167,7 +1167,7 @@ bool Parser::ParseCommandSetTextureOrSamplerParameter() {
 
 bool Parser::ParseCommandSetUniform() {
   auto start_token = tokenizer_->NextToken();
-  std::string program_identifier;
+  std::unique_ptr<Token> program_identifier;
   size_t location;
   UniformValue::ElementType type;
   std::pair<bool, size_t> maybe_array_size;
@@ -1184,7 +1184,7 @@ bool Parser::ParseCommandSetUniform() {
                                                token->GetText() + "'");
                 return false;
               }
-              program_identifier = token->GetText();
+              program_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordLocation,
@@ -1279,9 +1279,9 @@ bool Parser::ParseCommandSetUniform() {
   if (!maybe_uniform_value.first) {
     return false;
   }
-  parsed_commands_.push_back(
-      MakeUnique<CommandSetUniform>(std::move(start_token), program_identifier,
-                                    location, maybe_uniform_value.second));
+  parsed_commands_.push_back(MakeUnique<CommandSetUniform>(
+      std::move(start_token), std::move(program_identifier), location,
+      maybe_uniform_value.second));
   return true;
 }
 

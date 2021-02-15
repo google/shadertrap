@@ -28,13 +28,17 @@ namespace shadertrap {
 class CommandSetUniform : public Command {
  public:
   CommandSetUniform(std::unique_ptr<Token> start_token,
-                    std::string program_identifier, size_t location,
+                    std::unique_ptr<Token> program_identifier, size_t location,
                     UniformValue value);
 
   bool Accept(CommandVisitor* visitor) override;
 
   const std::string& GetProgramIdentifier() const {
-    return program_identifier_;
+    return program_identifier_->GetText();
+  }
+
+  const Token* GetProgramIdentifierToken() const {
+    return program_identifier_.get();
   }
 
   size_t GetLocation() const { return location_; }
@@ -42,7 +46,7 @@ class CommandSetUniform : public Command {
   const UniformValue& GetValue() const { return value_; }
 
  private:
-  std::string program_identifier_;
+  std::unique_ptr<Token> program_identifier_;
   size_t location_;
   UniformValue value_;
 };

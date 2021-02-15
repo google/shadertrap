@@ -798,5 +798,35 @@ TEST_F(CheckerTestFixture, BindUniformBufferBadUniformBuffer) {
             message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, DumpRenderbufferBadRenderbuffer) {
+  std::string program =
+      R"(DUMP_RENDERBUFFER RENDERBUFFER doesnotexist FILE "temp.png"
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 1:32: 'doesnotexist' must be a renderbuffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, SetUniformBadProgram) {
+  std::string program =
+      R"(SET_UNIFORM PROGRAM prog LOCATION 1 TYPE float VALUES 0.1
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 1:21: 'prog' must be a program",
+            message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap

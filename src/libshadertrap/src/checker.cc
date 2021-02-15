@@ -494,7 +494,20 @@ bool Checker::VisitCreateProgram(CommandCreateProgram* create_program) {
             "' using glslang failed. Line numbers in the following output are "
             "offsets from the start of the provided shader text string:\n" +
             std::string(glslang_program->getInfoLog()));
+    return false;
   }
+  if (!glslang_program->buildReflection()) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, create_program->GetStartToken(),
+        "Building reflection data for program '" +
+            create_program->GetResultIdentifier() +
+            "' using glslang failed. Line numbers in the following output are "
+            "offsets from the start of the provided shader text string:\n" +
+            std::string(glslang_program->getInfoLog()));
+    return false;
+  }
+  glslang_programs_.insert(
+      {create_program->GetResultIdentifier(), std::move(glslang_program)});
   return true;
 }
 
@@ -551,8 +564,15 @@ bool Checker::VisitDeclareShader(CommandDeclareShader* declare_shader) {
 
 bool Checker::VisitDumpRenderbuffer(
     CommandDumpRenderbuffer* command_dump_renderbuffer) {
-  // TODO(afd): The given buffer must be a renderbuffer.
-  (void)command_dump_renderbuffer;
+  if (created_renderbuffers_.count(
+          command_dump_renderbuffer->GetRenderbufferIdentifier()) == 0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_dump_renderbuffer->GetRenderbufferIdentifierToken(),
+        "'" + command_dump_renderbuffer->GetRenderbufferIdentifier() +
+            "' must be a renderbuffer");
+    return false;
+  }
   return true;
 }
 
@@ -577,8 +597,16 @@ bool Checker::VisitSetSamplerOrTextureParameter(
 }
 
 bool Checker::VisitSetUniform(CommandSetUniform* command_set_uniform) {
-  // TODO(afd): The program must exist. The uniform index must be valid.
-  (void)command_set_uniform;
+  if (created_programs_.count(command_set_uniform->GetProgramIdentifier()) ==
+      0) {
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               command_set_uniform->GetProgramIdentifierToken(),
+                               "'" +
+                                   command_set_uniform->GetProgramIdentifier() +
+                                   "' must be a program");
+    return false;
+  }
+  // TODO(afd): The uniform index must be valid.
   return true;
 }
 

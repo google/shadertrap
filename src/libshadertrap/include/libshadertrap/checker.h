@@ -126,6 +126,8 @@ class Checker : public CommandVisitor {
       created_textures_;
   std::unordered_map<std::string, std::unique_ptr<glslang::TShader>>
       glslang_shaders_;
+  std::unordered_map<std::string, std::unique_ptr<glslang::TProgram>>
+      glslang_programs_;
 };
 
 }  // namespace shadertrap
