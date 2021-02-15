@@ -235,8 +235,8 @@ bool Parser::ParseCommandAssertPixels() {
 
 bool Parser::ParseCommandAssertSimilarEmdHistogram() {
   auto start_token = tokenizer_->NextToken();
-  std::string buffer_identifier_1;
-  std::string buffer_identifier_2;
+  std::unique_ptr<Token> buffer_identifier_1;
+  std::unique_ptr<Token> buffer_identifier_2;
   float tolerance;
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffer1,
@@ -247,7 +247,7 @@ bool Parser::ParseCommandAssertSimilarEmdHistogram() {
                     MessageConsumer::Severity::kError, token.get(),
                     "Expected identifier for first buffer to be compared");
               }
-              buffer_identifier_1 = token->GetText();
+              buffer_identifier_1 = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordBuffer2,
@@ -258,7 +258,7 @@ bool Parser::ParseCommandAssertSimilarEmdHistogram() {
                     MessageConsumer::Severity::kError, token.get(),
                     "Expected identifier for second buffer to be compared");
               }
-              buffer_identifier_2 = token->GetText();
+              buffer_identifier_2 = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordTolerance, [this, &tolerance]() -> bool {
@@ -272,8 +272,8 @@ bool Parser::ParseCommandAssertSimilarEmdHistogram() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandAssertSimilarEmdHistogram>(
-      std::move(start_token), buffer_identifier_1, buffer_identifier_2,
-      tolerance));
+      std::move(start_token), std::move(buffer_identifier_1),
+      std::move(buffer_identifier_2), tolerance));
   return true;
 }
 

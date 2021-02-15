@@ -108,6 +108,11 @@ class Checker : public CommandVisitor {
   static std::string FixLinesInGlslangOutput(const std::string& glslang_output,
                                              size_t line_offset);
 
+  // Requires that |renderbuffer_token_1| and |renderbuffer_token_2| refer to
+  // renderbuffers. Returns true if and only if their widths and heights match.
+  bool CheckRenderbufferDimensionsMatch(const Token& renderbuffer_token_1,
+                                        const Token& renderbuffer_token_2);
+
   MessageConsumer* message_consumer_;
   std::unordered_map<std::string, const Token*> used_identifiers_;
   std::unordered_map<std::string, CommandDeclareShader*> declared_shaders_;

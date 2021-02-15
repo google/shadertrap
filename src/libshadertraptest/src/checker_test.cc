@@ -676,5 +676,71 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 8 0 EXPECTED 0 0 0 0
             message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, AssertSimilarEmdHistogramBadFistArgument) {
+  std::string program = R"(CREATE_RENDERBUFFER buf2 WIDTH 24 HEIGHT 24
+ASSERT_SIMILAR_EMD_HISTOGRAM BUFFER1 buf1 BUFFER2 buf2 TOLERANCE 1.0
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 2:38: 'buf1' must be a renderbuffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, AssertSimilarEmdHistogramBadSecondArgument) {
+  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
+ASSERT_SIMILAR_EMD_HISTOGRAM BUFFER1 buf1 BUFFER2 buf2 TOLERANCE 1.0
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 2:51: 'buf2' must be a renderbuffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, AssertSimilarEmdHistogramDifferentWidths) {
+  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
+CREATE_RENDERBUFFER buf2 WIDTH 20 HEIGHT 24
+ASSERT_SIMILAR_EMD_HISTOGRAM BUFFER1 buf1 BUFFER2 buf2 TOLERANCE 1.0
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:51: width 20 of 'buf2' does not match width 24 of 'buf1' at "
+      "3:38",
+      message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, AssertSimilarEmdHistogramDifferentHeights) {
+  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
+CREATE_RENDERBUFFER buf2 WIDTH 24 HEIGHT 28
+ASSERT_SIMILAR_EMD_HISTOGRAM BUFFER1 buf1 BUFFER2 buf2 TOLERANCE 1.0
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:51: height 28 of 'buf2' does not match height 24 of 'buf1' at "
+      "3:38",
+      message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap

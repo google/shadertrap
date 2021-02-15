@@ -175,28 +175,7 @@ bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
               "' must also be a renderbuffer");
       return false;
     }
-    bool dimensions_match = true;
-    auto* renderbuffer1 = created_renderbuffers_.at(operand1);
-    auto* renderbuffer2 = created_renderbuffers_.at(operand2);
-    if (renderbuffer1->GetWidth() != renderbuffer2->GetWidth()) {
-      message_consumer_->Message(
-          MessageConsumer::Severity::kError, operand2_token,
-          "width " + std::to_string(renderbuffer2->GetWidth()) + " of '" +
-              operand2 + "' does not match width " +
-              std::to_string(renderbuffer1->GetWidth()) + " of '" + operand1 +
-              "' at " + operand1_token->GetLocationString());
-      dimensions_match = false;
-    }
-    if (renderbuffer1->GetHeight() != renderbuffer2->GetHeight()) {
-      message_consumer_->Message(
-          MessageConsumer::Severity::kError, operand2_token,
-          "height " + std::to_string(renderbuffer2->GetHeight()) + " of '" +
-              operand2 + "' does not match height " +
-              std::to_string(renderbuffer1->GetHeight()) + " of '" + operand1 +
-              "' at " + operand1_token->GetLocationString());
-      dimensions_match = false;
-    }
-    if (!dimensions_match) {
+    if (!CheckRenderbufferDimensionsMatch(*operand1_token, *operand2_token)) {
       return false;
     }
   } else {
@@ -262,10 +241,31 @@ bool Checker::VisitAssertPixels(CommandAssertPixels* command_assert_pixels) {
 
 bool Checker::VisitAssertSimilarEmdHistogram(
     CommandAssertSimilarEmdHistogram* command_assert_similar_emd_histogram) {
-  // TODO(afd): Both arguments must be renderbuffers
-  // TODO(afd): Both arguments must have the same dimensions
-  (void)command_assert_similar_emd_histogram;
-  return true;
+  bool both_renderbuffers_present = true;
+  if (created_renderbuffers_.count(
+          command_assert_similar_emd_histogram->GetBufferIdentifier1()) == 0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_assert_similar_emd_histogram->GetBufferIdentifier1Token(),
+        "'" + command_assert_similar_emd_histogram->GetBufferIdentifier1() +
+            "' must be a renderbuffer");
+    both_renderbuffers_present = false;
+  }
+  if (created_renderbuffers_.count(
+          command_assert_similar_emd_histogram->GetBufferIdentifier2()) == 0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_assert_similar_emd_histogram->GetBufferIdentifier2Token(),
+        "'" + command_assert_similar_emd_histogram->GetBufferIdentifier2() +
+            "' must be a renderbuffer");
+    both_renderbuffers_present = false;
+  }
+  if (!both_renderbuffers_present) {
+    return false;
+  }
+  return CheckRenderbufferDimensionsMatch(
+      *command_assert_similar_emd_histogram->GetBufferIdentifier1Token(),
+      *command_assert_similar_emd_histogram->GetBufferIdentifier2Token());
 }
 
 bool Checker::VisitBindSampler(CommandBindSampler* command_bind_sampler) {
@@ -645,6 +645,40 @@ std::string Checker::FixLinesInGlslangOutput(const std::string& glslang_output,
         }
       }
     }
+  }
+  return result;
+}
+
+bool Checker::CheckRenderbufferDimensionsMatch(
+    const Token& renderbuffer_token_1, const Token& renderbuffer_token_2) {
+  assert(created_renderbuffers_.count(renderbuffer_token_1.GetText()) != 0 &&
+         "First argument must be a renderbuffer.");
+  assert(created_renderbuffers_.count(renderbuffer_token_2.GetText()) != 0 &&
+         "Second argument must be a renderbuffer.");
+  bool result = true;
+  auto* renderbuffer1 =
+      created_renderbuffers_.at(renderbuffer_token_1.GetText());
+  auto* renderbuffer2 =
+      created_renderbuffers_.at(renderbuffer_token_2.GetText());
+  if (renderbuffer1->GetWidth() != renderbuffer2->GetWidth()) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, &renderbuffer_token_2,
+        "width " + std::to_string(renderbuffer2->GetWidth()) + " of '" +
+            renderbuffer_token_2.GetText() + "' does not match width " +
+            std::to_string(renderbuffer1->GetWidth()) + " of '" +
+            renderbuffer_token_1.GetText() + "' at " +
+            renderbuffer_token_1.GetLocationString());
+    result = false;
+  }
+  if (renderbuffer1->GetHeight() != renderbuffer2->GetHeight()) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, &renderbuffer_token_2,
+        "height " + std::to_string(renderbuffer2->GetHeight()) + " of '" +
+            renderbuffer_token_2.GetText() + "' does not match height " +
+            std::to_string(renderbuffer1->GetHeight()) + " of '" +
+            renderbuffer_token_1.GetText() + "' at " +
+            renderbuffer_token_1.GetLocationString());
+    result = false;
   }
   return result;
 }
