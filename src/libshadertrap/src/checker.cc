@@ -218,8 +218,46 @@ bool Checker::VisitAssertPixels(CommandAssertPixels* command_assert_pixels) {
             "' is not a renderbuffer");
     return false;
   }
-  // TODO(afd): the rectangle must be in-bounds
-  return true;
+  bool found_errors = false;
+  if (command_assert_pixels->GetRectangleWidth() == 0) {
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               command_assert_pixels->GetRectangleWidthToken(),
+                               "width of rectangle must be positive");
+    found_errors = true;
+  }
+  if (command_assert_pixels->GetRectangleHeight() == 0) {
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               command_assert_pixels->GetRectangleHeightToken(),
+                               "height of rectangle must be positive");
+    found_errors = true;
+  }
+  const auto* renderbuffer = created_renderbuffers_.at(
+      command_assert_pixels->GetRenderbufferIdentifier());
+  size_t width_plus_x = command_assert_pixels->GetRectangleWidth() +
+                        command_assert_pixels->GetRectangleX();
+  if (width_plus_x > renderbuffer->GetWidth()) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_assert_pixels->GetRectangleWidthToken(),
+        "rectangle extends to x-coordinate " + std::to_string(width_plus_x) +
+            ", which exceeds width " +
+            std::to_string(renderbuffer->GetWidth()) + " of '" +
+            command_assert_pixels->GetRenderbufferIdentifier() + "'");
+    found_errors = true;
+  }
+  size_t height_plus_y = command_assert_pixels->GetRectangleHeight() +
+                         command_assert_pixels->GetRectangleY();
+  if (height_plus_y > renderbuffer->GetHeight()) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_assert_pixels->GetRectangleHeightToken(),
+        "rectangle extends to y-coordinate " + std::to_string(height_plus_y) +
+            ", which exceeds height " +
+            std::to_string(renderbuffer->GetHeight()) + " of '" +
+            command_assert_pixels->GetRenderbufferIdentifier() + "'");
+    found_errors = true;
+  }
+  return !found_errors;
 }
 
 bool Checker::VisitAssertSimilarEmdHistogram(

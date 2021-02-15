@@ -608,5 +608,73 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 0 0 2 2 EXPECTED 0 0 0 0
             message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, AssertPixelsOutOfBoundsX) {
+  std::string program =
+      R"(CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
+ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 9 8 EXPECTED 0 0 0 0
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 2:46: rectangle extends to x-coordinate 17, which exceeds width "
+      "16 of 'buf'",
+      message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, AssertPixelsOutOfBoundsY) {
+  std::string program =
+      R"(CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
+ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 8 9 EXPECTED 0 0 0 0
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 2:48: rectangle extends to y-coordinate 17, which exceeds height "
+      "16 of 'buf'",
+      message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, AssertPixelsZeroWidthRectangle) {
+  std::string program =
+      R"(CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
+ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 0 8 EXPECTED 0 0 0 0
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 2:46: width of rectangle must be positive",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, AssertPixelsZeroHeightRectangle) {
+  std::string program =
+      R"(CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
+ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 8 0 EXPECTED 0 0 0 0
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 2:48: height of rectangle must be positive",
+            message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap

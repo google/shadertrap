@@ -156,6 +156,8 @@ bool Parser::ParseCommandAssertPixels() {
   size_t rectangle_y;
   size_t rectangle_width;
   size_t rectangle_height;
+  std::unique_ptr<Token> rectangle_width_token;
+  std::unique_ptr<Token> rectangle_height_token;
   if (!ParseParameters({{Token::Type::kKeywordExpected,
                          [this, &expected_r, &expected_g, &expected_b,
                           &expected_a]() -> bool {
@@ -195,7 +197,8 @@ bool Parser::ParseCommandAssertPixels() {
                          }},
                         {Token::Type::kKeywordRectangle,
                          [this, &rectangle_x, &rectangle_y, &rectangle_width,
-                          &rectangle_height]() -> bool {
+                          &rectangle_height, &rectangle_width_token,
+                          &rectangle_height_token]() -> bool {
                            auto maybe_x = ParseUint32("x coordinate");
                            if (!maybe_x.first) {
                              return false;
@@ -206,11 +209,13 @@ bool Parser::ParseCommandAssertPixels() {
                              return false;
                            }
                            rectangle_y = maybe_y.second;
+                           rectangle_width_token = tokenizer_->PeekNextToken();
                            auto maybe_width = ParseUint32("width");
                            if (!maybe_width.first) {
                              return false;
                            }
                            rectangle_width = maybe_width.second;
+                           rectangle_height_token = tokenizer_->PeekNextToken();
                            auto maybe_height = ParseUint32("height");
                            if (!maybe_height.first) {
                              return false;
@@ -223,7 +228,8 @@ bool Parser::ParseCommandAssertPixels() {
   parsed_commands_.push_back(MakeUnique<CommandAssertPixels>(
       std::move(start_token), expected_r, expected_g, expected_b, expected_a,
       std::move(renderbuffer_identifier), rectangle_x, rectangle_y,
-      rectangle_width, rectangle_height));
+      rectangle_width, rectangle_height, std::move(rectangle_width_token),
+      std::move(rectangle_height_token)));
   return true;
 }
 

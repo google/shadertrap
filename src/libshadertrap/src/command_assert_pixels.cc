@@ -24,7 +24,9 @@ CommandAssertPixels::CommandAssertPixels(
     std::unique_ptr<Token> start_token, uint8_t expected_r, uint8_t expected_g,
     uint8_t expected_b, uint8_t expected_a,
     std::unique_ptr<Token> renderbuffer_identifier, size_t rectangle_x,
-    size_t rectangle_y, size_t rectangle_width, size_t rectangle_height)
+    size_t rectangle_y, size_t rectangle_width, size_t rectangle_height,
+    std::unique_ptr<Token> rectangle_width_token,
+    std::unique_ptr<Token> rectangle_height_token)
     : Command(std::move(start_token)),
       expected_r_(expected_r),
       expected_g_(expected_g),
@@ -34,7 +36,9 @@ CommandAssertPixels::CommandAssertPixels(
       rectangle_x_(rectangle_x),
       rectangle_y_(rectangle_y),
       rectangle_width_(rectangle_width),
-      rectangle_height_(rectangle_height) {}
+      rectangle_height_(rectangle_height),
+      rectangle_width_token_(std::move(rectangle_width_token)),
+      rectangle_height_token_(std::move(rectangle_height_token)) {}
 
 bool CommandAssertPixels::Accept(CommandVisitor* visitor) {
   return visitor->VisitAssertPixels(this);
