@@ -27,18 +27,23 @@ namespace shadertrap {
 class CommandBindTexture : public Command {
  public:
   CommandBindTexture(std::unique_ptr<Token> start_token,
-                     std::string texture_identifier, size_t texture_unit);
+                     std::unique_ptr<Token> texture_identifier,
+                     size_t texture_unit);
 
   bool Accept(CommandVisitor* visitor) override;
 
   const std::string& GetTextureIdentifier() const {
-    return texture_identifier_;
+    return texture_identifier_->GetText();
+  }
+
+  const Token* GetTextureIdentifierToken() const {
+    return texture_identifier_.get();
   }
 
   size_t GetTextureUnit() const { return texture_unit_; }
 
  private:
-  std::string texture_identifier_;
+  std::unique_ptr<Token> texture_identifier_;
   size_t texture_unit_;
 };
 

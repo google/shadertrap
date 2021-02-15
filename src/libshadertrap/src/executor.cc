@@ -265,10 +265,9 @@ bool Executor::VisitBindSampler(CommandBindSampler* bind_sampler) {
 
 bool Executor::VisitBindStorageBuffer(
     CommandBindStorageBuffer* bind_storage_buffer) {
-  GL_SAFECALL(
-      glBindBufferBase, GL_SHADER_STORAGE_BUFFER,
-      static_cast<GLuint>(bind_storage_buffer->GetBinding()),
-      created_buffers_.at(bind_storage_buffer->GetStorageBufferIdentifier()));
+  GL_SAFECALL(glBindBufferBase, GL_SHADER_STORAGE_BUFFER,
+              static_cast<GLuint>(bind_storage_buffer->GetBinding()),
+              created_buffers_.at(bind_storage_buffer->GetBufferIdentifier()));
   return true;
 }
 
@@ -283,10 +282,9 @@ bool Executor::VisitBindTexture(CommandBindTexture* bind_texture) {
 
 bool Executor::VisitBindUniformBuffer(
     CommandBindUniformBuffer* bind_uniform_buffer) {
-  GL_SAFECALL(
-      glBindBufferBase, GL_UNIFORM_BUFFER,
-      static_cast<GLuint>(bind_uniform_buffer->GetBinding()),
-      created_buffers_.at(bind_uniform_buffer->GetUniformBufferIdentifier()));
+  GL_SAFECALL(glBindBufferBase, GL_UNIFORM_BUFFER,
+              static_cast<GLuint>(bind_uniform_buffer->GetBinding()),
+              created_buffers_.at(bind_uniform_buffer->GetBufferIdentifier()));
   return true;
 }
 

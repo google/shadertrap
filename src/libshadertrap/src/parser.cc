@@ -279,7 +279,7 @@ bool Parser::ParseCommandAssertSimilarEmdHistogram() {
 
 bool Parser::ParseCommandBindSampler() {
   auto start_token = tokenizer_->NextToken();
-  std::string sampler_identifier;
+  std::unique_ptr<Token> sampler_identifier;
   size_t texture_unit;
   if (!ParseParameters(
           {{Token::Type::kKeywordSampler,
@@ -292,7 +292,7 @@ bool Parser::ParseCommandBindSampler() {
                         token->GetText() + "'");
                 return false;
               }
-              sampler_identifier = token->GetText();
+              sampler_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordTextureUnit, [this, &texture_unit]() -> bool {
@@ -306,13 +306,13 @@ bool Parser::ParseCommandBindSampler() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandBindSampler>(
-      std::move(start_token), sampler_identifier, texture_unit));
+      std::move(start_token), std::move(sampler_identifier), texture_unit));
   return true;
 }
 
 bool Parser::ParseCommandBindStorageBuffer() {
   auto start_token = tokenizer_->NextToken();
-  std::string buffer_identifier;
+  std::unique_ptr<Token> buffer_identifier;
   size_t binding;
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffer,
@@ -325,7 +325,7 @@ bool Parser::ParseCommandBindStorageBuffer() {
                         token->GetText() + "'");
                 return false;
               }
-              buffer_identifier = token->GetText();
+              buffer_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordBinding, [this, &binding]() -> bool {
@@ -339,13 +339,13 @@ bool Parser::ParseCommandBindStorageBuffer() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandBindStorageBuffer>(
-      std::move(start_token), buffer_identifier, binding));
+      std::move(start_token), std::move(buffer_identifier), binding));
   return true;
 }
 
 bool Parser::ParseCommandBindTexture() {
   auto start_token = tokenizer_->NextToken();
-  std::string texture_identifier;
+  std::unique_ptr<Token> texture_identifier;
   size_t texture_unit;
   if (!ParseParameters(
           {{Token::Type::kKeywordTexture,
@@ -358,7 +358,7 @@ bool Parser::ParseCommandBindTexture() {
                         token->GetText() + "'");
                 return false;
               }
-              texture_identifier = token->GetText();
+              texture_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordTextureUnit, [this, &texture_unit]() -> bool {
@@ -372,13 +372,13 @@ bool Parser::ParseCommandBindTexture() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandBindTexture>(
-      std::move(start_token), texture_identifier, texture_unit));
+      std::move(start_token), std::move(texture_identifier), texture_unit));
   return true;
 }
 
 bool Parser::ParseCommandBindUniformBuffer() {
   auto start_token = tokenizer_->NextToken();
-  std::string buffer_identifier;
+  std::unique_ptr<Token> buffer_identifier;
   size_t binding;
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffer,
@@ -391,7 +391,7 @@ bool Parser::ParseCommandBindUniformBuffer() {
                         token->GetText() + "'");
                 return false;
               }
-              buffer_identifier = token->GetText();
+              buffer_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordBinding, [this, &binding]() -> bool {
@@ -405,7 +405,7 @@ bool Parser::ParseCommandBindUniformBuffer() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandBindUniformBuffer>(
-      std::move(start_token), buffer_identifier, binding));
+      std::move(start_token), std::move(buffer_identifier), binding));
   return true;
 }
 

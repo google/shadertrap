@@ -742,5 +742,61 @@ ASSERT_SIMILAR_EMD_HISTOGRAM BUFFER1 buf1 BUFFER2 buf2 TOLERANCE 1.0
       message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, BindSamplerBadSampler) {
+  std::string program = R"(BIND_SAMPLER SAMPLER doesnotexist TEXTURE_UNIT 1
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 1:22: 'doesnotexist' must be a sampler",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, BindStorageBufferBadStorageBuffer) {
+  std::string program = R"(BIND_STORAGE_BUFFER BUFFER doesnotexist BINDING 1
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 1:28: 'doesnotexist' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, BindTextureBadTexture) {
+  std::string program = R"(BIND_TEXTURE TEXTURE doesnotexist TEXTURE_UNIT 1
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 1:22: 'doesnotexist' must be a texture",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, BindUniformBufferBadUniformBuffer) {
+  std::string program = R"(BIND_UNIFORM_BUFFER BUFFER doesnotexist BINDING 1
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 1:28: 'doesnotexist' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap

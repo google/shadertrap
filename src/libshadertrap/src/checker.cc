@@ -269,28 +269,56 @@ bool Checker::VisitAssertSimilarEmdHistogram(
 }
 
 bool Checker::VisitBindSampler(CommandBindSampler* command_bind_sampler) {
-  // TODO(afd): Check that the given sampler exists.
-  (void)command_bind_sampler;
+  if (created_samplers_.count(command_bind_sampler->GetSamplerIdentifier()) ==
+      0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_bind_sampler->GetSamplerIdentifierToken(),
+        "'" + command_bind_sampler->GetSamplerIdentifier() +
+            "' must be a sampler");
+    return false;
+  }
   return true;
 }
 
 bool Checker::VisitBindStorageBuffer(
     CommandBindStorageBuffer* command_bind_storage_buffer) {
-  // TODO(afd): Check that the given buffer exists.
-  (void)command_bind_storage_buffer;
+  if (created_buffers_.count(
+          command_bind_storage_buffer->GetBufferIdentifier()) == 0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_bind_storage_buffer->GetBufferIdentifierToken(),
+        "'" + command_bind_storage_buffer->GetBufferIdentifier() +
+            "' must be a buffer");
+    return false;
+  }
   return true;
 }
 
 bool Checker::VisitBindTexture(CommandBindTexture* command_bind_texture) {
-  // TODO(afd): Check that the given texture exists.
-  (void)command_bind_texture;
+  if (created_textures_.count(command_bind_texture->GetTextureIdentifier()) ==
+      0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_bind_texture->GetTextureIdentifierToken(),
+        "'" + command_bind_texture->GetTextureIdentifier() +
+            "' must be a texture");
+    return false;
+  }
   return true;
 }
 
 bool Checker::VisitBindUniformBuffer(
     CommandBindUniformBuffer* command_bind_uniform_buffer) {
-  // TODO(afd): Check that the given buffer exists.
-  (void)command_bind_uniform_buffer;
+  if (created_buffers_.count(
+          command_bind_uniform_buffer->GetBufferIdentifier()) == 0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_bind_uniform_buffer->GetBufferIdentifierToken(),
+        "'" + command_bind_uniform_buffer->GetBufferIdentifier() +
+            "' must be a buffer");
+    return false;
+  }
   return true;
 }
 
