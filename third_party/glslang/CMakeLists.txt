@@ -23,8 +23,8 @@ if(NOT TARGET glslang)
     if(NOT IS_DIRECTORY ${SHADERTRAP_GLSLANG_REPO_DIR})
         message(
                 FATAL_ERROR
-                "Could not find googletest-distribution at ${SHADERTRAP_GLSLANG_REPO_DIR}. "
-                "Try fetching submodules or set SHADERTRAP_GOOGLETEST_REPO_DIR.")
+                "Could not find glslang at ${SHADERTRAP_GLSLANG_REPO_DIR}. "
+                "Try fetching submodules or set SHADERTRAP_GLSLANG_REPO_DIR.")
     endif()
 
     set(
