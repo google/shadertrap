@@ -19,11 +19,21 @@ cmake_minimum_required(VERSION 3.13)
 ##
 ## Provides targets: glslang.
 ##
-if(NOT IS_DIRECTORY ${SHADERTRAP_GLSLANG_REPO_DIR})
-    message(
-            FATAL_ERROR
-            "Could not find googletest-distribution at ${SHADERTRAP_GLSLANG_REPO_DIR}. "
-            "Try fetching submodules or set SHADERTRAP_GOOGLETEST_REPO_DIR.")
-endif()
+if(NOT TARGET glslang)
+    if(NOT IS_DIRECTORY ${SHADERTRAP_GLSLANG_REPO_DIR})
+        message(
+                FATAL_ERROR
+                "Could not find googletest-distribution at ${SHADERTRAP_GLSLANG_REPO_DIR}. "
+                "Try fetching submodules or set SHADERTRAP_GOOGLETEST_REPO_DIR.")
+    endif()
 
-add_subdirectory(${SHADERTRAP_GLSLANG_REPO_DIR} EXCLUDE_FROM_ALL)
+    set(
+        SKIP_GLSLANG_INSTALL
+        ON
+        CACHE
+        BOOL
+        "Skip installation"
+    )
+
+    add_subdirectory(${SHADERTRAP_GLSLANG_REPO_DIR} EXCLUDE_FROM_ALL)
+endif()
