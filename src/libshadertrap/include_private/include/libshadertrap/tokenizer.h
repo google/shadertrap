@@ -38,7 +38,15 @@ class Tokenizer {
 
   void SkipWhitespace();
 
+  // Skips up to a single line of whitespace and comments. If a comment is
+  // skipped then a string token capturing the content of the comment is
+  // returned. Otherwise an empty string token is returned.
+  std::unique_ptr<Token> SkipSingleLineOfWhitespaceAndComments();
+
+  // Skips over a line, returning the line that was skipped.
   std::string SkipLine();
+
+  size_t GetLine() const { return line_; }
 
   static std::string KeywordToString(Token::Type keyword_token_type);
 

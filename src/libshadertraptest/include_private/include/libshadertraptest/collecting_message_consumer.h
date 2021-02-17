@@ -32,9 +32,7 @@ class CollectingMessageConsumer : public MessageConsumer {
 
   size_t GetNumMessages() { return messages_.size(); }
 
-  const std::string& GetMessageString(size_t index) {
-    return messages_.at(index).second;
-  }
+  std::string GetMessageString(size_t index);
 
  private:
   std::vector<std::pair<Severity, std::string>> messages_;

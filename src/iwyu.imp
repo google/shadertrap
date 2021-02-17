@@ -31,6 +31,9 @@
   # EGL <EGL/egl.h>
   { include: ["<EGL/eglplatform.h>", "private", "<EGL/egl.h>", "public"] },
 
+  # glslang.
+  { include: ["\"glslang/Include/ResourceLimits.h\"", "private", "\"glslang/Public/ShaderLang.h\"", "public"] },
+
   # Avoid iwyu suggesting <ext/alloc_traits.h> and <memory> when vector[] is
   # used: https://github.com/include-what-you-use/include-what-you-use/issues/166
   { include: [ "<ext/alloc_traits.h>", private, "<vector>", public ] },

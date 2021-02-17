@@ -27,6 +27,7 @@
 #include "libshadertrap/command_visitor.h"
 #include "libshadertrap/compound_visitor.h"
 #include "libshadertrap/executor.h"
+#include "libshadertrap/glslang.h"
 #include "libshadertrap/helpers.h"
 #include "libshadertrap/make_unique.h"
 #include "libshadertrap/message_consumer.h"
@@ -42,6 +43,9 @@ class ConsoleMessageConsumer : public shadertrap::MessageConsumer {
     switch (severity) {
       case MessageConsumer::Severity::kError:
         std::cerr << "ERROR";
+        break;
+      case MessageConsumer::Severity::kWarning:
+        std::cerr << "WARNING";
         break;
     }
     std::cerr << " at ";
@@ -159,7 +163,10 @@ int main(int argc, const char** argv) {
   temp.push_back(
       shadertrap::MakeUnique<shadertrap::Executor>(&message_consumer));
   shadertrap::CompoundVisitor checker_and_executor(std::move(temp));
-  if (!checker_and_executor.VisitCommands(shadertrap_program.get())) {
+  ShInitialize();
+  bool success = checker_and_executor.VisitCommands(shadertrap_program.get());
+  ShFinalize();
+  if (!success) {
     std::cerr << "Errors occurred during execution." << std::endl;
     return 1;
   }

@@ -32,4 +32,5 @@ cppcheck \
   --suppress=unusedFunction \
   --suppress=missingIncludeSystem \
   --suppress=unmatchedSuppression \
-  --suppress=syntaxError
+  --suppress=syntaxError \
+  --suppress=*:*/glslang/Public/ShaderLang.h

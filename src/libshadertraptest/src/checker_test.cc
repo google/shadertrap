@@ -16,6 +16,7 @@
 
 #include <memory>
 
+#include "libshadertrap/glslang.h"
 #include "libshadertrap/parser.h"
 #include "libshadertraptest/collecting_message_consumer.h"
 #include "libshadertraptest/gtest.h"
@@ -23,7 +24,35 @@
 namespace shadertrap {
 namespace {
 
-TEST(DeclareShader, RedeclareShader) {
+void EnsureGlslangIsInitialized() {
+  class GlslangInitializer {
+   public:
+    GlslangInitializer() { ShInitialize(); }
+    ~GlslangInitializer() { ShFinalize(); }
+    GlslangInitializer(const GlslangInitializer&) = delete;
+    GlslangInitializer& operator=(const GlslangInitializer&) = delete;
+    GlslangInitializer(GlslangInitializer&&) = delete;
+    GlslangInitializer& operator=(GlslangInitializer&&) = delete;
+  };
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+#endif
+  static GlslangInitializer initializer;
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+}
+
+class CheckerTestFixture : public ::testing::Test {
+ public:
+  void SetUp() override {
+    // Initialize glslang.
+    EnsureGlslangIsInitialized();
+  }
+};
+
+TEST_F(CheckerTestFixture, RedeclareShader) {
   std::string program = R"(DECLARE_SHADER s VERTEX
 #version 320 es
 layout(location = 0) in vec2 _GLF_vertexPosition;
@@ -47,11 +76,57 @@ END
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
-  ASSERT_EQ("9:16: Identifier 's' already used at 1:16",
+  ASSERT_EQ("ERROR: 9:16: Identifier 's' already used at 1:16",
             message_consumer.GetMessageString(0));
 }
 
-TEST(CompileShader, UnknownShader) {
+TEST_F(CheckerTestFixture, GlslangParseError) {
+  // glslang should fail to parse the program.
+  std::string program = R"(DECLARE_SHADER s VERTEX
+notversion
+END
+  )";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1U, message_consumer.GetNumMessages());
+  ASSERT_TRUE(message_consumer.GetMessageString(0).find(
+                  "ERROR: 1:1: Validation of shader 's' using glslang failed "
+                  "with the following messages:") != std::string::npos);
+  ASSERT_TRUE(message_consumer.GetMessageString(0).find(
+                  "ERROR: line 2: '' :  syntax error, unexpected IDENTIFIER") !=
+              std::string::npos);
+}
+
+TEST_F(CheckerTestFixture, GlslangPrecisionError) {
+  // glslang will complain that a float is declared with no default precision
+  // qualifier.
+  std::string program = R"(DECLARE_SHADER s FRAGMENT
+#version 320 es
+float f;
+void main() {
+}
+END
+  )";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_TRUE(message_consumer.GetMessageString(0).find(
+                  "ERROR: 1:1: Validation of shader 's' using glslang failed "
+                  "with the following messages:") != std::string::npos);
+  ASSERT_TRUE(
+      message_consumer.GetMessageString(0).find(
+          "ERROR: line 3: 'float' : type requires declaration of default "
+          "precision qualifier") != std::string::npos);
+}
+
+TEST_F(CheckerTestFixture, CompileShaderUnknownShader) {
   std::string program = R"(COMPILE_SHADER result SHADER nonexistent
   )";
 
@@ -62,11 +137,12 @@ TEST(CompileShader, UnknownShader) {
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "1:30: Identifier 'nonexistent' does not correspond to a declared shader",
+      "ERROR: 1:30: Identifier 'nonexistent' does not correspond to a declared "
+      "shader",
       message_consumer.GetMessageString(0));
 }
 
-TEST(CompileShader, NameAlreadyUsed) {
+TEST_F(CheckerTestFixture, CompileShaderNameAlreadyUsed) {
   std::string program = R"(DECLARE_SHADER s VERTEX
 #version 320 es
 layout(location = 0) in vec2 _GLF_vertexPosition;
@@ -84,11 +160,11 @@ COMPILE_SHADER s SHADER s
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
-  ASSERT_EQ("9:16: Identifier 's' already used at 1:16",
+  ASSERT_EQ("ERROR: 9:16: Identifier 's' already used at 1:16",
             message_consumer.GetMessageString(0));
 }
 
-TEST(CreateBuffer, NameAlreadyUsed) {
+TEST_F(CheckerTestFixture, CreateBufferNameAlreadyUsed) {
   std::string program = R"(DECLARE_SHADER vert VERTEX
 #version 320 es
 void main() { }
@@ -103,11 +179,11 @@ CREATE_BUFFER vert SIZE_BYTES 8 INIT_TYPE float INIT_VALUES 1.0 2.0
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("6:15: Identifier 'vert' already used at 1:16",
+  ASSERT_EQ("ERROR: 6:15: Identifier 'vert' already used at 1:16",
             message_consumer.GetMessageString(0));
 }
 
-TEST(CreateProgram, UnknownShader) {
+TEST_F(CheckerTestFixture, CreateProgramUnknownShader) {
   std::string program = R"(DECLARE_SHADER vert VERTEX
 #version 320 es
 void main() { }
@@ -131,11 +207,12 @@ CREATE_PROGRAM prog SHADERS vert_compiled mysampler frag_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "14:43: Identifier 'mysampler' does not correspond to a compiled shader",
+      "ERROR: 14:43: Identifier 'mysampler' does not correspond to a compiled "
+      "shader",
       message_consumer.GetMessageString(0));
 }
 
-TEST(CreateProgram, NameAlreadyUsed) {
+TEST_F(CheckerTestFixture, CreateProgramNameAlreadyUsed) {
   std::string program = R"(DECLARE_SHADER vert VERTEX
 #version 320 es
 void main() { }
@@ -157,11 +234,11 @@ CREATE_PROGRAM frag_compiled SHADERS vert_compiled frag_compiled
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
-  ASSERT_EQ("13:16: Identifier 'frag_compiled' already used at 12:16",
+  ASSERT_EQ("ERROR: 13:16: Identifier 'frag_compiled' already used at 12:16",
             message_consumer.GetMessageString(0));
 }
 
-TEST(CreateProgram, NoFragmentShader) {
+TEST_F(CheckerTestFixture, CreateProgramNoFragmentShader) {
   std::string program = R"(DECLARE_SHADER vert VERTEX
 #version 320 es
 void main() { }
@@ -177,11 +254,12 @@ CREATE_PROGRAM prog SHADERS vert_compiled
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
-  ASSERT_EQ("7:1: No fragment shader provided for 'CREATE_PROGRAM' command",
-            message_consumer.GetMessageString(0));
+  ASSERT_EQ(
+      "ERROR: 7:1: No fragment shader provided for 'CREATE_PROGRAM' command",
+      message_consumer.GetMessageString(0));
 }
 
-TEST(CreateProgram, NoVertexShader) {
+TEST_F(CheckerTestFixture, CreateProgramNoVertexShader) {
   std::string program = R"(DECLARE_SHADER frag FRAGMENT
 #version 320 es
 void main() { }
@@ -197,11 +275,12 @@ CREATE_PROGRAM prog SHADERS frag_compiled
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
-  ASSERT_EQ("7:1: No vertex shader provided for 'CREATE_PROGRAM' command",
-            message_consumer.GetMessageString(0));
+  ASSERT_EQ(
+      "ERROR: 7:1: No vertex shader provided for 'CREATE_PROGRAM' command",
+      message_consumer.GetMessageString(0));
 }
 
-TEST(CreateProgram, MultipleFragmentShaders) {
+TEST_F(CheckerTestFixture, CreateProgramMultipleFragmentShaders) {
   std::string program = R"(DECLARE_SHADER vert VERTEX
 #version 320 es
 void main() { }
@@ -224,12 +303,12 @@ CREATE_PROGRAM prog SHADERS vert_compiled frag_compiled frag_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "13:57: Multiple fragment shaders provided to 'CREATE_PROGRAM'; "
+      "ERROR: 13:57: Multiple fragment shaders provided to 'CREATE_PROGRAM'; "
       "already found 'frag_compiled' at 13:43",
       message_consumer.GetMessageString(0));
 }
 
-TEST(CreateProgram, MultipleVertexShaders) {
+TEST_F(CheckerTestFixture, CreateProgramMultipleVertexShaders) {
   std::string program = R"(DECLARE_SHADER vert VERTEX
 #version 320 es
 void main() { }
@@ -252,12 +331,12 @@ CREATE_PROGRAM prog SHADERS frag_compiled vert_compiled vert_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "13:57: Multiple vertex shaders provided to 'CREATE_PROGRAM'; "
+      "ERROR: 13:57: Multiple vertex shaders provided to 'CREATE_PROGRAM'; "
       "already found 'vert_compiled' at 13:43",
       message_consumer.GetMessageString(0));
 }
 
-TEST(CreateProgram, MultipleComputeShaders) {
+TEST_F(CheckerTestFixture, CreateProgramMultipleComputeShaders) {
   std::string program = R"(DECLARE_SHADER comp COMPUTE
 #version 320 es
 void main() { }
@@ -274,12 +353,12 @@ CREATE_PROGRAM prog SHADERS comp_compiled comp_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "7:43: Multiple compute shaders provided to 'CREATE_PROGRAM'; "
+      "ERROR: 7:43: Multiple compute shaders provided to 'CREATE_PROGRAM'; "
       "already found 'comp_compiled' at 7:29",
       message_consumer.GetMessageString(0));
 }
 
-TEST(CreateProgram, ComputeAndFragmentShaders) {
+TEST_F(CheckerTestFixture, CreateProgramComputeAndFragmentShaders) {
   std::string program = R"(DECLARE_SHADER comp COMPUTE
 #version 320 es
 void main() { }
@@ -302,13 +381,14 @@ CREATE_PROGRAM prog SHADERS frag_compiled comp_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "13:43: A compute shader cannot be used in 'CREATE_PROGRAM' with another "
+      "ERROR: 13:43: A compute shader cannot be used in 'CREATE_PROGRAM' with "
+      "another "
       "kind of shader; "
       "found fragment shader 'frag_compiled' at 13:29",
       message_consumer.GetMessageString(0));
 }
 
-TEST(CreateProgram, ComputeAndVertexShaders) {
+TEST_F(CheckerTestFixture, CreateProgramComputeAndVertexShaders) {
   std::string program = R"(DECLARE_SHADER comp COMPUTE
 #version 320 es
 void main() { }
@@ -331,13 +411,14 @@ CREATE_PROGRAM prog SHADERS comp_compiled vert_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "13:29: A compute shader cannot be used in 'CREATE_PROGRAM' with another "
+      "ERROR: 13:29: A compute shader cannot be used in 'CREATE_PROGRAM' with "
+      "another "
       "kind of shader; "
       "found vertex shader 'vert_compiled' at 13:43",
       message_consumer.GetMessageString(0));
 }
 
-TEST(CreateSampler, NameAlreadyUsed) {
+TEST_F(CheckerTestFixture, CreateSamplerNameAlreadyUsed) {
   std::string program = R"(CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
 CREATE_SAMPLER name
   )";
@@ -348,11 +429,11 @@ CREATE_SAMPLER name
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("2:16: Identifier 'name' already used at 1:25",
+  ASSERT_EQ("ERROR: 2:16: Identifier 'name' already used at 1:25",
             message_consumer.GetMessageString(0));
 }
 
-TEST(CreateEmptyTexture2D, NameAlreadyUsed) {
+TEST_F(CheckerTestFixture, CreateEmptyTexture2DNameAlreadyUsed) {
   std::string program = R"(CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
 CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
   )";
@@ -363,7 +444,7 @@ CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("2:25: Identifier 'name' already used at 1:25",
+  ASSERT_EQ("ERROR: 2:25: Identifier 'name' already used at 1:25",
             message_consumer.GetMessageString(0));
 }
 

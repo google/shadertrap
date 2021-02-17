@@ -23,11 +23,12 @@ namespace shadertrap {
 CommandDeclareShader::CommandDeclareShader(
     std::unique_ptr<Token> start_token,
     std::unique_ptr<Token> result_identifier, Kind kind,
-    std::string shader_text)
+    std::string shader_text, size_t shader_start_line)
     : Command(std::move(start_token)),
       result_identifier_(std::move(result_identifier)),
       kind_(kind),
-      shader_text_(std::move(shader_text)) {}
+      shader_text_(std::move(shader_text)),
+      shader_start_line_(shader_start_line) {}
 
 bool CommandDeclareShader::Accept(CommandVisitor* visitor) {
   return visitor->VisitDeclareShader(this);

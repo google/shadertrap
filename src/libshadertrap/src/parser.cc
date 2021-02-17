@@ -954,7 +954,27 @@ bool Parser::ParseCommandDeclareShader() {
             shader_kind->GetText() + "'");
     return false;
   }
-  tokenizer_->SkipWhitespace();
+  // The shader text should start on the next line, but there could be
+  // whitespace and comments on the rest of this line, so skip over them (but
+  // restrict skipping to just this line).
+  auto skipped_comment = tokenizer_->SkipSingleLineOfWhitespaceAndComments();
+  if (shader_kind->GetLine() == tokenizer_->GetLine()) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, shader_kind.get(),
+        "Shader text should begin on the line directly following the '" +
+            shader_kind->GetText() + "' keyword");
+    return false;
+  }
+  const std::string kVersionString = "#version ";
+  if (skipped_comment->GetText().substr(
+          0, std::string(kVersionString).length()) == kVersionString) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kWarning, skipped_comment.get(),
+        "'" + kVersionString +
+            "...' will be treated as a comment. If it is supposed to be the "
+            "first line of shader code, it should start on the following line");
+  }
+  const size_t shader_start_line = tokenizer_->GetLine();
   std::stringstream stringstream;
   while (true) {
     auto token = tokenizer_->PeekNextToken(false);
@@ -989,7 +1009,7 @@ bool Parser::ParseCommandDeclareShader() {
 
   parsed_commands_.push_back(MakeUnique<CommandDeclareShader>(
       std::move(start_token), std::move(result_identifier), declare_shader_kind,
-      stringstream.str()));
+      stringstream.str(), shader_start_line));
   return true;
 }
 

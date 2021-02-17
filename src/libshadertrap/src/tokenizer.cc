@@ -25,6 +25,10 @@
 
 namespace shadertrap {
 
+namespace {
+const uint8_t kFf = 0x0c;
+}  // namespace
+
 Tokenizer::Tokenizer(std::string data) : data_(std::move(data)) {}
 
 std::unique_ptr<Token> Tokenizer::NextToken(
@@ -131,7 +135,6 @@ std::unique_ptr<Token> Tokenizer::PeekNextToken() {
 }
 
 void Tokenizer::SkipWhitespace() {
-  const uint8_t kFf = 0x0c;
   while (position_ < data_.size()) {
     switch (data_[position_]) {
       case '\0':
@@ -154,6 +157,41 @@ void Tokenizer::SkipWhitespaceAndComments() {
     SkipLine();
     SkipWhitespace();
   }
+}
+
+std::unique_ptr<Token> Tokenizer::SkipSingleLineOfWhitespaceAndComments() {
+  // Skip any whitespace, with the exception of '\n'
+  bool found_newline_or_non_whitespace = false;
+  while (position_ < data_.size() && !found_newline_or_non_whitespace) {
+    switch (data_[position_]) {
+      case '\0':
+      case '\t':
+      case '\r':
+      case kFf:
+      case ' ':
+        AdvanceCharacter();
+        break;
+      default:
+        found_newline_or_non_whitespace = true;
+        break;
+    }
+  }
+  if (position_ < data_.size()) {
+    if (data_[position_] == '#') {
+      // The rest of the line is a comment, so skip over it, returning the
+      // content of the comment as a string token.
+      // These local variables are needed because SkipLine() will update
+      // |line_| and |column_|.
+      size_t line = line_;
+      size_t column = column_;
+      return MakeUnique<Token>(Token::Type::kString, SkipLine(), line, column);
+    }
+    if (data_[position_] == '\n') {
+      // We have hit the end of the line, so advance to the next line.
+      AdvanceCharacter();
+    }
+  }
+  return MakeUnique<Token>(Token::Type::kString, line_, column_);
 }
 
 void Tokenizer::AdvanceCharacter() {

@@ -29,7 +29,7 @@ add_executable(libshadertraptest
         src/collecting_message_consumer.cc
         src/parser_test.cc
 )
-target_link_libraries(libshadertraptest PRIVATE libshadertrap gtest_main)
+target_link_libraries(libshadertraptest PRIVATE glslang libshadertrap gtest_main)
 target_include_directories(libshadertraptest PRIVATE include_private/include)
 
 add_test(NAME libshadertraptest COMMAND libshadertraptest)
