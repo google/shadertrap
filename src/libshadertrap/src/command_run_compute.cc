@@ -21,7 +21,7 @@
 namespace shadertrap {
 
 CommandRunCompute::CommandRunCompute(std::unique_ptr<Token> start_token,
-                                     std::string program_identifier,
+                                     std::unique_ptr<Token> program_identifier,
                                      size_t num_groups_x, size_t num_groups_y,
                                      size_t num_groups_z)
     : Command(std::move(start_token)),

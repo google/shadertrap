@@ -728,7 +728,7 @@ bool Parser::ParseCommandCreateSampler() {
 bool Parser::ParseCommandRunCompute() {
   auto start_token = tokenizer_->NextToken();
 
-  std::string program_identifier;
+  std::unique_ptr<Token> program_identifier;
   size_t num_groups_x;
   size_t num_groups_y;
   size_t num_groups_z;
@@ -745,7 +745,7 @@ bool Parser::ParseCommandRunCompute() {
                                                token->GetText() + "'");
                 return false;
               }
-              program_identifier = token->GetText();
+              program_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordNumGroupsX,
@@ -776,21 +776,21 @@ bool Parser::ParseCommandRunCompute() {
             }}})) {
     return false;
   }
-  parsed_commands_.push_back(
-      MakeUnique<CommandRunCompute>(std::move(start_token), program_identifier,
-                                    num_groups_x, num_groups_y, num_groups_z));
+  parsed_commands_.push_back(MakeUnique<CommandRunCompute>(
+      std::move(start_token), std::move(program_identifier), num_groups_x,
+      num_groups_y, num_groups_z));
   return true;
 }
 
 bool Parser::ParseCommandRunGraphics() {
   auto start_token = tokenizer_->NextToken();
 
-  std::string program_identifier;
+  std::unique_ptr<Token> program_identifier;
   std::unordered_map<size_t, VertexAttributeInfo> vertex_data;
-  std::string index_data_buffer_identifier;
+  std::unique_ptr<Token> index_data_buffer_identifier;
   size_t vertex_count;
   CommandRunGraphics::Topology topology;
-  std::unordered_map<size_t, std::string> framebuffer_attachments;
+  std::unordered_map<size_t, std::unique_ptr<Token>> framebuffer_attachments;
 
   if (!ParseParameters(
           {{Token::Type::kKeywordProgram,
@@ -804,7 +804,7 @@ bool Parser::ParseCommandRunGraphics() {
                                                token->GetText() + "'");
                 return false;
               }
-              program_identifier = token->GetText();
+              program_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordVertexData,
@@ -834,8 +834,8 @@ bool Parser::ParseCommandRunGraphics() {
                 if (!maybe_vertex_list.first) {
                   return false;
                 }
-                vertex_data.insert(
-                    {maybe_location.second, maybe_vertex_list.second});
+                vertex_data.insert({maybe_location.second,
+                                    std::move(maybe_vertex_list.second)});
                 token = tokenizer_->PeekNextToken();
                 if (token->GetText() == ",") {
                   tokenizer_->NextToken();
@@ -859,7 +859,7 @@ bool Parser::ParseCommandRunGraphics() {
                         token->GetText() + "'");
                 return false;
               }
-              index_data_buffer_identifier = token->GetText();
+              index_data_buffer_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordVertexCount,
@@ -917,7 +917,7 @@ bool Parser::ParseCommandRunGraphics() {
                   return false;
                 }
                 framebuffer_attachments.insert(
-                    {maybe_location.second, token->GetText()});
+                    {maybe_location.second, std::move(token)});
                 token = tokenizer_->PeekNextToken();
                 if (token->GetText() == ",") {
                   tokenizer_->NextToken();
@@ -934,9 +934,9 @@ bool Parser::ParseCommandRunGraphics() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandRunGraphics>(
-      std::move(start_token), program_identifier, vertex_data,
-      index_data_buffer_identifier, vertex_count, topology,
-      framebuffer_attachments));
+      std::move(start_token), std::move(program_identifier),
+      std::move(vertex_data), std::move(index_data_buffer_identifier),
+      vertex_count, topology, std::move(framebuffer_attachments)));
   return true;
 }
 
@@ -1393,7 +1393,7 @@ bool Parser::ParseParameters(
 }
 
 std::pair<bool, VertexAttributeInfo> Parser::ParseVertexAttributeInfo() {
-  std::string buffer_identifier;
+  std::unique_ptr<Token> buffer_identifier;
   size_t offset_bytes;
   size_t stride_bytes;
   size_t dimension;
@@ -1408,7 +1408,7 @@ std::pair<bool, VertexAttributeInfo> Parser::ParseVertexAttributeInfo() {
                         token->GetText() + "'");
                 return false;
               }
-              buffer_identifier = token->GetText();
+              buffer_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordOffsetBytes,
@@ -1437,9 +1437,9 @@ std::pair<bool, VertexAttributeInfo> Parser::ParseVertexAttributeInfo() {
               dimension = maybe_dimension.second;
               return true;
             }}})) {
-    return {false, VertexAttributeInfo("", 0, 0, 0)};
+    return {false, VertexAttributeInfo(nullptr, 0, 0, 0)};
   }
-  return {true, VertexAttributeInfo(buffer_identifier, offset_bytes,
+  return {true, VertexAttributeInfo(std::move(buffer_identifier), offset_bytes,
                                     stride_bytes, dimension)};
 }
 

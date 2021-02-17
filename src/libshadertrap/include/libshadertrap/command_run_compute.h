@@ -31,13 +31,18 @@ class CommandRunCompute : public Command {
   enum class Topology { kTriangles };
 
   CommandRunCompute(std::unique_ptr<Token> start_token,
-                    std::string program_identifier, size_t num_groups_x,
-                    size_t num_groups_y, size_t num_groups_z);
+                    std::unique_ptr<Token> program_identifier,
+                    size_t num_groups_x, size_t num_groups_y,
+                    size_t num_groups_z);
 
   bool Accept(CommandVisitor* visitor) override;
 
   const std::string& GetProgramIdentifier() const {
-    return program_identifier_;
+    return program_identifier_->GetText();
+  }
+
+  const Token* GetProgramIdentifierToken() const {
+    return program_identifier_.get();
   }
 
   size_t GetNumGroupsX() const { return num_groups_x_; }
@@ -47,8 +52,7 @@ class CommandRunCompute : public Command {
   size_t GetNumGroupsZ() const { return num_groups_z_; }
 
  private:
-  std::string program_identifier_;
-  std::unordered_map<size_t, VertexAttributeInfo> vertex_data_;
+  std::unique_ptr<Token> program_identifier_;
   size_t num_groups_x_;
   size_t num_groups_y_;
   size_t num_groups_z_;

@@ -828,5 +828,303 @@ TEST_F(CheckerTestFixture, SetUniformBadProgram) {
             message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, RunComputeNonexistentProgram) {
+  std::string program =
+      R"(RUN_COMPUTE PROGRAM prog NUM_GROUPS_X 1 NUM_GROUPS_Y 1 NUM_GROUPS_Z 1
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 1:21: 'prog' must be a program",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, RunComputeWithGraphicsProgram) {
+  std::string program =
+      R"(DECLARE_SHADER frag FRAGMENT
+void main() { }
+END
+DECLARE_SHADER vert VERTEX
+void main() { }
+END
+COMPILE_SHADER frag_compiled SHADER frag
+COMPILE_SHADER vert_compiled SHADER vert
+CREATE_PROGRAM prog SHADERS frag_compiled vert_compiled
+RUN_COMPUTE PROGRAM prog NUM_GROUPS_X 1 NUM_GROUPS_Y 1 NUM_GROUPS_Z 1
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 10:21: 'prog' must be a compute program, not a graphics program",
+      message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, RunGraphicsNonexistentProgram) {
+  std::string program =
+      R"(DECLARE_SHADER frag FRAGMENT
+#version 320 es
+precision highp float;
+layout(location = 0) out vec4 color;
+void main() {
+ color = vec4(1.0, 0.0, 0.0, 1.0);
+}
+END
+
+DECLARE_SHADER vert VERTEX
+#version 320 es
+layout(location = 0) in vec2 pos;
+void main(void) {
+    gl_Position = vec4(pos, 0.0, 1.0);
+}
+END
+
+COMPILE_SHADER frag_compiled SHADER frag
+
+COMPILE_SHADER vert_compiled SHADER vert
+
+CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_TYPE float INIT_VALUES
+                           0.0 -1.0
+                           -1.0 1.0
+                            1.0 1.0
+
+CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+                           0 1 2 3 4 5
+
+CREATE_RENDERBUFFER renderbuffer WIDTH 256 HEIGHT 256
+
+RUN_GRAPHICS
+  PROGRAM nonexistent
+  VERTEX_DATA
+    [ 0 -> BUFFER vertex_buffer OFFSET_BYTES 0 STRIDE_BYTES 8 DIMENSION 2 ]
+  INDEX_DATA index_buffer
+  VERTEX_COUNT 3
+  TOPOLOGY TRIANGLES
+  FRAMEBUFFER_ATTACHMENTS
+    [ 0 -> renderbuffer ]
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 33:11: 'nonexistent' must be a program",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, RunGraphicsNonexistentVertexBuffer) {
+  std::string program =
+      R"(DECLARE_SHADER frag FRAGMENT
+#version 320 es
+precision highp float;
+layout(location = 0) out vec4 color;
+void main() {
+ color = vec4(1.0, 0.0, 0.0, 1.0);
+}
+END
+
+DECLARE_SHADER vert VERTEX
+#version 320 es
+layout(location = 0) in vec2 pos;
+void main(void) {
+    gl_Position = vec4(pos, 0.0, 1.0);
+}
+END
+
+COMPILE_SHADER frag_compiled SHADER frag
+
+COMPILE_SHADER vert_compiled SHADER vert
+
+CREATE_PROGRAM program SHADERS vert_compiled frag_compiled
+
+CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+                           0 1 2 3 4 5
+
+CREATE_RENDERBUFFER renderbuffer WIDTH 256 HEIGHT 256
+
+RUN_GRAPHICS
+  PROGRAM program
+  VERTEX_DATA
+    [ 0 -> BUFFER nonexistent OFFSET_BYTES 0 STRIDE_BYTES 8 DIMENSION 2 ]
+  INDEX_DATA index_buffer
+  VERTEX_COUNT 3
+  TOPOLOGY TRIANGLES
+  FRAMEBUFFER_ATTACHMENTS
+    [ 0 -> renderbuffer ]
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 32:19: vertex buffer 'nonexistent' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, RunGraphicsNonexistentIndexBuffer) {
+  std::string program =
+      R"(DECLARE_SHADER frag FRAGMENT
+#version 320 es
+precision highp float;
+layout(location = 0) out vec4 color;
+void main() {
+ color = vec4(1.0, 0.0, 0.0, 1.0);
+}
+END
+
+DECLARE_SHADER vert VERTEX
+#version 320 es
+layout(location = 0) in vec2 pos;
+void main(void) {
+    gl_Position = vec4(pos, 0.0, 1.0);
+}
+END
+
+COMPILE_SHADER frag_compiled SHADER frag
+
+COMPILE_SHADER vert_compiled SHADER vert
+
+CREATE_PROGRAM program SHADERS vert_compiled frag_compiled
+
+CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_TYPE float INIT_VALUES
+                           0.0 -1.0
+                           -1.0 1.0
+                            1.0 1.0
+
+CREATE_RENDERBUFFER renderbuffer WIDTH 256 HEIGHT 256
+
+RUN_GRAPHICS
+  PROGRAM program
+  VERTEX_DATA
+    [ 0 -> BUFFER vertex_buffer OFFSET_BYTES 0 STRIDE_BYTES 8 DIMENSION 2 ]
+  INDEX_DATA nonexistent
+  VERTEX_COUNT 3
+  TOPOLOGY TRIANGLES
+  FRAMEBUFFER_ATTACHMENTS
+    [ 0 -> renderbuffer ]
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 35:14: index buffer 'nonexistent' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, RunGraphicsNonexistentFramebufferAttachment) {
+  std::string program =
+      R"(DECLARE_SHADER frag FRAGMENT
+#version 320 es
+precision highp float;
+layout(location = 0) out vec4 color;
+void main() {
+ color = vec4(1.0, 0.0, 0.0, 1.0);
+}
+END
+
+DECLARE_SHADER vert VERTEX
+#version 320 es
+layout(location = 0) in vec2 pos;
+void main(void) {
+    gl_Position = vec4(pos, 0.0, 1.0);
+}
+END
+
+COMPILE_SHADER frag_compiled SHADER frag
+
+COMPILE_SHADER vert_compiled SHADER vert
+
+CREATE_PROGRAM program SHADERS vert_compiled frag_compiled
+
+CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_TYPE float INIT_VALUES
+                           0.0 -1.0
+                           -1.0 1.0
+                            1.0 1.0
+
+CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+                           0 1 2 3 4 5
+
+RUN_GRAPHICS
+  PROGRAM program
+  VERTEX_DATA
+    [ 0 -> BUFFER vertex_buffer OFFSET_BYTES 0 STRIDE_BYTES 8 DIMENSION 2 ]
+  INDEX_DATA index_buffer
+  VERTEX_COUNT 3
+  TOPOLOGY TRIANGLES
+  FRAMEBUFFER_ATTACHMENTS
+    [ 0 -> nonexistent ]
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 40:12: framebuffer attachment 'nonexistent' must be a "
+      "renderbuffer or texture",
+      message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, RunGraphicsWithComputeProgram) {
+  std::string program =
+      R"(DECLARE_SHADER comp COMPUTE
+#version 320 es
+void main() { }
+END
+
+COMPILE_SHADER comp_compiled SHADER comp
+
+CREATE_PROGRAM program SHADERS comp_compiled
+
+CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_TYPE float INIT_VALUES
+                           0.0 -1.0
+                           -1.0 1.0
+                            1.0 1.0
+
+CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+                           0 1 2 3 4 5
+
+CREATE_RENDERBUFFER renderbuffer WIDTH 256 HEIGHT 256
+
+RUN_GRAPHICS
+  PROGRAM program
+  VERTEX_DATA
+    [ 0 -> BUFFER vertex_buffer OFFSET_BYTES 0 STRIDE_BYTES 8 DIMENSION 2 ]
+  INDEX_DATA index_buffer
+  VERTEX_COUNT 3
+  TOPOLOGY TRIANGLES
+  FRAMEBUFFER_ATTACHMENTS
+    [ 0 -> renderbuffer ]
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 21:11: 'program' must be a graphics program, not a compute "
+      "program",
+      message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap

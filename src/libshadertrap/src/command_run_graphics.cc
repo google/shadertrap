@@ -21,17 +21,19 @@
 namespace shadertrap {
 
 CommandRunGraphics::CommandRunGraphics(
-    std::unique_ptr<Token> start_token, std::string program_identifier,
+    std::unique_ptr<Token> start_token,
+    std::unique_ptr<Token> program_identifier,
     std::unordered_map<size_t, VertexAttributeInfo> vertex_data,
-    std::string index_data_buffer_identifier, size_t vertex_count,
-    Topology topology, std::unordered_map<size_t, std::string> output_buffers)
+    std::unique_ptr<Token> index_data_buffer_identifier, size_t vertex_count,
+    Topology topology,
+    std::unordered_map<size_t, std::unique_ptr<Token>> framebuffer_attachments)
     : Command(std::move(start_token)),
       program_identifier_(std::move(program_identifier)),
       vertex_data_(std::move(vertex_data)),
       index_data_buffer_identifier_(std::move(index_data_buffer_identifier)),
       vertex_count_(vertex_count),
       topology_(topology),
-      framebuffer_attachments_(std::move(output_buffers)) {}
+      framebuffer_attachments_(std::move(framebuffer_attachments)) {}
 
 bool CommandRunGraphics::Accept(CommandVisitor* visitor) {
   return visitor->VisitRunGraphics(this);

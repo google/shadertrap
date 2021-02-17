@@ -577,15 +577,81 @@ bool Checker::VisitDumpRenderbuffer(
 }
 
 bool Checker::VisitRunCompute(CommandRunCompute* command_run_compute) {
-  // TODO(afd): Check that the given program is a compute program.
-  (void)command_run_compute;
+  if (created_programs_.count(command_run_compute->GetProgramIdentifier()) ==
+      0) {
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               command_run_compute->GetProgramIdentifierToken(),
+                               "'" +
+                                   command_run_compute->GetProgramIdentifier() +
+                                   "' must be a program");
+    return false;
+  }
+  if (created_programs_.at(command_run_compute->GetProgramIdentifier())
+          ->GetNumCompiledShaders() != 1) {
+    // A compute program comprises a single (compute) shader; if there is not
+    // exactly one shader then this must be a graphics program.
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_run_compute->GetProgramIdentifierToken(),
+        "'" + command_run_compute->GetProgramIdentifier() +
+            "' must be a compute program, not a graphics program");
+    return false;
+  }
   return true;
 }
 
 bool Checker::VisitRunGraphics(CommandRunGraphics* command_run_graphics) {
-  // TODO(afd): Check that the given program is a graphics program.
-  (void)command_run_graphics;
-  return true;
+  bool errors_found = false;
+  if (created_programs_.count(command_run_graphics->GetProgramIdentifier()) ==
+      0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_run_graphics->GetProgramIdentifierToken(),
+        "'" + command_run_graphics->GetProgramIdentifier() +
+            "' must be a program");
+    errors_found = true;
+  } else if (created_programs_.at(command_run_graphics->GetProgramIdentifier())
+                 ->GetNumCompiledShaders() != 2) {
+    // A graphics program comprises a pair of (vertex and fragment) shaders; if
+    // there is not exactly two shaders then this must be a compute program.
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_run_graphics->GetProgramIdentifierToken(),
+        "'" + command_run_graphics->GetProgramIdentifier() +
+            "' must be a graphics program, not a compute program");
+    errors_found = true;
+  }
+  for (const auto& entry : command_run_graphics->GetVertexData()) {
+    if (created_buffers_.count(entry.second.GetBufferIdentifier()) == 0) {
+      message_consumer_->Message(MessageConsumer::Severity::kError,
+                                 entry.second.GetBufferIdentifierToken(),
+                                 "vertex buffer '" +
+                                     entry.second.GetBufferIdentifier() +
+                                     "' must be a buffer");
+      errors_found = true;
+    }
+  }
+  if (created_buffers_.count(
+          command_run_graphics->GetIndexDataBufferIdentifier()) == 0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        command_run_graphics->GetIndexDataBufferIdentifierToken(),
+        "index buffer '" +
+            command_run_graphics->GetIndexDataBufferIdentifier() +
+            "' must be a buffer");
+    errors_found = true;
+  }
+  for (const auto& entry : command_run_graphics->GetFramebufferAttachments()) {
+    if (created_renderbuffers_.count(entry.second->GetText()) == 0 &&
+        created_textures_.count(entry.second->GetText()) == 0) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, entry.second.get(),
+          "framebuffer attachment '" + entry.second->GetText() +
+              "' must be a renderbuffer or texture");
+      errors_found = true;
+    }
+  }
+  return !errors_found;
 }
 
 bool Checker::VisitSetSamplerOrTextureParameter(

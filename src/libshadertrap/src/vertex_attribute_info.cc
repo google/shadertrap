@@ -16,10 +16,14 @@
 
 #include <utility>
 
-VertexAttributeInfo::VertexAttributeInfo(std::string buffer_identifier,
-                                         size_t offset_bytes,
-                                         size_t stride_bytes, size_t dimension)
+namespace shadertrap {
+
+VertexAttributeInfo::VertexAttributeInfo(
+    std::unique_ptr<Token> buffer_identifier, size_t offset_bytes,
+    size_t stride_bytes, size_t dimension)
     : buffer_identifier_(std::move(buffer_identifier)),
       offset_bytes_(offset_bytes),
       stride_bytes_(stride_bytes),
       dimension_(dimension) {}
+
+}  // namespace shadertrap

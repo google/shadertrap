@@ -31,16 +31,22 @@ class CommandRunGraphics : public Command {
   enum class Topology { kTriangles };
 
   CommandRunGraphics(
-      std::unique_ptr<Token> start_token, std::string program_identifier,
+      std::unique_ptr<Token> start_token,
+      std::unique_ptr<Token> program_identifier,
       std::unordered_map<size_t, VertexAttributeInfo> vertex_data,
-      std::string index_data_buffer_identifier, size_t vertex_count,
+      std::unique_ptr<Token> index_data_buffer_identifier, size_t vertex_count,
       Topology topology,
-      std::unordered_map<size_t, std::string> output_buffers);
+      std::unordered_map<size_t, std::unique_ptr<Token>>
+          framebuffer_attachments);
 
   bool Accept(CommandVisitor* visitor) override;
 
   const std::string& GetProgramIdentifier() const {
-    return program_identifier_;
+    return program_identifier_->GetText();
+  }
+
+  const Token* GetProgramIdentifierToken() const {
+    return program_identifier_.get();
   }
 
   const std::unordered_map<size_t, VertexAttributeInfo>& GetVertexData() const {
@@ -48,25 +54,29 @@ class CommandRunGraphics : public Command {
   }
 
   const std::string& GetIndexDataBufferIdentifier() const {
-    return index_data_buffer_identifier_;
+    return index_data_buffer_identifier_->GetText();
+  }
+
+  const Token* GetIndexDataBufferIdentifierToken() const {
+    return index_data_buffer_identifier_.get();
   }
 
   size_t GetVertexCount() const { return vertex_count_; }
 
   Topology GetTopology() const { return topology_; }
 
-  const std::unordered_map<size_t, std::string>& GetFramebufferAttachments()
-      const {
+  const std::unordered_map<size_t, std::unique_ptr<Token>>&
+  GetFramebufferAttachments() const {
     return framebuffer_attachments_;
   }
 
  private:
-  std::string program_identifier_;
+  std::unique_ptr<Token> program_identifier_;
   std::unordered_map<size_t, VertexAttributeInfo> vertex_data_;
-  std::string index_data_buffer_identifier_;
+  std::unique_ptr<Token> index_data_buffer_identifier_;
   size_t vertex_count_;
   Topology topology_;
-  std::unordered_map<size_t, std::string> framebuffer_attachments_;
+  std::unordered_map<size_t, std::unique_ptr<Token>> framebuffer_attachments_;
 };
 
 }  // namespace shadertrap
