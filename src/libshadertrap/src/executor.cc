@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "libshadertrap/helpers.h"
+#include "libshadertrap/token.h"
 #include "libshadertrap/uniform_value.h"
 #include "libshadertrap/vertex_attribute_info.h"
 #include "lodepng/lodepng.h"

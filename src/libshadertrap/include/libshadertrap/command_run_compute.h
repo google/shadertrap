@@ -18,11 +18,9 @@
 #include <cstddef>
 #include <memory>
 #include <string>
-#include <unordered_map>
 
 #include "libshadertrap/command.h"
 #include "libshadertrap/token.h"
-#include "libshadertrap/vertex_attribute_info.h"
 
 namespace shadertrap {
 

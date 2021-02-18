@@ -17,6 +17,7 @@
 #include <cassert>
 #include <set>
 #include <sstream>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 

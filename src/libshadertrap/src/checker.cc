@@ -14,6 +14,7 @@
 
 #include "libshadertrap/checker.h"
 
+#include <cassert>
 #include <cctype>
 #include <cstddef>
 #include <initializer_list>
@@ -21,6 +22,7 @@
 #include <utility>
 
 #include "libshadertrap/make_unique.h"
+#include "libshadertrap/vertex_attribute_info.h"
 
 namespace shadertrap {
 
