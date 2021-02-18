@@ -21,7 +21,7 @@
 namespace shadertrap {
 
 CommandSetUniform::CommandSetUniform(std::unique_ptr<Token> start_token,
-                                     std::string program_identifier,
+                                     std::unique_ptr<Token> program_identifier,
                                      size_t location, UniformValue value)
     : Command(std::move(start_token)),
       program_identifier_(std::move(program_identifier)),

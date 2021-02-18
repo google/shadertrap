@@ -27,19 +27,23 @@ namespace shadertrap {
 class CommandBindUniformBuffer : public Command {
  public:
   CommandBindUniformBuffer(std::unique_ptr<Token> start_token,
-                           std::string uniform_buffer_identifier,
+                           std::unique_ptr<Token> buffer_identifier,
                            size_t binding);
 
   bool Accept(CommandVisitor* visitor) override;
 
-  const std::string& GetUniformBufferIdentifier() const {
-    return uniform_buffer_identifier_;
+  const std::string& GetBufferIdentifier() const {
+    return buffer_identifier_->GetText();
+  }
+
+  const Token* GetBufferIdentifierToken() const {
+    return buffer_identifier_.get();
   }
 
   size_t GetBinding() const { return binding_; }
 
  private:
-  std::string uniform_buffer_identifier_;
+  std::unique_ptr<Token> buffer_identifier_;
   size_t binding_;
 };
 

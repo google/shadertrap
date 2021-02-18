@@ -27,19 +27,23 @@ namespace shadertrap {
 class CommandBindStorageBuffer : public Command {
  public:
   CommandBindStorageBuffer(std::unique_ptr<Token> start_token,
-                           std::string storage_buffer_identifier,
+                           std::unique_ptr<Token> buffer_identifier,
                            size_t binding);
 
   bool Accept(CommandVisitor* visitor) override;
 
-  const std::string& GetStorageBufferIdentifier() const {
-    return storage_buffer_identifier_;
+  const std::string& GetBufferIdentifier() const {
+    return buffer_identifier_->GetText();
+  }
+
+  const Token* GetBufferIdentifierToken() const {
+    return buffer_identifier_.get();
   }
 
   size_t GetBinding() const { return binding_; }
 
  private:
-  std::string storage_buffer_identifier_;
+  std::unique_ptr<Token> buffer_identifier_;
   size_t binding_;
 };
 

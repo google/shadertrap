@@ -27,8 +27,8 @@ namespace shadertrap {
 class CommandCreateRenderbuffer : public Command {
  public:
   CommandCreateRenderbuffer(std::unique_ptr<Token> start_token,
-                            std::string result_identifier, size_t width,
-                            size_t height);
+                            std::unique_ptr<Token> result_identifier,
+                            size_t width, size_t height);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -36,10 +36,16 @@ class CommandCreateRenderbuffer : public Command {
 
   size_t GetHeight() const { return height_; }
 
-  const std::string& GetResultIdentifier() const { return result_identifier_; }
+  const std::string& GetResultIdentifier() const {
+    return result_identifier_->GetText();
+  }
+
+  const Token* GetResultIdentifierToken() const {
+    return result_identifier_.get();
+  }
 
  private:
-  std::string result_identifier_;
+  std::unique_ptr<Token> result_identifier_;
   size_t width_;
   size_t height_;
 };

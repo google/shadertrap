@@ -27,18 +27,23 @@ namespace shadertrap {
 class CommandBindSampler : public Command {
  public:
   CommandBindSampler(std::unique_ptr<Token> start_token,
-                     std::string sampler_identifier, size_t texture_unit_);
+                     std::unique_ptr<Token> sampler_identifier,
+                     size_t texture_unit_);
 
   bool Accept(CommandVisitor* visitor) override;
 
   const std::string& GetSamplerIdentifier() const {
-    return sampler_identifier_;
+    return sampler_identifier_->GetText();
+  }
+
+  const Token* GetSamplerIdentifierToken() const {
+    return sampler_identifier_.get();
   }
 
   size_t GetTextureUnit() const { return texture_unit_; }
 
  private:
-  std::string sampler_identifier_;
+  std::unique_ptr<Token> sampler_identifier_;
   size_t texture_unit_;
 };
 

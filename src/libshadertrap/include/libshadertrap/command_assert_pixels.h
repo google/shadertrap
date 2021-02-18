@@ -29,9 +29,12 @@ class CommandAssertPixels : public Command {
  public:
   CommandAssertPixels(std::unique_ptr<Token> start_token, uint8_t expected_r,
                       uint8_t expected_g, uint8_t expected_b,
-                      uint8_t expected_a, std::string renderbuffer_identifier,
+                      uint8_t expected_a,
+                      std::unique_ptr<Token> renderbuffer_identifier,
                       size_t rectangle_x, size_t rectangle_y,
-                      size_t rectangle_width, size_t rectangle_height);
+                      size_t rectangle_width, size_t rectangle_height,
+                      std::unique_ptr<Token> rectangle_width_token,
+                      std::unique_ptr<Token> rectangle_height_token);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -44,7 +47,11 @@ class CommandAssertPixels : public Command {
   uint8_t GetExpectedA() const { return expected_a_; }
 
   const std::string& GetRenderbufferIdentifier() const {
-    return renderbuffer_identifier_;
+    return renderbuffer_identifier_->GetText();
+  }
+
+  const Token* GetRenderbufferIdentifierToken() const {
+    return renderbuffer_identifier_.get();
   }
 
   size_t GetRectangleX() const { return rectangle_x_; }
@@ -55,16 +62,26 @@ class CommandAssertPixels : public Command {
 
   size_t GetRectangleHeight() const { return rectangle_height_; }
 
+  const Token* GetRectangleWidthToken() const {
+    return rectangle_width_token_.get();
+  }
+
+  const Token* GetRectangleHeightToken() const {
+    return rectangle_height_token_.get();
+  }
+
  private:
   uint8_t expected_r_;
   uint8_t expected_g_;
   uint8_t expected_b_;
   uint8_t expected_a_;
-  std::string renderbuffer_identifier_;
+  std::unique_ptr<Token> renderbuffer_identifier_;
   size_t rectangle_x_;
   size_t rectangle_y_;
   size_t rectangle_width_;
   size_t rectangle_height_;
+  std::unique_ptr<Token> rectangle_width_token_;
+  std::unique_ptr<Token> rectangle_height_token_;
 };
 
 }  // namespace shadertrap

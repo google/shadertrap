@@ -108,13 +108,26 @@ class Checker : public CommandVisitor {
   static std::string FixLinesInGlslangOutput(const std::string& glslang_output,
                                              size_t line_offset);
 
+  // Requires that |renderbuffer_token_1| and |renderbuffer_token_2| refer to
+  // renderbuffers. Returns true if and only if their widths and heights match.
+  bool CheckRenderbufferDimensionsMatch(const Token& renderbuffer_token_1,
+                                        const Token& renderbuffer_token_2);
+
   MessageConsumer* message_consumer_;
   std::unordered_map<std::string, const Token*> used_identifiers_;
   std::unordered_map<std::string, CommandDeclareShader*> declared_shaders_;
   std::unordered_map<std::string, CommandCompileShader*> compiled_shaders_;
   std::unordered_map<std::string, CommandCreateProgram*> created_programs_;
+  std::unordered_map<std::string, CommandCreateBuffer*> created_buffers_;
+  std::unordered_map<std::string, CommandCreateRenderbuffer*>
+      created_renderbuffers_;
+  std::unordered_map<std::string, CommandCreateSampler*> created_samplers_;
+  std::unordered_map<std::string, CommandCreateEmptyTexture2D*>
+      created_textures_;
   std::unordered_map<std::string, std::unique_ptr<glslang::TShader>>
       glslang_shaders_;
+  std::unordered_map<std::string, std::unique_ptr<glslang::TProgram>>
+      glslang_programs_;
 };
 
 }  // namespace shadertrap

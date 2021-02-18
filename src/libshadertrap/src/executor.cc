@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "libshadertrap/helpers.h"
+#include "libshadertrap/token.h"
 #include "libshadertrap/uniform_value.h"
 #include "libshadertrap/vertex_attribute_info.h"
 #include "lodepng/lodepng.h"
@@ -265,10 +266,9 @@ bool Executor::VisitBindSampler(CommandBindSampler* bind_sampler) {
 
 bool Executor::VisitBindStorageBuffer(
     CommandBindStorageBuffer* bind_storage_buffer) {
-  GL_SAFECALL(
-      glBindBufferBase, GL_SHADER_STORAGE_BUFFER,
-      static_cast<GLuint>(bind_storage_buffer->GetBinding()),
-      created_buffers_.at(bind_storage_buffer->GetStorageBufferIdentifier()));
+  GL_SAFECALL(glBindBufferBase, GL_SHADER_STORAGE_BUFFER,
+              static_cast<GLuint>(bind_storage_buffer->GetBinding()),
+              created_buffers_.at(bind_storage_buffer->GetBufferIdentifier()));
   return true;
 }
 
@@ -283,10 +283,9 @@ bool Executor::VisitBindTexture(CommandBindTexture* bind_texture) {
 
 bool Executor::VisitBindUniformBuffer(
     CommandBindUniformBuffer* bind_uniform_buffer) {
-  GL_SAFECALL(
-      glBindBufferBase, GL_UNIFORM_BUFFER,
-      static_cast<GLuint>(bind_uniform_buffer->GetBinding()),
-      created_buffers_.at(bind_uniform_buffer->GetUniformBufferIdentifier()));
+  GL_SAFECALL(glBindBufferBase, GL_UNIFORM_BUFFER,
+              static_cast<GLuint>(bind_uniform_buffer->GetBinding()),
+              created_buffers_.at(bind_uniform_buffer->GetBufferIdentifier()));
   return true;
 }
 
@@ -484,7 +483,7 @@ bool Executor::VisitRunCompute(CommandRunCompute* run_compute) {
 bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
   GL_SAFECALL(glMemoryBarrier, GL_ALL_BARRIER_BITS);
 
-  auto vertex_data = run_graphics->GetVertexData();
+  const auto& vertex_data = run_graphics->GetVertexData();
   for (const auto& entry : vertex_data) {
     GL_SAFECALL(glBindBuffer, GL_ARRAY_BUFFER,
                 created_buffers_.at(entry.second.GetBufferIdentifier()));
@@ -502,7 +501,8 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
   GL_SAFECALL(glGenFramebuffers, 1, &framebuffer_object_id);
   GL_SAFECALL(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer_object_id);
 
-  auto framebuffer_attachments = run_graphics->GetFramebufferAttachments();
+  const auto& framebuffer_attachments =
+      run_graphics->GetFramebufferAttachments();
   assert(framebuffer_attachments.size() <= 32 && "Too many renderbuffers.");
   size_t max_location = 0;
   for (const auto& entry : framebuffer_attachments) {
@@ -512,14 +512,14 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
   for (size_t i = 0; i <= max_location; i++) {
     if (framebuffer_attachments.count(i) > 0) {
       GLenum color_attachment = GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(i);
-      auto output_buffer = framebuffer_attachments.at(i);
-      if (created_renderbuffers_.count(output_buffer) != 0) {
+      auto framebuffer_attachment = framebuffer_attachments.at(i)->GetText();
+      if (created_renderbuffers_.count(framebuffer_attachment) != 0) {
         GL_SAFECALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER, color_attachment,
                     GL_RENDERBUFFER,
-                    created_renderbuffers_.at(framebuffer_attachments.at(i)));
+                    created_renderbuffers_.at(framebuffer_attachment));
       } else {
         GL_SAFECALL(glFramebufferTexture, GL_FRAMEBUFFER, color_attachment,
-                    created_textures_.at(framebuffer_attachments.at(i)), 0);
+                    created_textures_.at(framebuffer_attachment), 0);
       }
       draw_buffers.push_back(color_attachment);
     } else {

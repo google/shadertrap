@@ -17,6 +17,7 @@
 #include <cassert>
 #include <set>
 #include <sstream>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 
@@ -111,8 +112,8 @@ bool Parser::ParseCommand() {
 
 bool Parser::ParseCommandAssertEqual() {
   auto start_token = tokenizer_->NextToken();
-  std::string buffer_identifier_1;
-  std::string buffer_identifier_2;
+  std::unique_ptr<Token> buffer_identifier_1;
+  std::unique_ptr<Token> buffer_identifier_2;
   if (!ParseParameters({{Token::Type::kKeywordBuffer1,
                          [this, &buffer_identifier_1]() -> bool {
                            auto token = tokenizer_->NextToken();
@@ -122,7 +123,7 @@ bool Parser::ParseCommandAssertEqual() {
                                  "Expected identifier for first renderbuffer "
                                  "to be compared");
                            }
-                           buffer_identifier_1 = token->GetText();
+                           buffer_identifier_1 = std::move(token);
                            return true;
                          }},
                         {Token::Type::kKeywordBuffer2,
@@ -134,13 +135,14 @@ bool Parser::ParseCommandAssertEqual() {
                                  "Expected identifier for second renderbuffer "
                                  "to be compared");
                            }
-                           buffer_identifier_2 = token->GetText();
+                           buffer_identifier_2 = std::move(token);
                            return true;
                          }}})) {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandAssertEqual>(
-      std::move(start_token), buffer_identifier_1, buffer_identifier_2));
+      std::move(start_token), std::move(buffer_identifier_1),
+      std::move(buffer_identifier_2)));
   return true;
 }
 
@@ -150,11 +152,13 @@ bool Parser::ParseCommandAssertPixels() {
   uint8_t expected_g;
   uint8_t expected_b;
   uint8_t expected_a;
-  std::string renderbuffer_identifier;
+  std::unique_ptr<Token> renderbuffer_identifier;
   size_t rectangle_x;
   size_t rectangle_y;
   size_t rectangle_width;
   size_t rectangle_height;
+  std::unique_ptr<Token> rectangle_width_token;
+  std::unique_ptr<Token> rectangle_height_token;
   if (!ParseParameters({{Token::Type::kKeywordExpected,
                          [this, &expected_r, &expected_g, &expected_b,
                           &expected_a]() -> bool {
@@ -189,12 +193,13 @@ bool Parser::ParseCommandAssertPixels() {
                                  "Expected renderbuffer identifier");
                              return false;
                            }
-                           renderbuffer_identifier = token->GetText();
+                           renderbuffer_identifier = std::move(token);
                            return true;
                          }},
                         {Token::Type::kKeywordRectangle,
                          [this, &rectangle_x, &rectangle_y, &rectangle_width,
-                          &rectangle_height]() -> bool {
+                          &rectangle_height, &rectangle_width_token,
+                          &rectangle_height_token]() -> bool {
                            auto maybe_x = ParseUint32("x coordinate");
                            if (!maybe_x.first) {
                              return false;
@@ -205,11 +210,13 @@ bool Parser::ParseCommandAssertPixels() {
                              return false;
                            }
                            rectangle_y = maybe_y.second;
+                           rectangle_width_token = tokenizer_->PeekNextToken();
                            auto maybe_width = ParseUint32("width");
                            if (!maybe_width.first) {
                              return false;
                            }
                            rectangle_width = maybe_width.second;
+                           rectangle_height_token = tokenizer_->PeekNextToken();
                            auto maybe_height = ParseUint32("height");
                            if (!maybe_height.first) {
                              return false;
@@ -221,15 +228,16 @@ bool Parser::ParseCommandAssertPixels() {
   }
   parsed_commands_.push_back(MakeUnique<CommandAssertPixels>(
       std::move(start_token), expected_r, expected_g, expected_b, expected_a,
-      renderbuffer_identifier, rectangle_x, rectangle_y, rectangle_width,
-      rectangle_height));
+      std::move(renderbuffer_identifier), rectangle_x, rectangle_y,
+      rectangle_width, rectangle_height, std::move(rectangle_width_token),
+      std::move(rectangle_height_token)));
   return true;
 }
 
 bool Parser::ParseCommandAssertSimilarEmdHistogram() {
   auto start_token = tokenizer_->NextToken();
-  std::string buffer_identifier_1;
-  std::string buffer_identifier_2;
+  std::unique_ptr<Token> buffer_identifier_1;
+  std::unique_ptr<Token> buffer_identifier_2;
   float tolerance;
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffer1,
@@ -240,7 +248,7 @@ bool Parser::ParseCommandAssertSimilarEmdHistogram() {
                     MessageConsumer::Severity::kError, token.get(),
                     "Expected identifier for first buffer to be compared");
               }
-              buffer_identifier_1 = token->GetText();
+              buffer_identifier_1 = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordBuffer2,
@@ -251,7 +259,7 @@ bool Parser::ParseCommandAssertSimilarEmdHistogram() {
                     MessageConsumer::Severity::kError, token.get(),
                     "Expected identifier for second buffer to be compared");
               }
-              buffer_identifier_2 = token->GetText();
+              buffer_identifier_2 = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordTolerance, [this, &tolerance]() -> bool {
@@ -265,14 +273,14 @@ bool Parser::ParseCommandAssertSimilarEmdHistogram() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandAssertSimilarEmdHistogram>(
-      std::move(start_token), buffer_identifier_1, buffer_identifier_2,
-      tolerance));
+      std::move(start_token), std::move(buffer_identifier_1),
+      std::move(buffer_identifier_2), tolerance));
   return true;
 }
 
 bool Parser::ParseCommandBindSampler() {
   auto start_token = tokenizer_->NextToken();
-  std::string sampler_identifier;
+  std::unique_ptr<Token> sampler_identifier;
   size_t texture_unit;
   if (!ParseParameters(
           {{Token::Type::kKeywordSampler,
@@ -285,7 +293,7 @@ bool Parser::ParseCommandBindSampler() {
                         token->GetText() + "'");
                 return false;
               }
-              sampler_identifier = token->GetText();
+              sampler_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordTextureUnit, [this, &texture_unit]() -> bool {
@@ -299,13 +307,13 @@ bool Parser::ParseCommandBindSampler() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandBindSampler>(
-      std::move(start_token), sampler_identifier, texture_unit));
+      std::move(start_token), std::move(sampler_identifier), texture_unit));
   return true;
 }
 
 bool Parser::ParseCommandBindStorageBuffer() {
   auto start_token = tokenizer_->NextToken();
-  std::string buffer_identifier;
+  std::unique_ptr<Token> buffer_identifier;
   size_t binding;
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffer,
@@ -318,7 +326,7 @@ bool Parser::ParseCommandBindStorageBuffer() {
                         token->GetText() + "'");
                 return false;
               }
-              buffer_identifier = token->GetText();
+              buffer_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordBinding, [this, &binding]() -> bool {
@@ -332,13 +340,13 @@ bool Parser::ParseCommandBindStorageBuffer() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandBindStorageBuffer>(
-      std::move(start_token), buffer_identifier, binding));
+      std::move(start_token), std::move(buffer_identifier), binding));
   return true;
 }
 
 bool Parser::ParseCommandBindTexture() {
   auto start_token = tokenizer_->NextToken();
-  std::string texture_identifier;
+  std::unique_ptr<Token> texture_identifier;
   size_t texture_unit;
   if (!ParseParameters(
           {{Token::Type::kKeywordTexture,
@@ -351,7 +359,7 @@ bool Parser::ParseCommandBindTexture() {
                         token->GetText() + "'");
                 return false;
               }
-              texture_identifier = token->GetText();
+              texture_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordTextureUnit, [this, &texture_unit]() -> bool {
@@ -365,13 +373,13 @@ bool Parser::ParseCommandBindTexture() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandBindTexture>(
-      std::move(start_token), texture_identifier, texture_unit));
+      std::move(start_token), std::move(texture_identifier), texture_unit));
   return true;
 }
 
 bool Parser::ParseCommandBindUniformBuffer() {
   auto start_token = tokenizer_->NextToken();
-  std::string buffer_identifier;
+  std::unique_ptr<Token> buffer_identifier;
   size_t binding;
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffer,
@@ -384,7 +392,7 @@ bool Parser::ParseCommandBindUniformBuffer() {
                         token->GetText() + "'");
                 return false;
               }
-              buffer_identifier = token->GetText();
+              buffer_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordBinding, [this, &binding]() -> bool {
@@ -398,7 +406,7 @@ bool Parser::ParseCommandBindUniformBuffer() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandBindUniformBuffer>(
-      std::move(start_token), buffer_identifier, binding));
+      std::move(start_token), std::move(buffer_identifier), binding));
   return true;
 }
 
@@ -699,7 +707,7 @@ bool Parser::ParseCommandCreateRenderbuffer() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandCreateRenderbuffer>(
-      std::move(start_token), result_identifier->GetText(), width, height));
+      std::move(start_token), std::move(result_identifier), width, height));
   return true;
 }
 
@@ -721,7 +729,7 @@ bool Parser::ParseCommandCreateSampler() {
 bool Parser::ParseCommandRunCompute() {
   auto start_token = tokenizer_->NextToken();
 
-  std::string program_identifier;
+  std::unique_ptr<Token> program_identifier;
   size_t num_groups_x;
   size_t num_groups_y;
   size_t num_groups_z;
@@ -738,7 +746,7 @@ bool Parser::ParseCommandRunCompute() {
                                                token->GetText() + "'");
                 return false;
               }
-              program_identifier = token->GetText();
+              program_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordNumGroupsX,
@@ -769,21 +777,21 @@ bool Parser::ParseCommandRunCompute() {
             }}})) {
     return false;
   }
-  parsed_commands_.push_back(
-      MakeUnique<CommandRunCompute>(std::move(start_token), program_identifier,
-                                    num_groups_x, num_groups_y, num_groups_z));
+  parsed_commands_.push_back(MakeUnique<CommandRunCompute>(
+      std::move(start_token), std::move(program_identifier), num_groups_x,
+      num_groups_y, num_groups_z));
   return true;
 }
 
 bool Parser::ParseCommandRunGraphics() {
   auto start_token = tokenizer_->NextToken();
 
-  std::string program_identifier;
+  std::unique_ptr<Token> program_identifier;
   std::unordered_map<size_t, VertexAttributeInfo> vertex_data;
-  std::string index_data_buffer_identifier;
+  std::unique_ptr<Token> index_data_buffer_identifier;
   size_t vertex_count;
   CommandRunGraphics::Topology topology;
-  std::unordered_map<size_t, std::string> framebuffer_attachments;
+  std::unordered_map<size_t, std::unique_ptr<Token>> framebuffer_attachments;
 
   if (!ParseParameters(
           {{Token::Type::kKeywordProgram,
@@ -797,7 +805,7 @@ bool Parser::ParseCommandRunGraphics() {
                                                token->GetText() + "'");
                 return false;
               }
-              program_identifier = token->GetText();
+              program_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordVertexData,
@@ -827,8 +835,8 @@ bool Parser::ParseCommandRunGraphics() {
                 if (!maybe_vertex_list.first) {
                   return false;
                 }
-                vertex_data.insert(
-                    {maybe_location.second, maybe_vertex_list.second});
+                vertex_data.insert({maybe_location.second,
+                                    std::move(maybe_vertex_list.second)});
                 token = tokenizer_->PeekNextToken();
                 if (token->GetText() == ",") {
                   tokenizer_->NextToken();
@@ -852,7 +860,7 @@ bool Parser::ParseCommandRunGraphics() {
                         token->GetText() + "'");
                 return false;
               }
-              index_data_buffer_identifier = token->GetText();
+              index_data_buffer_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordVertexCount,
@@ -910,7 +918,7 @@ bool Parser::ParseCommandRunGraphics() {
                   return false;
                 }
                 framebuffer_attachments.insert(
-                    {maybe_location.second, token->GetText()});
+                    {maybe_location.second, std::move(token)});
                 token = tokenizer_->PeekNextToken();
                 if (token->GetText() == ",") {
                   tokenizer_->NextToken();
@@ -927,9 +935,9 @@ bool Parser::ParseCommandRunGraphics() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandRunGraphics>(
-      std::move(start_token), program_identifier, vertex_data,
-      index_data_buffer_identifier, vertex_count, topology,
-      framebuffer_attachments));
+      std::move(start_token), std::move(program_identifier),
+      std::move(vertex_data), std::move(index_data_buffer_identifier),
+      vertex_count, topology, std::move(framebuffer_attachments)));
   return true;
 }
 
@@ -1015,7 +1023,7 @@ bool Parser::ParseCommandDeclareShader() {
 
 bool Parser::ParseCommandDumpRenderbuffer() {
   auto start_token = tokenizer_->NextToken();
-  std::string renderbuffer_identifier;
+  std::unique_ptr<Token> renderbuffer_identifier;
   std::string filename;
   if (!ParseParameters(
           {{Token::Type::kKeywordRenderbuffer,
@@ -1028,7 +1036,7 @@ bool Parser::ParseCommandDumpRenderbuffer() {
                         token->GetText() + "'");
                 return false;
               }
-              renderbuffer_identifier = token->GetText();
+              renderbuffer_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordFile, [this, &filename]() -> bool {
@@ -1047,7 +1055,7 @@ bool Parser::ParseCommandDumpRenderbuffer() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandDumpRenderbuffer>(
-      std::move(start_token), renderbuffer_identifier, filename));
+      std::move(start_token), std::move(renderbuffer_identifier), filename));
   return true;
 }
 
@@ -1160,7 +1168,7 @@ bool Parser::ParseCommandSetTextureOrSamplerParameter() {
 
 bool Parser::ParseCommandSetUniform() {
   auto start_token = tokenizer_->NextToken();
-  std::string program_identifier;
+  std::unique_ptr<Token> program_identifier;
   size_t location;
   UniformValue::ElementType type;
   std::pair<bool, size_t> maybe_array_size;
@@ -1177,7 +1185,7 @@ bool Parser::ParseCommandSetUniform() {
                                                token->GetText() + "'");
                 return false;
               }
-              program_identifier = token->GetText();
+              program_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordLocation,
@@ -1272,9 +1280,9 @@ bool Parser::ParseCommandSetUniform() {
   if (!maybe_uniform_value.first) {
     return false;
   }
-  parsed_commands_.push_back(
-      MakeUnique<CommandSetUniform>(std::move(start_token), program_identifier,
-                                    location, maybe_uniform_value.second));
+  parsed_commands_.push_back(MakeUnique<CommandSetUniform>(
+      std::move(start_token), std::move(program_identifier), location,
+      maybe_uniform_value.second));
   return true;
 }
 
@@ -1386,7 +1394,7 @@ bool Parser::ParseParameters(
 }
 
 std::pair<bool, VertexAttributeInfo> Parser::ParseVertexAttributeInfo() {
-  std::string buffer_identifier;
+  std::unique_ptr<Token> buffer_identifier;
   size_t offset_bytes;
   size_t stride_bytes;
   size_t dimension;
@@ -1401,7 +1409,7 @@ std::pair<bool, VertexAttributeInfo> Parser::ParseVertexAttributeInfo() {
                         token->GetText() + "'");
                 return false;
               }
-              buffer_identifier = token->GetText();
+              buffer_identifier = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordOffsetBytes,
@@ -1430,9 +1438,9 @@ std::pair<bool, VertexAttributeInfo> Parser::ParseVertexAttributeInfo() {
               dimension = maybe_dimension.second;
               return true;
             }}})) {
-    return {false, VertexAttributeInfo("", 0, 0, 0)};
+    return {false, VertexAttributeInfo(nullptr, 0, 0, 0)};
   }
-  return {true, VertexAttributeInfo(buffer_identifier, offset_bytes,
+  return {true, VertexAttributeInfo(std::move(buffer_identifier), offset_bytes,
                                     stride_bytes, dimension)};
 }
 

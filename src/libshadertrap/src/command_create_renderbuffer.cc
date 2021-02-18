@@ -21,8 +21,8 @@
 namespace shadertrap {
 
 CommandCreateRenderbuffer::CommandCreateRenderbuffer(
-    std::unique_ptr<Token> start_token, std::string result_identifier,
-    size_t width, size_t height)
+    std::unique_ptr<Token> start_token,
+    std::unique_ptr<Token> result_identifier, size_t width, size_t height)
     : Command(std::move(start_token)),
       result_identifier_(std::move(result_identifier)),
       width_(width),

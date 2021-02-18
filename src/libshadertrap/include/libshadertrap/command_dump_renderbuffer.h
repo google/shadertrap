@@ -26,19 +26,23 @@ namespace shadertrap {
 class CommandDumpRenderbuffer : public Command {
  public:
   CommandDumpRenderbuffer(std::unique_ptr<Token> start_token,
-                          std::string renderbuffer_identifier,
+                          std::unique_ptr<Token> renderbuffer_identifier,
                           std::string filename);
 
   bool Accept(CommandVisitor* visitor) override;
 
   const std::string& GetRenderbufferIdentifier() const {
-    return renderbuffer_identifier_;
+    return renderbuffer_identifier_->GetText();
+  }
+
+  const Token* GetRenderbufferIdentifierToken() const {
+    return renderbuffer_identifier_.get();
   }
 
   const std::string& GetFilename() const { return filename_; }
 
  private:
-  std::string renderbuffer_identifier_;
+  std::unique_ptr<Token> renderbuffer_identifier_;
   std::string filename_;
 };
 

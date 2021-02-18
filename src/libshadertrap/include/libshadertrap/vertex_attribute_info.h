@@ -16,14 +16,26 @@
 #define LIBSHADERTRAP_VERTEX_ATTRIBUTE_INFO_H
 
 #include <cstddef>
+#include <memory>
 #include <string>
+
+#include "libshadertrap/token.h"
+
+namespace shadertrap {
 
 class VertexAttributeInfo {
  public:
-  VertexAttributeInfo(std::string buffer_identifier, size_t offset_bytes,
-                      size_t stride_bytes, size_t dimension);
+  VertexAttributeInfo(std::unique_ptr<Token> buffer_identifier,
+                      size_t offset_bytes, size_t stride_bytes,
+                      size_t dimension);
 
-  const std::string& GetBufferIdentifier() const { return buffer_identifier_; }
+  const std::string& GetBufferIdentifier() const {
+    return buffer_identifier_->GetText();
+  }
+
+  const Token* GetBufferIdentifierToken() const {
+    return buffer_identifier_.get();
+  }
 
   size_t GetOffsetBytes() const { return offset_bytes_; }
 
@@ -32,10 +44,12 @@ class VertexAttributeInfo {
   size_t GetDimension() const { return dimension_; }
 
  private:
-  std::string buffer_identifier_;
+  std::unique_ptr<Token> buffer_identifier_;
   size_t offset_bytes_;
   size_t stride_bytes_;
   size_t dimension_;
 };
+
+}  // namespace shadertrap
 
 #endif  // LIBSHADERTRAP_VERTEX_ATTRIBUTE_INFO_H
