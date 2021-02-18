@@ -18,7 +18,7 @@
 #include <cctype>
 #include <cstddef>
 #include <initializer_list>
-#include <type_traits>
+#include <type_traits>  // IWYU pragma: keep
 #include <utility>
 
 #include "libshadertrap/make_unique.h"
