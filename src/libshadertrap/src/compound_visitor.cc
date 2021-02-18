@@ -105,9 +105,14 @@ bool CompoundVisitor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
   return ApplyVisitors(run_graphics);
 }
 
-bool CompoundVisitor::VisitSetSamplerOrTextureParameter(
-    CommandSetSamplerOrTextureParameter* set_sampler_or_texture_parameter) {
-  return ApplyVisitors(set_sampler_or_texture_parameter);
+bool CompoundVisitor::VisitSetSamplerParameter(
+    CommandSetSamplerParameter* set_sampler_parameter) {
+  return ApplyVisitors(set_sampler_parameter);
+}
+
+bool CompoundVisitor::VisitSetTextureParameter(
+    CommandSetTextureParameter* set_texture_parameter) {
+  return ApplyVisitors(set_texture_parameter);
 }
 
 bool CompoundVisitor::VisitSetUniform(CommandSetUniform* set_uniform) {

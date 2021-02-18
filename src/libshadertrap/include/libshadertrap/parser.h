@@ -93,7 +93,9 @@ class Parser {
 
   bool ParseCommandRunGraphics();
 
-  bool ParseCommandSetTextureOrSamplerParameter();
+  bool ParseCommandSetSamplerParameter();
+
+  bool ParseCommandSetTextureParameter();
 
   bool ParseCommandSetUniform();
 

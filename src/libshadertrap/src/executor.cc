@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "libshadertrap/helpers.h"
+#include "libshadertrap/texture_parameter.h"
 #include "libshadertrap/token.h"
 #include "libshadertrap/uniform_value.h"
 #include "libshadertrap/vertex_attribute_info.h"
@@ -564,44 +565,63 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
   return true;
 }
 
-bool Executor::VisitSetSamplerOrTextureParameter(
-    CommandSetSamplerOrTextureParameter* set_sampler_or_texture_parameter) {
+bool Executor::VisitSetSamplerParameter(
+    CommandSetSamplerParameter* set_sampler_parameter) {
   GLenum parameter = GL_NONE;
-  switch (set_sampler_or_texture_parameter->GetParameter()) {
-    case CommandSetSamplerOrTextureParameter::TextureParameter::kMagFilter:
+  switch (set_sampler_parameter->GetParameter()) {
+    case TextureParameter::kMagFilter:
       parameter = GL_TEXTURE_MAG_FILTER;
       break;
-    case CommandSetSamplerOrTextureParameter::TextureParameter::kMinFilter:
+    case TextureParameter::kMinFilter:
       parameter = GL_TEXTURE_MIN_FILTER;
       break;
   }
   GLint parameter_value = GL_NONE;
-  switch (set_sampler_or_texture_parameter->GetParameterValue()) {
-    case CommandSetSamplerOrTextureParameter::TextureParameterValue::kNearest:
+  switch (set_sampler_parameter->GetParameterValue()) {
+    case TextureParameterValue::kNearest:
       parameter_value = GL_NEAREST;
       break;
-    case CommandSetSamplerOrTextureParameter::TextureParameterValue::kLinear:
+    case TextureParameterValue::kLinear:
       parameter_value = GL_LINEAR;
       break;
   }
-  if (created_samplers_.count(
-          set_sampler_or_texture_parameter->GetTargetTextureOrSampler()) > 0) {
-    GL_SAFECALL(
-        glSamplerParameteri,
-        created_samplers_.at(
-            set_sampler_or_texture_parameter->GetTargetTextureOrSampler()),
-        parameter, parameter_value);
-  } else {
-    assert(created_textures_.count(
-               set_sampler_or_texture_parameter->GetTargetTextureOrSampler()) >
-               0 &&
-           "Unknown texture or sampler.");
-    GL_SAFECALL(
-        glBindTexture, GL_TEXTURE_2D,
-        created_textures_.at(
-            set_sampler_or_texture_parameter->GetTargetTextureOrSampler()));
-    GL_SAFECALL(glTexParameteri, GL_TEXTURE_2D, parameter, parameter_value);
+  assert(created_samplers_.count(
+             set_sampler_parameter->GetSamplerIdentifier()) > 0 &&
+         "Unknown sampler.");
+  GL_SAFECALL(
+      glSamplerParameteri,
+      created_samplers_.at(set_sampler_parameter->GetSamplerIdentifier()),
+      parameter, parameter_value);
+  return true;
+}
+
+bool Executor::VisitSetTextureParameter(
+    CommandSetTextureParameter* set_texture_parameter) {
+  GLenum parameter = GL_NONE;
+  switch (set_texture_parameter->GetParameter()) {
+    case TextureParameter::kMagFilter:
+      parameter = GL_TEXTURE_MAG_FILTER;
+      break;
+    case TextureParameter::kMinFilter:
+      parameter = GL_TEXTURE_MIN_FILTER;
+      break;
   }
+  GLint parameter_value = GL_NONE;
+  switch (set_texture_parameter->GetParameterValue()) {
+    case TextureParameterValue::kNearest:
+      parameter_value = GL_NEAREST;
+      break;
+    case TextureParameterValue::kLinear:
+      parameter_value = GL_LINEAR;
+      break;
+  }
+  assert(created_textures_.count(
+             set_texture_parameter->GetTextureIdentifier()) > 0 &&
+         "Unknown texture.");
+  GL_SAFECALL(
+      glBindTexture, GL_TEXTURE_2D,
+      created_textures_.at(set_texture_parameter->GetTextureIdentifier()));
+  GL_SAFECALL(glTexParameteri, GL_TEXTURE_2D, parameter, parameter_value);
   return true;
 }
 

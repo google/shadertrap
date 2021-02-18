@@ -1,4 +1,4 @@
-// Copyright 2020 The ShaderTrap Project Authors
+// Copyright 2021 The ShaderTrap Project Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,32 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSHADERTRAP_COMMAND_SET_SAMPLER_OR_TEXTURE_PARAMETER_H
-#define LIBSHADERTRAP_COMMAND_SET_SAMPLER_OR_TEXTURE_PARAMETER_H
+#ifndef LIBSHADERTRAP_COMMAND_SET_SAMPLER_PARAMETER_H
+#define LIBSHADERTRAP_COMMAND_SET_SAMPLER_PARAMETER_H
 
 #include <memory>
 #include <string>
 
 #include "libshadertrap/command.h"
+#include "libshadertrap/texture_parameter.h"
 #include "libshadertrap/token.h"
 
 namespace shadertrap {
 
-class CommandSetSamplerOrTextureParameter : public Command {
+class CommandSetSamplerParameter : public Command {
  public:
-  enum class TextureParameter { kMagFilter, kMinFilter };
-
-  enum class TextureParameterValue { kNearest, kLinear };
-
-  CommandSetSamplerOrTextureParameter(std::unique_ptr<Token> start_token,
-                                      std::string target_texture_or_sampler,
-                                      TextureParameter parameter,
-                                      TextureParameterValue parameter_value);
+  CommandSetSamplerParameter(std::unique_ptr<Token> start_token,
+                             std::unique_ptr<Token> sampler_identifier,
+                             TextureParameter parameter,
+                             TextureParameterValue parameter_value);
 
   bool Accept(CommandVisitor* visitor) override;
 
-  const std::string& GetTargetTextureOrSampler() const {
-    return target_texture_or_sampler_;
+  const std::string& GetSamplerIdentifier() const {
+    return sampler_identifier_->GetText();
+  }
+
+  const Token* GetSamplerIdentifierToken() const {
+    return sampler_identifier_.get();
   }
 
   TextureParameter GetParameter() const { return parameter_; }
@@ -45,11 +46,11 @@ class CommandSetSamplerOrTextureParameter : public Command {
   TextureParameterValue GetParameterValue() const { return parameter_value_; }
 
  private:
-  std::string target_texture_or_sampler_;
+  std::unique_ptr<Token> sampler_identifier_;
   TextureParameter parameter_;
   TextureParameterValue parameter_value_;
 };
 
 }  // namespace shadertrap
 
-#endif  // LIBSHADERTRAP_COMMAND_SET_SAMPLER_OR_TEXTURE_PARAMETER_H
+#endif  // LIBSHADERTRAP_COMMAND_SET_SAMPLER_PARAMETER_H
