@@ -656,11 +656,17 @@ bool Checker::VisitRunGraphics(CommandRunGraphics* command_run_graphics) {
   return !errors_found;
 }
 
-bool Checker::VisitSetSamplerOrTextureParameter(
-    CommandSetSamplerOrTextureParameter*
-        command_set_sampler_or_texture_parameter) {
-  // TODO(afd): The sampler or texture must exist.
-  (void)command_set_sampler_or_texture_parameter;
+bool Checker::VisitSetSamplerParameter(
+    CommandSetSamplerParameter* command_set_sampler_parameter) {
+  // TODO(afd): The sampler must exist.
+  (void)command_set_sampler_parameter;
+  return true;
+}
+
+bool Checker::VisitSetTextureParameter(
+    CommandSetTextureParameter* command_set_texture_parameter) {
+  // TODO(afd): The texture must exist.
+  (void)command_set_texture_parameter;
   return true;
 }
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "libshadertrap/command_set_sampler_or_texture_parameter.h"
+#include "libshadertrap/command_set_sampler_parameter.h"
 
 #include <utility>
 
@@ -20,16 +20,17 @@
 
 namespace shadertrap {
 
-CommandSetSamplerOrTextureParameter::CommandSetSamplerOrTextureParameter(
-    std::unique_ptr<Token> start_token, std::string target_texture_or_sampler,
-    TextureParameter parameter, TextureParameterValue parameter_value)
+CommandSetSamplerParameter::CommandSetSamplerParameter(
+    std::unique_ptr<Token> start_token,
+    std::unique_ptr<Token> sampler_identifier, TextureParameter parameter,
+    TextureParameterValue parameter_value)
     : Command(std::move(start_token)),
-      target_texture_or_sampler_(std::move(target_texture_or_sampler)),
+      sampler_identifier_(std::move(sampler_identifier)),
       parameter_(parameter),
       parameter_value_(parameter_value) {}
 
-bool CommandSetSamplerOrTextureParameter::Accept(CommandVisitor* visitor) {
-  return visitor->VisitSetSamplerOrTextureParameter(this);
+bool CommandSetSamplerParameter::Accept(CommandVisitor* visitor) {
+  return visitor->VisitSetSamplerParameter(this);
 }
 
 }  // namespace shadertrap

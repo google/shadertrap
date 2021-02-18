@@ -37,7 +37,8 @@
 #include "libshadertrap/command_dump_renderbuffer.h"
 #include "libshadertrap/command_run_compute.h"
 #include "libshadertrap/command_run_graphics.h"
-#include "libshadertrap/command_set_sampler_or_texture_parameter.h"
+#include "libshadertrap/command_set_sampler_parameter.h"
+#include "libshadertrap/command_set_texture_parameter.h"
 #include "libshadertrap/command_set_uniform.h"
 #include "libshadertrap/command_visitor.h"
 #include "libshadertrap/message_consumer.h"
@@ -88,9 +89,11 @@ class Executor : public CommandVisitor {
 
   bool VisitRunGraphics(CommandRunGraphics* run_graphics) override;
 
-  bool VisitSetSamplerOrTextureParameter(
-      CommandSetSamplerOrTextureParameter* set_sampler_or_texture_parameter)
-      override;
+  bool VisitSetSamplerParameter(
+      CommandSetSamplerParameter* set_sampler_parameter) override;
+
+  bool VisitSetTextureParameter(
+      CommandSetTextureParameter* set_texture_parameter) override;
 
   bool VisitSetUniform(CommandSetUniform* set_uniform) override;
 

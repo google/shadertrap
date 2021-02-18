@@ -38,9 +38,11 @@
 #include "libshadertrap/command_dump_renderbuffer.h"
 #include "libshadertrap/command_run_compute.h"
 #include "libshadertrap/command_run_graphics.h"
-#include "libshadertrap/command_set_sampler_or_texture_parameter.h"
+#include "libshadertrap/command_set_sampler_parameter.h"
+#include "libshadertrap/command_set_texture_parameter.h"
 #include "libshadertrap/command_set_uniform.h"
 #include "libshadertrap/make_unique.h"
+#include "libshadertrap/texture_parameter.h"
 #include "libshadertrap/token.h"
 #include "libshadertrap/tokenizer.h"
 
@@ -99,8 +101,9 @@ bool Parser::ParseCommand() {
     case Token::Type::kKeywordRunGraphics:
       return ParseCommandRunGraphics();
     case Token::Type::kKeywordSetSamplerParameter:
+      return ParseCommandSetSamplerParameter();
     case Token::Type::kKeywordSetTextureParameter:
-      return ParseCommandSetTextureOrSamplerParameter();
+      return ParseCommandSetTextureParameter();
     case Token::Type::kKeywordSetUniform:
       return ParseCommandSetUniform();
     default:
@@ -1059,110 +1062,127 @@ bool Parser::ParseCommandDumpRenderbuffer() {
   return true;
 }
 
-bool Parser::ParseCommandSetTextureOrSamplerParameter() {
+bool Parser::ParseCommandSetSamplerParameter() {
   auto start_token = tokenizer_->NextToken();
-  const bool is_set_texture =
-      start_token->GetType() == Token::Type::kKeywordSetTextureParameter;
-  bool got_target_identifier = false;
-  std::string target_identifier;
-  bool got_parameter = false;
-  CommandSetSamplerOrTextureParameter::TextureParameter parameter =
-      CommandSetSamplerOrTextureParameter::TextureParameter::kMagFilter;
-  CommandSetSamplerOrTextureParameter::TextureParameterValue parameter_value =
-      CommandSetSamplerOrTextureParameter::TextureParameterValue::kNearest;
+  std::unique_ptr<Token> sampler_identifier;
+  TextureParameter parameter;
+  TextureParameterValue parameter_value;
 
-  while (true) {
-    auto token = tokenizer_->PeekNextToken();
-    if (token->GetType() == Token::Type::kKeywordSampler ||
-        token->GetType() == Token::Type::kKeywordTexture) {
-      token = tokenizer_->NextToken();
-      Token::Type expected_token = is_set_texture
-                                       ? Token::Type::kKeywordTexture
-                                       : Token::Type::kKeywordSampler;
-      if (token->GetType() != expected_token) {
-        message_consumer_->Message(
-            MessageConsumer::Severity::kError, token.get(),
-            "The 'SET_" + Tokenizer::KeywordToString(expected_token) +
-                "_PARAMETER' command takes a '" +
-                Tokenizer::KeywordToString(expected_token) +
-                "' argument, not a '" + token->GetText() + "' argument");
-        return false;
-      }
-      if (got_target_identifier) {
-        message_consumer_->Message(
-            MessageConsumer::Severity::kError, token.get(),
-            "Multiple '" + Tokenizer::KeywordToString(expected_token) +
-                "' parmaters provided, already got '" + target_identifier +
-                "'");
-        return false;
-      }
-      token = tokenizer_->NextToken();
-      if (!token->IsIdentifier()) {
-        std::stringstream stringstream;
-        stringstream << "Expected identifier for target "
-                     << (expected_token == Token::Type::kKeywordTexture
-                             ? "texture"
-                             : "sampler")
-                     << ", got '" << token->GetText() << "'";
-        message_consumer_->Message(MessageConsumer::Severity::kError,
-                                   token.get(), stringstream.str());
-        return false;
-      }
-      target_identifier = token->GetText();
-      got_target_identifier = true;
-    } else if (token->GetType() == Token::Type::kKeywordTextureMagFilter ||
-               token->GetType() == Token::Type::kKeywordTextureMinFilter) {
-      if (got_parameter) {
-        std::stringstream stringstream;
-        stringstream << "Multiple parameters specified for "
-                     << (is_set_texture ? "texture" : "sampler");
-        message_consumer_->Message(MessageConsumer::Severity::kError,
-                                   token.get(), stringstream.str());
-        return false;
-      }
-      got_parameter = true;
-      auto parameter_name = tokenizer_->NextToken();
-      token = tokenizer_->NextToken();
-      parameter = parameter_name->GetText() == "TEXTURE_MAG_FILTER"
-                      ? CommandSetSamplerOrTextureParameter::TextureParameter::
-                            kMagFilter
-                      : CommandSetSamplerOrTextureParameter::TextureParameter::
-                            kMinFilter;
-      if (token->GetText() == "LINEAR") {
-        parameter_value =
-            CommandSetSamplerOrTextureParameter::TextureParameterValue::kLinear;
-      } else if (token->GetText() == "NEAREST") {
-        parameter_value = CommandSetSamplerOrTextureParameter::
-            TextureParameterValue::kNearest;
-      } else {
-        message_consumer_->Message(
-            MessageConsumer::Severity::kError, token.get(),
-            "Expected value for the '" + parameter_name->GetText() +
-                "' parameter, got '" + token->GetText());
-        return false;
-      }
-    } else {
-      break;
-    }
-  }
-  if (!got_target_identifier) {
-    std::stringstream stringstream;
-    stringstream << "No target " << (is_set_texture ? "texture" : "sampler")
-                 << " was specified";
-    message_consumer_->Message(MessageConsumer::Severity::kError,
-                               start_token.get(), stringstream.str());
+  if (!ParseParameters(
+          {{Token::Type::kKeywordSampler,
+            [this, &sampler_identifier]() -> bool {
+              auto token = tokenizer_->NextToken();
+              if (!token->IsIdentifier()) {
+                message_consumer_->Message(
+                    MessageConsumer::Severity::kError, token.get(),
+                    "Expected identifier for target sampler, got '" +
+                        token->GetText() + "'");
+                return false;
+              }
+              sampler_identifier = std::move(token);
+              return true;
+            }},
+           {Token::Type::kKeywordParameter,
+            [this, &parameter]() -> bool {
+              auto token = tokenizer_->NextToken();
+              switch (token->GetType()) {
+                case Token::Type::kKeywordTextureMagFilter:
+                  parameter = TextureParameter::kMagFilter;
+                  return true;
+                case Token::Type::kKeywordTextureMinFilter:
+                  parameter = TextureParameter::kMinFilter;
+                  return true;
+                default:
+                  message_consumer_->Message(
+                      MessageConsumer::Severity::kError, token.get(),
+                      "Unknown sampler parameter '" + token->GetText() + "'");
+                  return false;
+              }
+            }},
+           {Token::Type::kKeywordValue, [this, &parameter_value]() -> bool {
+              auto token = tokenizer_->NextToken();
+              switch (token->GetType()) {
+                case Token::Type::kKeywordLinear:
+                  parameter_value = TextureParameterValue::kLinear;
+                  return true;
+                case Token::Type::kKeywordNearest:
+                  parameter_value = TextureParameterValue::kNearest;
+                  return true;
+                default:
+                  message_consumer_->Message(
+                      MessageConsumer::Severity::kError, token.get(),
+                      "Unknown sampler parameter value '" + token->GetText() +
+                          "'");
+                  return false;
+              }
+            }}})) {
     return false;
   }
-  if (!got_parameter) {
-    std::stringstream stringstream;
-    stringstream << "No " << (is_set_texture ? "texture" : "sampler")
-                 << " parameter was specified";
-    message_consumer_->Message(MessageConsumer::Severity::kError,
-                               start_token.get(), stringstream.str());
+  parsed_commands_.push_back(MakeUnique<CommandSetSamplerParameter>(
+      std::move(start_token), std::move(sampler_identifier), parameter,
+      parameter_value));
+  return true;
+}
+
+bool Parser::ParseCommandSetTextureParameter() {
+  auto start_token = tokenizer_->NextToken();
+  std::unique_ptr<Token> texture_identifier;
+  TextureParameter parameter;
+  TextureParameterValue parameter_value;
+
+  if (!ParseParameters(
+          {{Token::Type::kKeywordTexture,
+            [this, &texture_identifier]() -> bool {
+              auto token = tokenizer_->NextToken();
+              if (!token->IsIdentifier()) {
+                message_consumer_->Message(
+                    MessageConsumer::Severity::kError, token.get(),
+                    "Expected identifier for target texture, got '" +
+                        token->GetText() + "'");
+                return false;
+              }
+              texture_identifier = std::move(token);
+              return true;
+            }},
+           {Token::Type::kKeywordParameter,
+            [this, &parameter]() -> bool {
+              auto token = tokenizer_->NextToken();
+              switch (token->GetType()) {
+                case Token::Type::kKeywordTextureMagFilter:
+                  parameter = TextureParameter::kMagFilter;
+                  return true;
+                case Token::Type::kKeywordTextureMinFilter:
+                  parameter = TextureParameter::kMinFilter;
+                  return true;
+                default:
+                  message_consumer_->Message(
+                      MessageConsumer::Severity::kError, token.get(),
+                      "Unknown texture parameter '" + token->GetText() + "'");
+                  return false;
+              }
+            }},
+           {Token::Type::kKeywordValue, [this, &parameter_value]() -> bool {
+              auto token = tokenizer_->NextToken();
+              switch (token->GetType()) {
+                case Token::Type::kKeywordLinear:
+                  parameter_value = TextureParameterValue::kLinear;
+                  return true;
+                case Token::Type::kKeywordNearest:
+                  parameter_value = TextureParameterValue::kNearest;
+                  return true;
+                default:
+                  message_consumer_->Message(
+                      MessageConsumer::Severity::kError, token.get(),
+                      "Unknown texture parameter value '" + token->GetText() +
+                          "'");
+                  return false;
+              }
+            }}})) {
     return false;
   }
-  parsed_commands_.push_back(MakeUnique<CommandSetSamplerOrTextureParameter>(
-      std::move(start_token), target_identifier, parameter, parameter_value));
+  parsed_commands_.push_back(MakeUnique<CommandSetTextureParameter>(
+      std::move(start_token), std::move(texture_identifier), parameter,
+      parameter_value));
   return true;
 }
 

@@ -34,7 +34,8 @@ add_library(libshadertrap STATIC
         include/libshadertrap/command_dump_renderbuffer.h
         include/libshadertrap/command_run_compute.h
         include/libshadertrap/command_run_graphics.h
-        include/libshadertrap/command_set_sampler_or_texture_parameter.h
+        include/libshadertrap/command_set_sampler_parameter.h
+        include/libshadertrap/command_set_texture_parameter.h
         include/libshadertrap/command_set_uniform.h
         include/libshadertrap/command_visitor.h
         include/libshadertrap/compound_visitor.h
@@ -47,6 +48,7 @@ add_library(libshadertrap STATIC
         include/libshadertrap/token.h
         include/libshadertrap/uniform_value.h
         include/libshadertrap/vertex_attribute_info.h
+        include/libshadertrap/texture_parameter.h
         include_private/include/libshadertrap/tokenizer.h
 
         src/checker.cc
@@ -68,7 +70,8 @@ add_library(libshadertrap STATIC
         src/command_dump_renderbuffer.cc
         src/command_run_compute.cc
         src/command_run_graphics.cc
-        src/command_set_sampler_or_texture_parameter.cc
+        src/command_set_sampler_parameter.cc
+        src/command_set_texture_parameter.cc
         src/command_set_uniform.cc
         src/command_visitor.cc
         src/compound_visitor.cc
@@ -81,7 +84,7 @@ add_library(libshadertrap STATIC
         src/tokenizer.cc
         src/uniform_value.cc
         src/vertex_attribute_info.cc
-        include/libshadertrap/glslang.h)
+        include/libshadertrap/glslang.h include/libshadertrap/texture_parameter.h)
 
 target_include_directories(libshadertrap PUBLIC include PRIVATE include_private/include)
 target_link_libraries(libshadertrap PRIVATE glad glslang lodepng)
