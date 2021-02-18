@@ -38,9 +38,7 @@ class CommandDeclareShader : public Command {
     return result_identifier_->GetText();
   }
 
-  const Token* GetResultIdentifierToken() const {
-    return result_identifier_.get();
-  }
+  const Token& GetResultIdentifierToken() const { return *result_identifier_; }
 
   const std::string& GetShaderText() const { return shader_text_; }
 

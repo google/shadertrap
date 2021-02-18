@@ -144,16 +144,16 @@ Checker::Checker(MessageConsumer* message_consumer)
 bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
   const auto& operand1 = command_assert_equal->GetBufferIdentifier1();
   const auto& operand2 = command_assert_equal->GetBufferIdentifier2();
-  const auto* operand1_token =
+  const auto& operand1_token =
       command_assert_equal->GetBufferIdentifier1Token();
-  const auto* operand2_token =
+  const auto& operand2_token =
       command_assert_equal->GetBufferIdentifier2Token();
 
   if (created_buffers_.count(operand1) != 0) {
     if (created_buffers_.count(operand2) == 0) {
       message_consumer_->Message(
-          MessageConsumer::Severity::kError, operand2_token,
-          "'" + operand1 + "' at " + operand1_token->GetLocationString() +
+          MessageConsumer::Severity::kError, &operand2_token,
+          "'" + operand1 + "' at " + operand1_token.GetLocationString() +
               " is a buffer, so '" + operand2 + "' must also be a buffer");
       return false;
     }
@@ -161,28 +161,28 @@ bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
     auto* buffer2 = created_buffers_.at(operand2);
     if (buffer1->GetSizeBytes() != buffer2->GetSizeBytes()) {
       message_consumer_->Message(
-          MessageConsumer::Severity::kError, operand2_token,
+          MessageConsumer::Severity::kError, &operand2_token,
           "size (in bytes) " + std::to_string(buffer2->GetSizeBytes()) +
               " of '" + operand2 + "' does not match size (in bytes) " +
               std::to_string(buffer1->GetSizeBytes()) + " of '" + operand1 +
-              "' at " + operand1_token->GetLocationString());
+              "' at " + operand1_token.GetLocationString());
       return false;
     }
   } else if (created_renderbuffers_.count(operand1) != 0) {
     if (created_renderbuffers_.count(operand2) == 0) {
       message_consumer_->Message(
-          MessageConsumer::Severity::kError, operand2_token,
-          "'" + operand1 + "' at " + operand1_token->GetLocationString() +
+          MessageConsumer::Severity::kError, &operand2_token,
+          "'" + operand1 + "' at " + operand1_token.GetLocationString() +
               " is a renderbuffer, so '" + operand2 +
               "' must also be a renderbuffer");
       return false;
     }
-    if (!CheckRenderbufferDimensionsMatch(*operand1_token, *operand2_token)) {
+    if (!CheckRenderbufferDimensionsMatch(operand1_token, operand2_token)) {
       return false;
     }
   } else {
     message_consumer_->Message(
-        MessageConsumer::Severity::kError, operand1_token,
+        MessageConsumer::Severity::kError, &operand1_token,
         "'" + operand1 + "' must be a buffer or renderbuffer");
     return false;
   }
@@ -194,7 +194,7 @@ bool Checker::VisitAssertPixels(CommandAssertPixels* command_assert_pixels) {
           command_assert_pixels->GetRenderbufferIdentifier()) == 0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_assert_pixels->GetRenderbufferIdentifierToken(),
+        &command_assert_pixels->GetRenderbufferIdentifierToken(),
         "'" + command_assert_pixels->GetRenderbufferIdentifier() +
             "' is not a renderbuffer");
     return false;
@@ -202,14 +202,15 @@ bool Checker::VisitAssertPixels(CommandAssertPixels* command_assert_pixels) {
   bool found_errors = false;
   if (command_assert_pixels->GetRectangleWidth() == 0) {
     message_consumer_->Message(MessageConsumer::Severity::kError,
-                               command_assert_pixels->GetRectangleWidthToken(),
+                               &command_assert_pixels->GetRectangleWidthToken(),
                                "width of rectangle must be positive");
     found_errors = true;
   }
   if (command_assert_pixels->GetRectangleHeight() == 0) {
-    message_consumer_->Message(MessageConsumer::Severity::kError,
-                               command_assert_pixels->GetRectangleHeightToken(),
-                               "height of rectangle must be positive");
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        &command_assert_pixels->GetRectangleHeightToken(),
+        "height of rectangle must be positive");
     found_errors = true;
   }
   const auto* renderbuffer = created_renderbuffers_.at(
@@ -219,7 +220,7 @@ bool Checker::VisitAssertPixels(CommandAssertPixels* command_assert_pixels) {
   if (width_plus_x > renderbuffer->GetWidth()) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_assert_pixels->GetRectangleWidthToken(),
+        &command_assert_pixels->GetRectangleWidthToken(),
         "rectangle extends to x-coordinate " + std::to_string(width_plus_x) +
             ", which exceeds width " +
             std::to_string(renderbuffer->GetWidth()) + " of '" +
@@ -231,7 +232,7 @@ bool Checker::VisitAssertPixels(CommandAssertPixels* command_assert_pixels) {
   if (height_plus_y > renderbuffer->GetHeight()) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_assert_pixels->GetRectangleHeightToken(),
+        &command_assert_pixels->GetRectangleHeightToken(),
         "rectangle extends to y-coordinate " + std::to_string(height_plus_y) +
             ", which exceeds height " +
             std::to_string(renderbuffer->GetHeight()) + " of '" +
@@ -248,7 +249,7 @@ bool Checker::VisitAssertSimilarEmdHistogram(
           command_assert_similar_emd_histogram->GetBufferIdentifier1()) == 0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_assert_similar_emd_histogram->GetBufferIdentifier1Token(),
+        &command_assert_similar_emd_histogram->GetBufferIdentifier1Token(),
         "'" + command_assert_similar_emd_histogram->GetBufferIdentifier1() +
             "' must be a renderbuffer");
     both_renderbuffers_present = false;
@@ -257,7 +258,7 @@ bool Checker::VisitAssertSimilarEmdHistogram(
           command_assert_similar_emd_histogram->GetBufferIdentifier2()) == 0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_assert_similar_emd_histogram->GetBufferIdentifier2Token(),
+        &command_assert_similar_emd_histogram->GetBufferIdentifier2Token(),
         "'" + command_assert_similar_emd_histogram->GetBufferIdentifier2() +
             "' must be a renderbuffer");
     both_renderbuffers_present = false;
@@ -266,8 +267,8 @@ bool Checker::VisitAssertSimilarEmdHistogram(
     return false;
   }
   return CheckRenderbufferDimensionsMatch(
-      *command_assert_similar_emd_histogram->GetBufferIdentifier1Token(),
-      *command_assert_similar_emd_histogram->GetBufferIdentifier2Token());
+      command_assert_similar_emd_histogram->GetBufferIdentifier1Token(),
+      command_assert_similar_emd_histogram->GetBufferIdentifier2Token());
 }
 
 bool Checker::VisitBindSampler(CommandBindSampler* command_bind_sampler) {
@@ -275,7 +276,7 @@ bool Checker::VisitBindSampler(CommandBindSampler* command_bind_sampler) {
       0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_bind_sampler->GetSamplerIdentifierToken(),
+        &command_bind_sampler->GetSamplerIdentifierToken(),
         "'" + command_bind_sampler->GetSamplerIdentifier() +
             "' must be a sampler");
     return false;
@@ -289,7 +290,7 @@ bool Checker::VisitBindStorageBuffer(
           command_bind_storage_buffer->GetBufferIdentifier()) == 0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_bind_storage_buffer->GetBufferIdentifierToken(),
+        &command_bind_storage_buffer->GetBufferIdentifierToken(),
         "'" + command_bind_storage_buffer->GetBufferIdentifier() +
             "' must be a buffer");
     return false;
@@ -302,7 +303,7 @@ bool Checker::VisitBindTexture(CommandBindTexture* command_bind_texture) {
       0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_bind_texture->GetTextureIdentifierToken(),
+        &command_bind_texture->GetTextureIdentifierToken(),
         "'" + command_bind_texture->GetTextureIdentifier() +
             "' must be a texture");
     return false;
@@ -316,7 +317,7 @@ bool Checker::VisitBindUniformBuffer(
           command_bind_uniform_buffer->GetBufferIdentifier()) == 0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_bind_uniform_buffer->GetBufferIdentifierToken(),
+        &command_bind_uniform_buffer->GetBufferIdentifierToken(),
         "'" + command_bind_uniform_buffer->GetBufferIdentifier() +
             "' must be a buffer");
     return false;
@@ -331,7 +332,7 @@ bool Checker::VisitCompileShader(CommandCompileShader* compile_shader) {
   if (declared_shaders_.count(compile_shader->GetShaderIdentifier()) == 0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        compile_shader->GetShaderIdentifierToken(),
+        &compile_shader->GetShaderIdentifierToken(),
         "Identifier '" + compile_shader->GetShaderIdentifier() +
             "' does not correspond to a declared shader");
     return false;
@@ -386,51 +387,51 @@ bool Checker::VisitCreateProgram(CommandCreateProgram* create_program) {
   const Token* compiled_comp_shader = nullptr;
   for (size_t index = 0; index < create_program->GetNumCompiledShaders();
        index++) {
-    const auto* compiled_shader_identifier =
+    const auto& compiled_shader_identifier =
         create_program->GetCompiledShaderIdentifierToken(index);
-    if (compiled_shaders_.count(compiled_shader_identifier->GetText()) == 0) {
+    if (compiled_shaders_.count(compiled_shader_identifier.GetText()) == 0) {
       message_consumer_->Message(
-          MessageConsumer::Severity::kError, compiled_shader_identifier,
-          "Identifier '" + compiled_shader_identifier->GetText() +
+          MessageConsumer::Severity::kError, &compiled_shader_identifier,
+          "Identifier '" + compiled_shader_identifier.GetText() +
               "' does not correspond to a compiled shader");
       result = false;
     } else {
       auto shader_kind =
           declared_shaders_
-              .at(compiled_shaders_.at(compiled_shader_identifier->GetText())
+              .at(compiled_shaders_.at(compiled_shader_identifier.GetText())
                       ->GetShaderIdentifier())
               ->GetKind();
       switch (shader_kind) {
         case CommandDeclareShader::Kind::FRAGMENT:
           if (compiled_frag_shader != nullptr) {
             message_consumer_->Message(
-                MessageConsumer::Severity::kError, compiled_shader_identifier,
+                MessageConsumer::Severity::kError, &compiled_shader_identifier,
                 "Multiple fragment shaders provided to 'CREATE_PROGRAM'; "
                 "already found '" +
                     compiled_frag_shader->GetText() + "' at " +
                     compiled_frag_shader->GetLocationString());
             result = false;
           } else {
-            compiled_frag_shader = compiled_shader_identifier;
+            compiled_frag_shader = &compiled_shader_identifier;
           }
           break;
         case CommandDeclareShader::Kind::VERTEX:
           if (compiled_vert_shader != nullptr) {
             message_consumer_->Message(
-                MessageConsumer::Severity::kError, compiled_shader_identifier,
+                MessageConsumer::Severity::kError, &compiled_shader_identifier,
                 "Multiple vertex shaders provided to 'CREATE_PROGRAM'; already "
                 "found '" +
                     compiled_vert_shader->GetText() + "' at " +
                     compiled_vert_shader->GetLocationString());
             result = false;
           } else {
-            compiled_vert_shader = compiled_shader_identifier;
+            compiled_vert_shader = &compiled_shader_identifier;
           }
           break;
         case CommandDeclareShader::Kind::COMPUTE:
           if (compiled_comp_shader != nullptr) {
             message_consumer_->Message(
-                MessageConsumer::Severity::kError, compiled_shader_identifier,
+                MessageConsumer::Severity::kError, &compiled_shader_identifier,
                 "Multiple compute shaders provided to 'CREATE_PROGRAM'; "
                 "already "
                 "found '" +
@@ -438,7 +439,7 @@ bool Checker::VisitCreateProgram(CommandCreateProgram* create_program) {
                     compiled_comp_shader->GetLocationString());
             result = false;
           } else {
-            compiled_comp_shader = compiled_shader_identifier;
+            compiled_comp_shader = &compiled_shader_identifier;
           }
           break;
       }
@@ -466,13 +467,13 @@ bool Checker::VisitCreateProgram(CommandCreateProgram* create_program) {
   } else {
     if (compiled_frag_shader == nullptr) {
       message_consumer_->Message(
-          MessageConsumer::Severity::kError, create_program->GetStartToken(),
+          MessageConsumer::Severity::kError, &create_program->GetStartToken(),
           "No fragment shader provided for 'CREATE_PROGRAM' command");
       result = false;
     }
     if (compiled_vert_shader == nullptr) {
       message_consumer_->Message(
-          MessageConsumer::Severity::kError, create_program->GetStartToken(),
+          MessageConsumer::Severity::kError, &create_program->GetStartToken(),
           "No vertex shader provided for 'CREATE_PROGRAM' command");
       result = false;
     }
@@ -491,7 +492,7 @@ bool Checker::VisitCreateProgram(CommandCreateProgram* create_program) {
   }
   if (!glslang_program->link(EShMsgDefault)) {
     message_consumer_->Message(
-        MessageConsumer::Severity::kError, create_program->GetStartToken(),
+        MessageConsumer::Severity::kError, &create_program->GetStartToken(),
         "Linking of program '" + create_program->GetResultIdentifier() +
             "' using glslang failed. Line numbers in the following output are "
             "offsets from the start of the provided shader text string:\n" +
@@ -500,7 +501,7 @@ bool Checker::VisitCreateProgram(CommandCreateProgram* create_program) {
   }
   if (!glslang_program->buildReflection()) {
     message_consumer_->Message(
-        MessageConsumer::Severity::kError, create_program->GetStartToken(),
+        MessageConsumer::Severity::kError, &create_program->GetStartToken(),
         "Building reflection data for program '" +
             create_program->GetResultIdentifier() +
             "' using glslang failed. Line numbers in the following output are "
@@ -550,7 +551,7 @@ bool Checker::VisitDeclareShader(CommandDeclareShader* declare_shader) {
   if (!glslang_shader->parse(&kDefaultTBuiltInResource, kGlslVersion100, false,
                              EShMsgDefault)) {
     message_consumer_->Message(
-        MessageConsumer::Severity::kError, declare_shader->GetStartToken(),
+        MessageConsumer::Severity::kError, &declare_shader->GetStartToken(),
         "Validation of shader '" + declare_shader->GetResultIdentifier() +
             "' using glslang failed with the following messages:\n" +
             FixLinesInGlslangOutput(std::string(glslang_shader->getInfoLog()),
@@ -570,7 +571,7 @@ bool Checker::VisitDumpRenderbuffer(
           command_dump_renderbuffer->GetRenderbufferIdentifier()) == 0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_dump_renderbuffer->GetRenderbufferIdentifierToken(),
+        &command_dump_renderbuffer->GetRenderbufferIdentifierToken(),
         "'" + command_dump_renderbuffer->GetRenderbufferIdentifier() +
             "' must be a renderbuffer");
     return false;
@@ -581,11 +582,11 @@ bool Checker::VisitDumpRenderbuffer(
 bool Checker::VisitRunCompute(CommandRunCompute* command_run_compute) {
   if (created_programs_.count(command_run_compute->GetProgramIdentifier()) ==
       0) {
-    message_consumer_->Message(MessageConsumer::Severity::kError,
-                               command_run_compute->GetProgramIdentifierToken(),
-                               "'" +
-                                   command_run_compute->GetProgramIdentifier() +
-                                   "' must be a program");
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        &command_run_compute->GetProgramIdentifierToken(),
+        "'" + command_run_compute->GetProgramIdentifier() +
+            "' must be a program");
     return false;
   }
   if (created_programs_.at(command_run_compute->GetProgramIdentifier())
@@ -594,7 +595,7 @@ bool Checker::VisitRunCompute(CommandRunCompute* command_run_compute) {
     // exactly one shader then this must be a graphics program.
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_run_compute->GetProgramIdentifierToken(),
+        &command_run_compute->GetProgramIdentifierToken(),
         "'" + command_run_compute->GetProgramIdentifier() +
             "' must be a compute program, not a graphics program");
     return false;
@@ -608,7 +609,7 @@ bool Checker::VisitRunGraphics(CommandRunGraphics* command_run_graphics) {
       0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_run_graphics->GetProgramIdentifierToken(),
+        &command_run_graphics->GetProgramIdentifierToken(),
         "'" + command_run_graphics->GetProgramIdentifier() +
             "' must be a program");
     errors_found = true;
@@ -618,7 +619,7 @@ bool Checker::VisitRunGraphics(CommandRunGraphics* command_run_graphics) {
     // there is not exactly two shaders then this must be a compute program.
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_run_graphics->GetProgramIdentifierToken(),
+        &command_run_graphics->GetProgramIdentifierToken(),
         "'" + command_run_graphics->GetProgramIdentifier() +
             "' must be a graphics program, not a compute program");
     errors_found = true;
@@ -626,7 +627,7 @@ bool Checker::VisitRunGraphics(CommandRunGraphics* command_run_graphics) {
   for (const auto& entry : command_run_graphics->GetVertexData()) {
     if (created_buffers_.count(entry.second.GetBufferIdentifier()) == 0) {
       message_consumer_->Message(MessageConsumer::Severity::kError,
-                                 entry.second.GetBufferIdentifierToken(),
+                                 &entry.second.GetBufferIdentifierToken(),
                                  "vertex buffer '" +
                                      entry.second.GetBufferIdentifier() +
                                      "' must be a buffer");
@@ -637,7 +638,7 @@ bool Checker::VisitRunGraphics(CommandRunGraphics* command_run_graphics) {
           command_run_graphics->GetIndexDataBufferIdentifier()) == 0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        command_run_graphics->GetIndexDataBufferIdentifierToken(),
+        &command_run_graphics->GetIndexDataBufferIdentifierToken(),
         "index buffer '" +
             command_run_graphics->GetIndexDataBufferIdentifier() +
             "' must be a buffer");
@@ -673,26 +674,26 @@ bool Checker::VisitSetTextureParameter(
 bool Checker::VisitSetUniform(CommandSetUniform* command_set_uniform) {
   if (created_programs_.count(command_set_uniform->GetProgramIdentifier()) ==
       0) {
-    message_consumer_->Message(MessageConsumer::Severity::kError,
-                               command_set_uniform->GetProgramIdentifierToken(),
-                               "'" +
-                                   command_set_uniform->GetProgramIdentifier() +
-                                   "' must be a program");
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        &command_set_uniform->GetProgramIdentifierToken(),
+        "'" + command_set_uniform->GetProgramIdentifier() +
+            "' must be a program");
     return false;
   }
   // TODO(afd): The uniform index must be valid.
   return true;
 }
 
-bool Checker::CheckIdentifierIsFresh(const Token* identifier) {
-  if (used_identifiers_.count(identifier->GetText()) > 0) {
+bool Checker::CheckIdentifierIsFresh(const Token& identifier) {
+  if (used_identifiers_.count(identifier.GetText()) > 0) {
     message_consumer_->Message(
-        MessageConsumer::Severity::kError, identifier,
-        "Identifier '" + identifier->GetText() + "' already used at " +
-            used_identifiers_.at(identifier->GetText())->GetLocationString());
+        MessageConsumer::Severity::kError, &identifier,
+        "Identifier '" + identifier.GetText() + "' already used at " +
+            used_identifiers_.at(identifier.GetText()).GetLocationString());
     return false;
   }
-  used_identifiers_.insert({identifier->GetText(), identifier});
+  used_identifiers_.insert({identifier.GetText(), identifier});
   return true;
 }
 

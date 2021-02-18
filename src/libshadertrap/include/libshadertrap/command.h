@@ -39,7 +39,7 @@ class Command {
 
   virtual bool Accept(CommandVisitor* visitor) = 0;
 
-  const Token* GetStartToken() const { return start_token_.get(); }
+  const Token& GetStartToken() const { return *start_token_; }
 
  private:
   std::unique_ptr<Token> start_token_;

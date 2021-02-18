@@ -50,8 +50,8 @@ class CommandAssertPixels : public Command {
     return renderbuffer_identifier_->GetText();
   }
 
-  const Token* GetRenderbufferIdentifierToken() const {
-    return renderbuffer_identifier_.get();
+  const Token& GetRenderbufferIdentifierToken() const {
+    return *renderbuffer_identifier_;
   }
 
   size_t GetRectangleX() const { return rectangle_x_; }
@@ -62,12 +62,12 @@ class CommandAssertPixels : public Command {
 
   size_t GetRectangleHeight() const { return rectangle_height_; }
 
-  const Token* GetRectangleWidthToken() const {
-    return rectangle_width_token_.get();
+  const Token& GetRectangleWidthToken() const {
+    return *rectangle_width_token_;
   }
 
-  const Token* GetRectangleHeightToken() const {
-    return rectangle_height_token_.get();
+  const Token& GetRectangleHeightToken() const {
+    return *rectangle_height_token_;
   }
 
  private:

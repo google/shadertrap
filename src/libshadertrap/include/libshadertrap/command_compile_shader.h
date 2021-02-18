@@ -35,17 +35,13 @@ class CommandCompileShader : public Command {
     return result_identifier_->GetText();
   }
 
-  const Token* GetResultIdentifierToken() const {
-    return result_identifier_.get();
-  }
+  const Token& GetResultIdentifierToken() const { return *result_identifier_; }
 
   const std::string& GetShaderIdentifier() const {
     return shader_identifier_->GetText();
   }
 
-  const Token* GetShaderIdentifierToken() const {
-    return shader_identifier_.get();
-  }
+  const Token& GetShaderIdentifierToken() const { return *shader_identifier_; }
 
  private:
   std::unique_ptr<Token> result_identifier_;

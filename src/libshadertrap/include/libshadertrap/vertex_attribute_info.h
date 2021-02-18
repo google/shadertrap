@@ -33,9 +33,7 @@ class VertexAttributeInfo {
     return buffer_identifier_->GetText();
   }
 
-  const Token* GetBufferIdentifierToken() const {
-    return buffer_identifier_.get();
-  }
+  const Token& GetBufferIdentifierToken() const { return *buffer_identifier_; }
 
   size_t GetOffsetBytes() const { return offset_bytes_; }
 

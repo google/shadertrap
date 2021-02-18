@@ -36,8 +36,8 @@ class CommandBindTexture : public Command {
     return texture_identifier_->GetText();
   }
 
-  const Token* GetTextureIdentifierToken() const {
-    return texture_identifier_.get();
+  const Token& GetTextureIdentifierToken() const {
+    return *texture_identifier_;
   }
 
   size_t GetTextureUnit() const { return texture_unit_; }

@@ -39,18 +39,16 @@ class CommandCreateProgram : public Command {
     return result_identifier_->GetText();
   }
 
-  const Token* GetResultIdentifierToken() const {
-    return result_identifier_.get();
-  }
+  const Token& GetResultIdentifierToken() const { return *result_identifier_; }
 
   const std::string& GetCompiledShaderIdentifier(size_t index) const {
-    return GetCompiledShaderIdentifierToken(index)->GetText();
+    return GetCompiledShaderIdentifierToken(index).GetText();
   }
 
-  const Token* GetCompiledShaderIdentifierToken(size_t index) const {
+  const Token& GetCompiledShaderIdentifierToken(size_t index) const {
     assert(index < compiled_shader_identifiers_.size() &&
            "Index out of bounds.");
-    return compiled_shader_identifiers_.at(index).get();
+    return *compiled_shader_identifiers_.at(index);
   }
 
   size_t GetNumCompiledShaders() const {

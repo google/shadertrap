@@ -36,9 +36,7 @@ class CommandBindStorageBuffer : public Command {
     return buffer_identifier_->GetText();
   }
 
-  const Token* GetBufferIdentifierToken() const {
-    return buffer_identifier_.get();
-  }
+  const Token& GetBufferIdentifierToken() const { return *buffer_identifier_; }
 
   size_t GetBinding() const { return binding_; }
 

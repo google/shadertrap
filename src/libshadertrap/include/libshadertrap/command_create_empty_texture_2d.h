@@ -36,9 +36,7 @@ class CommandCreateEmptyTexture2D : public Command {
     return result_identifier_->GetText();
   }
 
-  const Token* GetResultIdentifierToken() const {
-    return result_identifier_.get();
-  }
+  const Token& GetResultIdentifierToken() const { return *result_identifier_; }
 
   size_t GetWidth() const { return width_; }
 

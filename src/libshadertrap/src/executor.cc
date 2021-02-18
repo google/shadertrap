@@ -114,7 +114,7 @@ bool Executor::VisitAssertPixels(CommandAssertPixels* assert_pixels) {
                      << assert_pixels->GetRenderbufferIdentifier() << "[" << x
                      << "][" << y << "]";
         message_consumer_->Message(MessageConsumer::Severity::kError,
-                                   assert_pixels->GetStartToken(),
+                                   &assert_pixels->GetStartToken(),
                                    stringstream.str());
       }
     }
@@ -157,7 +157,7 @@ bool Executor::VisitAssertSimilarEmdHistogram(
                  << assert_similar_emd_histogram->GetBufferIdentifier2()
                  << " do not match: " << width[0] << " vs. " << width[1];
     message_consumer_->Message(MessageConsumer::Severity::kError,
-                               assert_similar_emd_histogram->GetStartToken(),
+                               &assert_similar_emd_histogram->GetStartToken(),
                                stringstream.str());
     return false;
   }
@@ -170,7 +170,7 @@ bool Executor::VisitAssertSimilarEmdHistogram(
                  << assert_similar_emd_histogram->GetBufferIdentifier2()
                  << " do not match: " << height[0] << " vs. " << height[1];
     message_consumer_->Message(MessageConsumer::Severity::kError,
-                               assert_similar_emd_histogram->GetStartToken(),
+                               &assert_similar_emd_histogram->GetStartToken(),
                                stringstream.str());
     return false;
   }
@@ -250,7 +250,7 @@ bool Executor::VisitAssertSimilarEmdHistogram(
       static_cast<double>(assert_similar_emd_histogram->GetTolerance())) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        assert_similar_emd_histogram->GetStartToken(),
+        &assert_similar_emd_histogram->GetStartToken(),
         "Histogram EMD value of " + std::to_string(max_emd) +
             " is greater than tolerance of " +
             std::to_string(assert_similar_emd_histogram->GetTolerance()));
@@ -731,7 +731,7 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
                  << " and " << assert_equal->GetBufferIdentifier2()
                  << " do not match: " << width[0] << " vs. " << width[1];
     message_consumer_->Message(MessageConsumer::Severity::kError,
-                               assert_equal->GetStartToken(),
+                               &assert_equal->GetStartToken(),
                                stringstream.str());
     return false;
   }
@@ -742,7 +742,7 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
                  << " and " << assert_equal->GetBufferIdentifier2()
                  << " do not match: " << height[0] << " vs. " << height[1];
     message_consumer_->Message(MessageConsumer::Severity::kError,
-                               assert_equal->GetStartToken(),
+                               &assert_equal->GetStartToken(),
                                stringstream.str());
     return false;
   }
@@ -802,7 +802,7 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
                      << ", " << static_cast<uint32_t>(data[1][offset + 3])
                      << ")";
         message_consumer_->Message(MessageConsumer::Severity::kError,
-                                   assert_equal->GetStartToken(),
+                                   &assert_equal->GetStartToken(),
                                    stringstream.str());
         result = false;
       }
@@ -835,7 +835,7 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
                  << " do not match: " << buffer_size[0] << " vs. "
                  << buffer_size[1];
     message_consumer_->Message(MessageConsumer::Severity::kError,
-                               assert_equal->GetStartToken(),
+                               &assert_equal->GetStartToken(),
                                stringstream.str());
     return false;
   }
@@ -870,7 +870,7 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
                    << assert_equal->GetBufferIdentifier2() << "[" << index
                    << "] == " << static_cast<uint32_t>(value_2);
       message_consumer_->Message(MessageConsumer::Severity::kError,
-                                 assert_equal->GetStartToken(),
+                                 &assert_equal->GetStartToken(),
                                  stringstream.str());
       result = false;
     }
