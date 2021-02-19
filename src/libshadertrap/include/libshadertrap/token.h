@@ -71,6 +71,7 @@ class Token {
     kKeywordProgram,
     kKeywordRectangle,
     kKeywordRenderbuffer,
+    kKeywordRenderbuffers,
     kKeywordRunCompute,
     kKeywordRunGraphics,
     kKeywordSampler,

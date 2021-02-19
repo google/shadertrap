@@ -239,30 +239,29 @@ bool Parser::ParseCommandAssertPixels() {
 
 bool Parser::ParseCommandAssertSimilarEmdHistogram() {
   auto start_token = tokenizer_->NextToken();
-  std::unique_ptr<Token> buffer_identifier_1;
-  std::unique_ptr<Token> buffer_identifier_2;
+  std::unique_ptr<Token> renderbuffer_identifier_1;
+  std::unique_ptr<Token> renderbuffer_identifier_2;
   float tolerance;
   if (!ParseParameters(
-          {{Token::Type::kKeywordBuffer1,
-            [this, &buffer_identifier_1]() -> bool {
+          {{Token::Type::kKeywordRenderbuffers,
+            [this, &renderbuffer_identifier_1,
+             &renderbuffer_identifier_2]() -> bool {
               auto token = tokenizer_->NextToken();
               if (!token->IsIdentifier()) {
-                message_consumer_->Message(
-                    MessageConsumer::Severity::kError, token.get(),
-                    "Expected identifier for first buffer to be compared");
+                message_consumer_->Message(MessageConsumer::Severity::kError,
+                                           token.get(),
+                                           "Expected identifier for first "
+                                           "renderbuffer to be compared");
               }
-              buffer_identifier_1 = std::move(token);
-              return true;
-            }},
-           {Token::Type::kKeywordBuffer2,
-            [this, &buffer_identifier_2]() -> bool {
-              auto token = tokenizer_->NextToken();
+              renderbuffer_identifier_1 = std::move(token);
+              token = tokenizer_->NextToken();
               if (!token->IsIdentifier()) {
-                message_consumer_->Message(
-                    MessageConsumer::Severity::kError, token.get(),
-                    "Expected identifier for second buffer to be compared");
+                message_consumer_->Message(MessageConsumer::Severity::kError,
+                                           token.get(),
+                                           "Expected identifier for second "
+                                           "renderbuffer to be compared");
               }
-              buffer_identifier_2 = std::move(token);
+              renderbuffer_identifier_2 = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordTolerance, [this, &tolerance]() -> bool {
@@ -276,8 +275,8 @@ bool Parser::ParseCommandAssertSimilarEmdHistogram() {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandAssertSimilarEmdHistogram>(
-      std::move(start_token), std::move(buffer_identifier_1),
-      std::move(buffer_identifier_2), tolerance));
+      std::move(start_token), std::move(renderbuffer_identifier_1),
+      std::move(renderbuffer_identifier_2), tolerance));
   return true;
 }
 

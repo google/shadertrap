@@ -268,6 +268,7 @@ const std::unordered_map<std::string, Token::Type>
         {"PROGRAM", Token::Type::kKeywordProgram},
         {"RECTANGLE", Token::Type::kKeywordRectangle},
         {"RENDERBUFFER", Token::Type::kKeywordRenderbuffer},
+        {"RENDERBUFFERS", Token::Type::kKeywordRenderbuffers},
         {"RUN_COMPUTE", Token::Type::kKeywordRunCompute},
         {"RUN_GRAPHICS", Token::Type::kKeywordRunGraphics},
         {"SAMPLER", Token::Type::kKeywordSampler},

@@ -246,20 +246,26 @@ bool Checker::VisitAssertSimilarEmdHistogram(
     CommandAssertSimilarEmdHistogram* command_assert_similar_emd_histogram) {
   bool both_renderbuffers_present = true;
   if (created_renderbuffers_.count(
-          command_assert_similar_emd_histogram->GetBufferIdentifier1()) == 0) {
+          command_assert_similar_emd_histogram->GetRenderbufferIdentifier1()) ==
+      0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        &command_assert_similar_emd_histogram->GetBufferIdentifier1Token(),
-        "'" + command_assert_similar_emd_histogram->GetBufferIdentifier1() +
+        &command_assert_similar_emd_histogram
+             ->GetRenderbufferIdentifier1Token(),
+        "'" +
+            command_assert_similar_emd_histogram->GetRenderbufferIdentifier1() +
             "' must be a renderbuffer");
     both_renderbuffers_present = false;
   }
   if (created_renderbuffers_.count(
-          command_assert_similar_emd_histogram->GetBufferIdentifier2()) == 0) {
+          command_assert_similar_emd_histogram->GetRenderbufferIdentifier2()) ==
+      0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        &command_assert_similar_emd_histogram->GetBufferIdentifier2Token(),
-        "'" + command_assert_similar_emd_histogram->GetBufferIdentifier2() +
+        &command_assert_similar_emd_histogram
+             ->GetRenderbufferIdentifier2Token(),
+        "'" +
+            command_assert_similar_emd_histogram->GetRenderbufferIdentifier2() +
             "' must be a renderbuffer");
     both_renderbuffers_present = false;
   }
@@ -267,8 +273,8 @@ bool Checker::VisitAssertSimilarEmdHistogram(
     return false;
   }
   return CheckRenderbufferDimensionsMatch(
-      command_assert_similar_emd_histogram->GetBufferIdentifier1Token(),
-      command_assert_similar_emd_histogram->GetBufferIdentifier2Token());
+      command_assert_similar_emd_histogram->GetRenderbufferIdentifier1Token(),
+      command_assert_similar_emd_histogram->GetRenderbufferIdentifier2Token());
 }
 
 bool Checker::VisitBindSampler(CommandBindSampler* command_bind_sampler) {

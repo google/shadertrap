@@ -126,9 +126,9 @@ bool Executor::VisitAssertSimilarEmdHistogram(
     CommandAssertSimilarEmdHistogram* assert_similar_emd_histogram) {
   GLuint renderbuffers[2];
   renderbuffers[0] = created_renderbuffers_.at(
-      assert_similar_emd_histogram->GetBufferIdentifier1());
+      assert_similar_emd_histogram->GetRenderbufferIdentifier1());
   renderbuffers[1] = created_renderbuffers_.at(
-      assert_similar_emd_histogram->GetBufferIdentifier2());
+      assert_similar_emd_histogram->GetRenderbufferIdentifier2());
 
   size_t width[2] = {0, 0};
   size_t height[2] = {0, 0};
@@ -152,9 +152,9 @@ bool Executor::VisitAssertSimilarEmdHistogram(
   if (width[0] != width[1]) {
     std::stringstream stringstream;
     stringstream << "The widths of "
-                 << assert_similar_emd_histogram->GetBufferIdentifier1()
+                 << assert_similar_emd_histogram->GetRenderbufferIdentifier1()
                  << " and "
-                 << assert_similar_emd_histogram->GetBufferIdentifier2()
+                 << assert_similar_emd_histogram->GetRenderbufferIdentifier2()
                  << " do not match: " << width[0] << " vs. " << width[1];
     message_consumer_->Message(MessageConsumer::Severity::kError,
                                &assert_similar_emd_histogram->GetStartToken(),
@@ -165,9 +165,9 @@ bool Executor::VisitAssertSimilarEmdHistogram(
   if (height[0] != height[1]) {
     std::stringstream stringstream;
     stringstream << "The heights of "
-                 << assert_similar_emd_histogram->GetBufferIdentifier1()
+                 << assert_similar_emd_histogram->GetRenderbufferIdentifier1()
                  << " and "
-                 << assert_similar_emd_histogram->GetBufferIdentifier2()
+                 << assert_similar_emd_histogram->GetRenderbufferIdentifier2()
                  << " do not match: " << height[0] << " vs. " << height[1];
     message_consumer_->Message(MessageConsumer::Severity::kError,
                                &assert_similar_emd_histogram->GetStartToken(),

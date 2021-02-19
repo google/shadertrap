@@ -25,34 +25,34 @@ namespace shadertrap {
 
 class CommandAssertSimilarEmdHistogram : public Command {
  public:
-  CommandAssertSimilarEmdHistogram(std::unique_ptr<Token> start_token,
-                                   std::unique_ptr<Token> buffer_identifier_1,
-                                   std::unique_ptr<Token> buffer_identifier_2,
-                                   float tolerance);
+  CommandAssertSimilarEmdHistogram(
+      std::unique_ptr<Token> start_token,
+      std::unique_ptr<Token> renderbuffer_identifier_1,
+      std::unique_ptr<Token> renderbuffer_identifier_2, float tolerance);
 
   bool Accept(CommandVisitor* visitor) override;
 
-  const std::string& GetBufferIdentifier1() const {
-    return buffer_identifier_1_->GetText();
+  const std::string& GetRenderbufferIdentifier1() const {
+    return renderbuffer_identifier_1_->GetText();
   }
 
-  const Token& GetBufferIdentifier1Token() const {
-    return *buffer_identifier_1_;
+  const Token& GetRenderbufferIdentifier1Token() const {
+    return *renderbuffer_identifier_1_;
   }
 
-  const std::string& GetBufferIdentifier2() const {
-    return buffer_identifier_2_->GetText();
+  const std::string& GetRenderbufferIdentifier2() const {
+    return renderbuffer_identifier_2_->GetText();
   }
 
-  const Token& GetBufferIdentifier2Token() const {
-    return *buffer_identifier_2_;
+  const Token& GetRenderbufferIdentifier2Token() const {
+    return *renderbuffer_identifier_2_;
   }
 
   float GetTolerance() const { return tolerance_; }
 
  private:
-  std::unique_ptr<Token> buffer_identifier_1_;
-  std::unique_ptr<Token> buffer_identifier_2_;
+  std::unique_ptr<Token> renderbuffer_identifier_1_;
+  std::unique_ptr<Token> renderbuffer_identifier_2_;
   float tolerance_;
 };
 
