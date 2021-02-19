@@ -99,7 +99,7 @@ class Checker : public CommandVisitor {
 
   bool VisitSetUniform(CommandSetUniform* set_uniform) override;
 
-  bool CheckIdentifierIsFresh(const Token* identifier_token);
+  bool CheckIdentifierIsFresh(const Token& identifier_token);
 
  private:
   // |glslang_output| is output from glslang, which may contain error messages
@@ -117,7 +117,7 @@ class Checker : public CommandVisitor {
                                         const Token& renderbuffer_token_2);
 
   MessageConsumer* message_consumer_;
-  std::unordered_map<std::string, const Token*> used_identifiers_;
+  std::unordered_map<std::string, const Token&> used_identifiers_;
   std::unordered_map<std::string, CommandDeclareShader*> declared_shaders_;
   std::unordered_map<std::string, CommandCompileShader*> compiled_shaders_;
   std::unordered_map<std::string, CommandCreateProgram*> created_programs_;

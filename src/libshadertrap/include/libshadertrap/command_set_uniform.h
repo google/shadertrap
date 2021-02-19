@@ -37,8 +37,8 @@ class CommandSetUniform : public Command {
     return program_identifier_->GetText();
   }
 
-  const Token* GetProgramIdentifierToken() const {
-    return program_identifier_.get();
+  const Token& GetProgramIdentifierToken() const {
+    return *program_identifier_;
   }
 
   size_t GetLocation() const { return location_; }

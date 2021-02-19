@@ -35,8 +35,8 @@ class CommandDumpRenderbuffer : public Command {
     return renderbuffer_identifier_->GetText();
   }
 
-  const Token* GetRenderbufferIdentifierToken() const {
-    return renderbuffer_identifier_.get();
+  const Token& GetRenderbufferIdentifierToken() const {
+    return *renderbuffer_identifier_;
   }
 
   const std::string& GetFilename() const { return filename_; }

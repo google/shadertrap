@@ -45,8 +45,8 @@ class CommandRunGraphics : public Command {
     return program_identifier_->GetText();
   }
 
-  const Token* GetProgramIdentifierToken() const {
-    return program_identifier_.get();
+  const Token& GetProgramIdentifierToken() const {
+    return *program_identifier_;
   }
 
   const std::unordered_map<size_t, VertexAttributeInfo>& GetVertexData() const {
@@ -57,8 +57,8 @@ class CommandRunGraphics : public Command {
     return index_data_buffer_identifier_->GetText();
   }
 
-  const Token* GetIndexDataBufferIdentifierToken() const {
-    return index_data_buffer_identifier_.get();
+  const Token& GetIndexDataBufferIdentifierToken() const {
+    return *index_data_buffer_identifier_;
   }
 
   size_t GetVertexCount() const { return vertex_count_; }

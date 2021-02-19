@@ -36,16 +36,16 @@ class CommandAssertSimilarEmdHistogram : public Command {
     return buffer_identifier_1_->GetText();
   }
 
-  const Token* GetBufferIdentifier1Token() const {
-    return buffer_identifier_1_.get();
+  const Token& GetBufferIdentifier1Token() const {
+    return *buffer_identifier_1_;
   }
 
   const std::string& GetBufferIdentifier2() const {
     return buffer_identifier_2_->GetText();
   }
 
-  const Token* GetBufferIdentifier2Token() const {
-    return buffer_identifier_2_.get();
+  const Token& GetBufferIdentifier2Token() const {
+    return *buffer_identifier_2_;
   }
 
   float GetTolerance() const { return tolerance_; }

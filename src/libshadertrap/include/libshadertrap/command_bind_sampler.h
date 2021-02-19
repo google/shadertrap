@@ -36,8 +36,8 @@ class CommandBindSampler : public Command {
     return sampler_identifier_->GetText();
   }
 
-  const Token* GetSamplerIdentifierToken() const {
-    return sampler_identifier_.get();
+  const Token& GetSamplerIdentifierToken() const {
+    return *sampler_identifier_;
   }
 
   size_t GetTextureUnit() const { return texture_unit_; }

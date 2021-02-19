@@ -34,9 +34,7 @@ class CommandCreateSampler : public Command {
     return result_identifier_->GetText();
   }
 
-  const Token* GetResultIdentifierToken() const {
-    return result_identifier_.get();
-  }
+  const Token& GetResultIdentifierToken() const { return *result_identifier_; }
 
  private:
   std::unique_ptr<Token> result_identifier_;

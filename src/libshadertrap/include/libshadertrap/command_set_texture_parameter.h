@@ -37,8 +37,8 @@ class CommandSetTextureParameter : public Command {
     return texture_identifier_->GetText();
   }
 
-  const Token* GetTextureIdentifierToken() const {
-    return texture_identifier_.get();
+  const Token& GetTextureIdentifierToken() const {
+    return *texture_identifier_;
   }
 
   TextureParameter GetParameter() const { return parameter_; }
