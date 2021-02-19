@@ -665,8 +665,13 @@ bool Checker::VisitRunGraphics(CommandRunGraphics* command_run_graphics) {
 
 bool Checker::VisitSetSamplerParameter(
     CommandSetSamplerParameter* command_set_sampler_parameter) {
-  if (created_samplers_.count(command_set_sampler_parameter->GetSamplerIdentifier()) == 0) {
-    message_consumer_->Message(MessageConsumer::Severity::kError, &command_set_sampler_parameter->GetSamplerIdentifierToken(), "'" + command_set_sampler_parameter->GetSamplerIdentifier() + "' must be a sampler");
+  if (created_samplers_.count(
+          command_set_sampler_parameter->GetSamplerIdentifier()) == 0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        &command_set_sampler_parameter->GetSamplerIdentifierToken(),
+        "'" + command_set_sampler_parameter->GetSamplerIdentifier() +
+            "' must be a sampler");
     return false;
   }
   return true;
@@ -674,8 +679,13 @@ bool Checker::VisitSetSamplerParameter(
 
 bool Checker::VisitSetTextureParameter(
     CommandSetTextureParameter* command_set_texture_parameter) {
-  if (created_textures_.count(command_set_texture_parameter->GetTextureIdentifier()) == 0) {
-    message_consumer_->Message(MessageConsumer::Severity::kError, &command_set_texture_parameter->GetTextureIdentifierToken(), "'" + command_set_texture_parameter->GetTextureIdentifier() + "' must be a texture");
+  if (created_textures_.count(
+          command_set_texture_parameter->GetTextureIdentifier()) == 0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        &command_set_texture_parameter->GetTextureIdentifierToken(),
+        "'" + command_set_texture_parameter->GetTextureIdentifier() +
+            "' must be a texture");
     return false;
   }
   return true;

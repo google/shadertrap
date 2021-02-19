@@ -1127,7 +1127,6 @@ RUN_GRAPHICS
 }
 
 TEST_F(CheckerTestFixture, SetSamplerParameterNonexistentSampler) {
-
   std::string program =
       R"(SET_SAMPLER_PARAMETER PARAMETER TEXTURE_MAG_FILTER VALUE LINEAR SAMPLER nonexistent
 )";
@@ -1137,13 +1136,11 @@ TEST_F(CheckerTestFixture, SetSamplerParameterNonexistentSampler) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ(
-      "ERROR: 1:73: 'nonexistent' must be a sampler",
-      message_consumer.GetMessageString(0));
+  ASSERT_EQ("ERROR: 1:73: 'nonexistent' must be a sampler",
+            message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, SetTextureParameterNonexistentSampler) {
-
   std::string program =
       R"(SET_TEXTURE_PARAMETER VALUE NEAREST PARAMETER TEXTURE_MIN_FILTER TEXTURE nonexistent
 )";
@@ -1153,9 +1150,8 @@ TEST_F(CheckerTestFixture, SetTextureParameterNonexistentSampler) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ(
-      "ERROR: 1:74: 'nonexistent' must be a texture",
-      message_consumer.GetMessageString(0));
+  ASSERT_EQ("ERROR: 1:74: 'nonexistent' must be a texture",
+            message_consumer.GetMessageString(0));
 }
 
 }  // namespace
