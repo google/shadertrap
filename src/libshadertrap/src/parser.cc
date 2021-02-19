@@ -751,30 +751,16 @@ bool Parser::ParseCommandRunCompute() {
               program_identifier = std::move(token);
               return true;
             }},
-           {Token::Type::kKeywordNumGroupsX,
-            [this, &num_groups_x]() -> bool {
-              auto maybe_num_groups_x = ParseUint32("number of groups");
-              if (!maybe_num_groups_x.first) {
-                return false;
+           {Token::Type::kKeywordNumGroups,
+            [this, &num_groups_x, &num_groups_y, &num_groups_z]() -> bool {
+              for (auto* num_groups :
+                   {&num_groups_x, &num_groups_y, &num_groups_z}) {
+                auto maybe_num_groups = ParseUint32("number of groups");
+                if (!maybe_num_groups.first) {
+                  return false;
+                }
+                *num_groups = maybe_num_groups.second;
               }
-              num_groups_x = maybe_num_groups_x.second;
-              return true;
-            }},
-           {Token::Type::kKeywordNumGroupsY,
-            [this, &num_groups_y]() -> bool {
-              auto maybe_num_groups_y = ParseUint32("number of groups");
-              if (!maybe_num_groups_y.first) {
-                return false;
-              }
-              num_groups_y = maybe_num_groups_y.second;
-              return true;
-            }},
-           {Token::Type::kKeywordNumGroupsZ, [this, &num_groups_z]() -> bool {
-              auto maybe_num_groups_z = ParseUint32("number of groups");
-              if (!maybe_num_groups_z.first) {
-                return false;
-              }
-              num_groups_z = maybe_num_groups_z.second;
               return true;
             }}})) {
     return false;

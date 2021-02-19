@@ -830,7 +830,7 @@ TEST_F(CheckerTestFixture, SetUniformBadProgram) {
 
 TEST_F(CheckerTestFixture, RunComputeNonexistentProgram) {
   std::string program =
-      R"(RUN_COMPUTE PROGRAM prog NUM_GROUPS_X 1 NUM_GROUPS_Y 1 NUM_GROUPS_Z 1
+      R"(RUN_COMPUTE PROGRAM prog NUM_GROUPS 1 1 1
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -854,7 +854,7 @@ END
 COMPILE_SHADER frag_compiled SHADER frag
 COMPILE_SHADER vert_compiled SHADER vert
 CREATE_PROGRAM prog SHADERS frag_compiled vert_compiled
-RUN_COMPUTE PROGRAM prog NUM_GROUPS_X 1 NUM_GROUPS_Y 1 NUM_GROUPS_Z 1
+RUN_COMPUTE PROGRAM prog NUM_GROUPS 1 1 1
 )";
 
   CollectingMessageConsumer message_consumer;
