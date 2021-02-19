@@ -22,11 +22,11 @@ namespace shadertrap {
 
 CommandAssertSimilarEmdHistogram::CommandAssertSimilarEmdHistogram(
     std::unique_ptr<Token> start_token,
-    std::unique_ptr<Token> buffer_identifier_1,
-    std::unique_ptr<Token> buffer_identifier_2, float tolerance)
+    std::unique_ptr<Token> renderbuffer_identifier_1,
+    std::unique_ptr<Token> renderbuffer_identifier_2, float tolerance)
     : Command(std::move(start_token)),
-      buffer_identifier_1_(std::move(buffer_identifier_1)),
-      buffer_identifier_2_(std::move(buffer_identifier_2)),
+      renderbuffer_identifier_1_(std::move(renderbuffer_identifier_1)),
+      renderbuffer_identifier_2_(std::move(renderbuffer_identifier_2)),
       tolerance_(tolerance) {}
 
 bool CommandAssertSimilarEmdHistogram::Accept(CommandVisitor* visitor) {

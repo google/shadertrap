@@ -134,7 +134,9 @@ int main(int argc, const char** argv) {
   }
 
   if (num_config != 1) {
-    crash("%s", "eglChooseConfig did not return 1 config.");
+    std::cerr << "ERROR: eglChooseConfig returned " << num_config
+              << " configurations; exactly 1 configuration is required";
+    return 1;
   }
 
   context =
