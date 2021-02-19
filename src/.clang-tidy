@@ -35,8 +35,13 @@ Checks: >
   -bugprone-exception-escape,
 
   -readability-simplify-boolean-expr,
-
+  -readability-use-anyofallof,
+  
 # Some comments for the above:
+
+# -readability-use-anyofallof: in this project we often think that
+#  using a good old for loop is more readable than using a lambda,
+#  especially if you want to be able to early-exit from the loop.
 
 # -readability-simplify-boolean-expr: it's quite common to implement a method
 #  as a series of checks with returns, with a final return true at the end.
