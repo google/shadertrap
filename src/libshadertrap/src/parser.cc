@@ -15,6 +15,7 @@
 #include "libshadertrap/parser.h"
 
 #include <cassert>
+#include <initializer_list>
 #include <set>
 #include <sstream>
 #include <type_traits>
