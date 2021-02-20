@@ -1397,6 +1397,7 @@ bool Parser::ParseParameters(
   // Check that any token types that are regarded as mutually exclusive do have
   // associated parser entries.
   for (const auto& entry : mutually_exclusive) {
+    (void)entry;  // Keep release-mode compilers happy
     assert(parameter_parsers.count(entry.first) != 0 &&
            parameter_parsers.count(entry.second) != 0 &&
            "Mutual exclusion specified for parameter for which there is no "
