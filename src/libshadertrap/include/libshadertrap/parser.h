@@ -57,6 +57,10 @@ class Parser {
   bool ParseCommand();
 
   bool ParseParameters(
+      const std::map<Token::Type, std::function<bool()>>& parameter_parsers,
+      const std::map<Token::Type, Token::Type>& mutually_exclusive);
+
+  bool ParseParameters(
       const std::map<Token::Type, std::function<bool()>>& parameter_parsers);
 
   bool ParseCommandAssertEqual();

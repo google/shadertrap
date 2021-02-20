@@ -39,4 +39,4 @@ RUN_COMPUTE
     PROGRAM compute_prog
     NUM_GROUPS 1 1 1
 
-ASSERT_EQUAL BUFFER1 expected BUFFER2 ssbo
+ASSERT_EQUAL BUFFERS expected ssbo

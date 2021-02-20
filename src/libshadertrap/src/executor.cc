@@ -41,10 +41,9 @@ Executor::Executor(MessageConsumer* message_consumer)
     : message_consumer_(message_consumer) {}
 
 bool Executor::VisitAssertEqual(CommandAssertEqual* assert_equal) {
-  if (created_renderbuffers_.count(assert_equal->GetBufferIdentifier1()) != 0) {
+  if (assert_equal->GetArgumentsAreRenderbuffers()) {
     return CheckEqualRenderbuffers(assert_equal);
   }
-  assert(created_buffers_.count(assert_equal->GetBufferIdentifier1()) != 0);
   return CheckEqualBuffers(assert_equal);
 }
 
@@ -693,18 +692,20 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
 }
 
 bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
-  assert(created_renderbuffers_.count(assert_equal->GetBufferIdentifier1()) !=
+  assert(assert_equal->GetArgumentsAreRenderbuffers() &&
+         "Arguments must be renderbuffers");
+  assert(created_renderbuffers_.count(assert_equal->GetArgumentIdentifier1()) !=
              0 &&
          "Expected a renderbuffer");
-  assert(created_renderbuffers_.count(assert_equal->GetBufferIdentifier2()) !=
+  assert(created_renderbuffers_.count(assert_equal->GetArgumentIdentifier2()) !=
              0 &&
          "Expected a renderbuffer");
 
   GLuint renderbuffers[2];
   renderbuffers[0] =
-      created_renderbuffers_.at(assert_equal->GetBufferIdentifier1());
+      created_renderbuffers_.at(assert_equal->GetArgumentIdentifier1());
   renderbuffers[1] =
-      created_renderbuffers_.at(assert_equal->GetBufferIdentifier2());
+      created_renderbuffers_.at(assert_equal->GetArgumentIdentifier2());
 
   size_t width[2] = {0, 0};
   size_t height[2] = {0, 0};
@@ -727,8 +728,8 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
 
   if (width[0] != width[1]) {
     std::stringstream stringstream;
-    stringstream << "The widths of " << assert_equal->GetBufferIdentifier1()
-                 << " and " << assert_equal->GetBufferIdentifier2()
+    stringstream << "The widths of " << assert_equal->GetArgumentIdentifier1()
+                 << " and " << assert_equal->GetArgumentIdentifier2()
                  << " do not match: " << width[0] << " vs. " << width[1];
     message_consumer_->Message(MessageConsumer::Severity::kError,
                                &assert_equal->GetStartToken(),
@@ -738,8 +739,8 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
 
   if (height[0] != height[1]) {
     std::stringstream stringstream;
-    stringstream << "The heights of " << assert_equal->GetBufferIdentifier1()
-                 << " and " << assert_equal->GetBufferIdentifier2()
+    stringstream << "The heights of " << assert_equal->GetArgumentIdentifier1()
+                 << " and " << assert_equal->GetArgumentIdentifier2()
                  << " do not match: " << height[0] << " vs. " << height[1];
     message_consumer_->Message(MessageConsumer::Severity::kError,
                                &assert_equal->GetStartToken(),
@@ -789,18 +790,18 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
       if (!all_match) {
         std::stringstream stringstream;
         stringstream << "Pixel mismatch at position (" << x << ", " << y
-                     << "): " << assert_equal->GetBufferIdentifier1() << "["
+                     << "): " << assert_equal->GetArgumentIdentifier1() << "["
                      << x << "][" << y << "] == ("
                      << static_cast<uint32_t>(data[0][offset]) << ", "
                      << static_cast<uint32_t>(data[0][offset + 1]) << ", "
                      << static_cast<uint32_t>(data[0][offset + 2]) << ", "
                      << static_cast<uint32_t>(data[0][offset + 3]) << "), vs. "
-                     << assert_equal->GetBufferIdentifier2() << "[" << x << "]["
-                     << y << "] == (" << static_cast<uint32_t>(data[1][offset])
-                     << ", " << static_cast<uint32_t>(data[1][offset + 1])
-                     << ", " << static_cast<uint32_t>(data[1][offset + 2])
-                     << ", " << static_cast<uint32_t>(data[1][offset + 3])
-                     << ")";
+                     << assert_equal->GetArgumentIdentifier2() << "[" << x
+                     << "][" << y << "] == ("
+                     << static_cast<uint32_t>(data[1][offset]) << ", "
+                     << static_cast<uint32_t>(data[1][offset + 1]) << ", "
+                     << static_cast<uint32_t>(data[1][offset + 2]) << ", "
+                     << static_cast<uint32_t>(data[1][offset + 3]) << ")";
         message_consumer_->Message(MessageConsumer::Severity::kError,
                                    &assert_equal->GetStartToken(),
                                    stringstream.str());
@@ -812,14 +813,16 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
 }
 
 bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
-  assert(created_buffers_.count(assert_equal->GetBufferIdentifier1()) != 0 &&
+  assert(!assert_equal->GetArgumentsAreRenderbuffers() &&
+         "Arguments must be buffers");
+  assert(created_buffers_.count(assert_equal->GetArgumentIdentifier1()) != 0 &&
          "Expected a buffer");
-  assert(created_buffers_.count(assert_equal->GetBufferIdentifier2()) != 0 &&
+  assert(created_buffers_.count(assert_equal->GetArgumentIdentifier2()) != 0 &&
          "Expected a buffer");
 
   GLuint buffers[2];
-  buffers[0] = created_buffers_.at(assert_equal->GetBufferIdentifier1());
-  buffers[1] = created_buffers_.at(assert_equal->GetBufferIdentifier2());
+  buffers[0] = created_buffers_.at(assert_equal->GetArgumentIdentifier1());
+  buffers[1] = created_buffers_.at(assert_equal->GetArgumentIdentifier2());
 
   GLint64 buffer_size[2]{0, 0};
   for (auto index : {0, 1}) {
@@ -830,8 +833,8 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
 
   if (buffer_size[0] != buffer_size[1]) {
     std::stringstream stringstream;
-    stringstream << "The lengths of " << assert_equal->GetBufferIdentifier1()
-                 << " and " << assert_equal->GetBufferIdentifier2()
+    stringstream << "The lengths of " << assert_equal->GetArgumentIdentifier1()
+                 << " and " << assert_equal->GetArgumentIdentifier2()
                  << " do not match: " << buffer_size[0] << " vs. "
                  << buffer_size[1];
     message_consumer_->Message(MessageConsumer::Severity::kError,
@@ -865,9 +868,9 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
     if (value_1 != value_2) {
       std::stringstream stringstream;
       stringstream << "Byte mismatch at index " << index << ": "
-                   << assert_equal->GetBufferIdentifier1() << "[" << index
+                   << assert_equal->GetArgumentIdentifier1() << "[" << index
                    << "] == " << static_cast<uint32_t>(value_1) << ", "
-                   << assert_equal->GetBufferIdentifier2() << "[" << index
+                   << assert_equal->GetArgumentIdentifier2() << "[" << index
                    << "] == " << static_cast<uint32_t>(value_2);
       message_consumer_->Message(MessageConsumer::Severity::kError,
                                  &assert_equal->GetStartToken(),

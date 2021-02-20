@@ -21,12 +21,13 @@
 namespace shadertrap {
 
 CommandAssertEqual::CommandAssertEqual(
-    std::unique_ptr<Token> start_token,
-    std::unique_ptr<Token> buffer_identifier_1,
-    std::unique_ptr<Token> buffer_identifier_2)
+    std::unique_ptr<Token> start_token, bool arguments_are_renderbuffers,
+    std::unique_ptr<Token> argument_identifier_1,
+    std::unique_ptr<Token> argument_identifier_2)
     : Command(std::move(start_token)),
-      buffer_identifier_1_(std::move(buffer_identifier_1)),
-      buffer_identifier_2_(std::move(buffer_identifier_2)) {}
+      arguments_are_renderbuffers_(arguments_are_renderbuffers),
+      argument_identifier_1_(std::move(argument_identifier_1)),
+      argument_identifier_2_(std::move(argument_identifier_2)) {}
 
 bool CommandAssertEqual::Accept(CommandVisitor* visitor) {
   return visitor->VisitAssertEqual(this);
