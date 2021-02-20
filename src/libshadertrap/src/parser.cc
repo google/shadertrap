@@ -116,37 +116,62 @@ bool Parser::ParseCommand() {
 
 bool Parser::ParseCommandAssertEqual() {
   auto start_token = tokenizer_->NextToken();
-  std::unique_ptr<Token> buffer_identifier_1;
-  std::unique_ptr<Token> buffer_identifier_2;
-  if (!ParseParameters({{Token::Type::kKeywordBuffer1,
-                         [this, &buffer_identifier_1]() -> bool {
-                           auto token = tokenizer_->NextToken();
-                           if (!token->IsIdentifier()) {
-                             message_consumer_->Message(
-                                 MessageConsumer::Severity::kError, token.get(),
-                                 "Expected identifier for first renderbuffer "
-                                 "to be compared");
-                           }
-                           buffer_identifier_1 = std::move(token);
-                           return true;
-                         }},
-                        {Token::Type::kKeywordBuffer2,
-                         [this, &buffer_identifier_2]() -> bool {
-                           auto token = tokenizer_->NextToken();
-                           if (!token->IsIdentifier()) {
-                             message_consumer_->Message(
-                                 MessageConsumer::Severity::kError, token.get(),
-                                 "Expected identifier for second renderbuffer "
-                                 "to be compared");
-                           }
-                           buffer_identifier_2 = std::move(token);
-                           return true;
-                         }}})) {
+  std::unique_ptr<Token> argument_identifier_1;
+  std::unique_ptr<Token> argument_identifier_2;
+  bool arguments_are_renderbuffers = false;
+  if (!ParseParameters(
+          {{Token::Type::kKeywordBuffers,
+            [this, &arguments_are_renderbuffers, &argument_identifier_1,
+             &argument_identifier_2]() -> bool {
+              arguments_are_renderbuffers = false;
+              auto token = tokenizer_->NextToken();
+              if (!token->IsIdentifier()) {
+                message_consumer_->Message(
+                    MessageConsumer::Severity::kError, token.get(),
+                    "Expected identifier for first buffer "
+                    "to be compared");
+              }
+              argument_identifier_1 = std::move(token);
+              token = tokenizer_->NextToken();
+              if (!token->IsIdentifier()) {
+                message_consumer_->Message(
+                    MessageConsumer::Severity::kError, token.get(),
+                    "Expected identifier for second buffer "
+                    "to be compared");
+              }
+              argument_identifier_2 = std::move(token);
+              return true;
+            }},
+           {Token::Type::kKeywordRenderbuffers,
+            [this, &arguments_are_renderbuffers, &argument_identifier_1,
+             &argument_identifier_2]() -> bool {
+              arguments_are_renderbuffers = true;
+              auto token = tokenizer_->NextToken();
+              if (!token->IsIdentifier()) {
+                message_consumer_->Message(
+                    MessageConsumer::Severity::kError, token.get(),
+                    "Expected identifier for first renderbuffer "
+                    "to be compared");
+              }
+              argument_identifier_1 = std::move(token);
+              token = tokenizer_->NextToken();
+              if (!token->IsIdentifier()) {
+                message_consumer_->Message(
+                    MessageConsumer::Severity::kError, token.get(),
+                    "Expected identifier for second renderbuffer "
+                    "to be compared");
+              }
+              argument_identifier_2 = std::move(token);
+              return true;
+            }}},
+          // BUFFERS and RENDERBUFFERS are mutually exclusive parameters
+          {{Token::Type::kKeywordBuffers,
+            Token::Type::kKeywordRenderbuffers}})) {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandAssertEqual>(
-      std::move(start_token), std::move(buffer_identifier_1),
-      std::move(buffer_identifier_2)));
+      std::move(start_token), arguments_are_renderbuffers,
+      std::move(argument_identifier_1), std::move(argument_identifier_2)));
   return true;
 }
 
@@ -1367,36 +1392,84 @@ std::pair<bool, UniformValue> Parser::ProcessUniformValue(
 }
 
 bool Parser::ParseParameters(
-    const std::map<Token::Type, std::function<bool()>>& parameter_parsers) {
-  std::set<Token::Type> observed;
+    const std::map<Token::Type, std::function<bool()>>& parameter_parsers,
+    const std::map<Token::Type, Token::Type>& mutually_exclusive) {
+  // Check that any token types that are regarded as mutually exclusive do have
+  // associated parser entries.
+  for (const auto& entry : mutually_exclusive) {
+    (void)entry;  // Keep release-mode compilers happy
+    assert(parameter_parsers.count(entry.first) != 0 &&
+           parameter_parsers.count(entry.second) != 0 &&
+           "Mutual exclusion specified for parameter for which there is no "
+           "parser");
+  }
+
+  std::map<Token::Type, std::unique_ptr<Token>> observed;
   while (true) {
     auto token = tokenizer_->PeekNextToken();
-    if (parameter_parsers.count(token->GetType()) == 0) {
+    auto token_type = token->GetType();
+    if (parameter_parsers.count(token_type) == 0) {
       break;
     }
-    if (observed.count(token->GetType()) > 0) {
+    if (observed.count(token_type) > 0) {
       message_consumer_->Message(
           MessageConsumer::Severity::kError, token.get(),
           "Duplicate parameter '" + token->GetText() + "'");
       return false;
     }
-    observed.insert(token->GetType());
+    observed.insert({token_type, std::move(token)});
     tokenizer_->NextToken();
-    if (!parameter_parsers.at(token->GetType())()) {
+    if (!parameter_parsers.at(token_type)()) {
       return false;
     }
   }
-  bool all_parameters_present = true;
+
+  bool found_errors = false;
+
+  // This captures the parameters associated with mutually-exclusive pairs: we
+  // record that we have handled them so that when we finally look for missing
+  // parameters we do not consider them again.
+  std::set<Token::Type> already_handled;
+  for (const auto& pair : mutually_exclusive) {
+    if (observed.count(pair.first) > 0 && observed.count(pair.second) > 0) {
+      auto* first_token = observed.at(pair.first).get();
+      auto* second_token = observed.at(pair.second).get();
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, first_token,
+          "Parameters '" + first_token->GetText() + "' and '" +
+              second_token->GetText() +
+              "' are mutually-exclusive; both are present " +
+              first_token->GetLocationString() + " and " +
+              second_token->GetLocationString());
+      found_errors = true;
+    } else if (observed.count(pair.first) == 0 &&
+               observed.count(pair.second) == 0) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, tokenizer_->PeekNextToken().get(),
+          "Missing parameter '" + Tokenizer::KeywordToString(pair.first) +
+              "' or '" + Tokenizer::KeywordToString(pair.second) + "'");
+      found_errors = true;
+    }
+    already_handled.insert(pair.first);
+    already_handled.insert(pair.second);
+  }
+
   for (const auto& entry : parameter_parsers) {
-    if (observed.count(entry.first) == 0) {
+    if (already_handled.count(entry.first) == 0 &&
+        observed.count(entry.first) == 0) {
       message_consumer_->Message(
           MessageConsumer::Severity::kError, tokenizer_->PeekNextToken().get(),
           "Missing parameter '" + Tokenizer::KeywordToString(entry.first) +
               "'");
-      all_parameters_present = false;
+      found_errors = true;
     }
   }
-  return all_parameters_present;
+  return !found_errors;
+}
+
+bool Parser::ParseParameters(
+    const std::map<Token::Type, std::function<bool()>>& parameter_parsers) {
+  return ParseParameters(parameter_parsers, {});
 }
 
 std::pair<bool, VertexAttributeInfo> Parser::ParseVertexAttributeInfo() {

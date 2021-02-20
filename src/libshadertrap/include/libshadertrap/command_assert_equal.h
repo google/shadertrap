@@ -26,30 +26,37 @@ namespace shadertrap {
 class CommandAssertEqual : public Command {
  public:
   CommandAssertEqual(std::unique_ptr<Token> start_token,
-                     std::unique_ptr<Token> buffer_identifier_1,
-                     std::unique_ptr<Token> buffer_identifier_2);
+                     bool arguments_are_renderbuffers,
+                     std::unique_ptr<Token> argument_identifier_1,
+                     std::unique_ptr<Token> argument_identifier_2);
 
   bool Accept(CommandVisitor* visitor) override;
 
-  const std::string& GetBufferIdentifier1() const {
-    return buffer_identifier_1_->GetText();
+  bool GetArgumentsAreRenderbuffers() const {
+    return arguments_are_renderbuffers_;
   }
 
-  const Token& GetBufferIdentifier1Token() const {
-    return *buffer_identifier_1_;
+  const std::string& GetArgumentIdentifier1() const {
+    return argument_identifier_1_->GetText();
   }
 
-  const std::string& GetBufferIdentifier2() const {
-    return buffer_identifier_2_->GetText();
+  const Token& GetArgumentIdentifier1Token() const {
+    return *argument_identifier_1_;
   }
 
-  const Token& GetBufferIdentifier2Token() const {
-    return *buffer_identifier_2_;
+  const std::string& GetArgumentIdentifier2() const {
+    return argument_identifier_2_->GetText();
+  }
+
+  const Token& GetArgumentIdentifier2Token() const {
+    return *argument_identifier_2_;
   }
 
  private:
-  std::unique_ptr<Token> buffer_identifier_1_;
-  std::unique_ptr<Token> buffer_identifier_2_;
+  // true if arguments are renderbuffers, false if arguments are buffers
+  bool arguments_are_renderbuffers_;
+  std::unique_ptr<Token> argument_identifier_1_;
+  std::unique_ptr<Token> argument_identifier_2_;
 };
 
 }  // namespace shadertrap

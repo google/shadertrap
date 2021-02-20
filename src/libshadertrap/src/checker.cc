@@ -142,49 +142,51 @@ Checker::Checker(MessageConsumer* message_consumer)
     : message_consumer_(message_consumer) {}
 
 bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
-  const auto& operand1 = command_assert_equal->GetBufferIdentifier1();
-  const auto& operand2 = command_assert_equal->GetBufferIdentifier2();
   const auto& operand1_token =
-      command_assert_equal->GetBufferIdentifier1Token();
+      command_assert_equal->GetArgumentIdentifier1Token();
   const auto& operand2_token =
-      command_assert_equal->GetBufferIdentifier2Token();
-
-  if (created_buffers_.count(operand1) != 0) {
-    if (created_buffers_.count(operand2) == 0) {
-      message_consumer_->Message(
-          MessageConsumer::Severity::kError, &operand2_token,
-          "'" + operand1 + "' at " + operand1_token.GetLocationString() +
-              " is a buffer, so '" + operand2 + "' must also be a buffer");
-      return false;
+      command_assert_equal->GetArgumentIdentifier2Token();
+  bool found_errors = false;
+  if (command_assert_equal->GetArgumentsAreRenderbuffers()) {
+    for (const auto& operand_token : {operand1_token, operand2_token}) {
+      if (created_renderbuffers_.count(operand_token.GetText()) == 0) {
+        message_consumer_->Message(
+            MessageConsumer::Severity::kError, &operand_token,
+            "'" + operand_token.GetText() + "' must be a renderbuffer");
+        found_errors = true;
+      }
     }
-    auto* buffer1 = created_buffers_.at(operand1);
-    auto* buffer2 = created_buffers_.at(operand2);
-    if (buffer1->GetSizeBytes() != buffer2->GetSizeBytes()) {
-      message_consumer_->Message(
-          MessageConsumer::Severity::kError, &operand2_token,
-          "size (in bytes) " + std::to_string(buffer2->GetSizeBytes()) +
-              " of '" + operand2 + "' does not match size (in bytes) " +
-              std::to_string(buffer1->GetSizeBytes()) + " of '" + operand1 +
-              "' at " + operand1_token.GetLocationString());
-      return false;
-    }
-  } else if (created_renderbuffers_.count(operand1) != 0) {
-    if (created_renderbuffers_.count(operand2) == 0) {
-      message_consumer_->Message(
-          MessageConsumer::Severity::kError, &operand2_token,
-          "'" + operand1 + "' at " + operand1_token.GetLocationString() +
-              " is a renderbuffer, so '" + operand2 +
-              "' must also be a renderbuffer");
+    if (found_errors) {
       return false;
     }
     if (!CheckRenderbufferDimensionsMatch(operand1_token, operand2_token)) {
       return false;
     }
   } else {
-    message_consumer_->Message(
-        MessageConsumer::Severity::kError, &operand1_token,
-        "'" + operand1 + "' must be a buffer or renderbuffer");
-    return false;
+    for (const auto& operand_token : {operand1_token, operand2_token}) {
+      if (created_buffers_.count(operand_token.GetText()) == 0) {
+        message_consumer_->Message(
+            MessageConsumer::Severity::kError, &operand_token,
+            "'" + operand_token.GetText() + "' must be a buffer");
+        found_errors = true;
+      }
+    }
+    if (found_errors) {
+      return false;
+    }
+    auto* buffer1 = created_buffers_.at(operand1_token.GetText());
+    auto* buffer2 = created_buffers_.at(operand2_token.GetText());
+    if (buffer1->GetSizeBytes() != buffer2->GetSizeBytes()) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, &operand2_token,
+          "size (in bytes) " + std::to_string(buffer2->GetSizeBytes()) +
+              " of '" + operand2_token.GetText() +
+              "' does not match size (in bytes) " +
+              std::to_string(buffer1->GetSizeBytes()) + " of '" +
+              operand1_token.GetText() + "' at " +
+              operand1_token.GetLocationString());
+      return false;
+    }
   }
   return true;
 }
