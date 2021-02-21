@@ -31,10 +31,9 @@
 #include "libshadertrap/vertex_attribute_info.h"
 #include "lodepng/lodepng.h"
 
-// RGBA
-#define CHANNELS (4)
-
 namespace shadertrap {
+
+namespace {
 
 std::string OpenglErrorString(GLenum err) {
   switch (err) {
@@ -54,6 +53,10 @@ std::string OpenglErrorString(GLenum err) {
       return "UNKNOW_ERROR";
   }
 }
+
+const size_t kNumRgbaChannels = 4;
+
+}  // namespace
 
 #define GL_CHECKERR(token, function_name)                 \
   do {                                                    \
@@ -78,9 +81,6 @@ std::string OpenglErrorString(GLenum err) {
     function();                              \
     GL_CHECKERR(token, #function);           \
   } while (0)
-
-#define COMPILE_ERROR_EXIT_CODE (101)
-#define LINK_ERROR_EXIT_CODE (102)
 
 Executor::Executor(MessageConsumer* message_consumer)
     : message_consumer_(message_consumer) {}
@@ -125,7 +125,7 @@ bool Executor::VisitAssertPixels(CommandAssertPixels* assert_pixels) {
     return false;
   }
 
-  std::vector<std::uint8_t> data(width * height * CHANNELS);
+  std::vector<std::uint8_t> data(width * height * kNumRgbaChannels);
   GL_SAFECALL(&assert_pixels->GetStartToken(), glReadBuffer,
               GL_COLOR_ATTACHMENT0);
   GL_SAFECALL(&assert_pixels->GetStartToken(), glReadPixels, 0, 0,
@@ -251,7 +251,7 @@ bool Executor::VisitAssertSimilarEmdHistogram(
 
   std::vector<std::uint8_t> data[2];
   for (auto index : {0, 1}) {
-    data[index].resize(width[index] * height[index] * CHANNELS);
+    data[index].resize(width[index] * height[index] * kNumRgbaChannels);
     GL_SAFECALL(&assert_similar_emd_histogram->GetStartToken(), glReadBuffer,
                 GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index));
     GL_SAFECALL(&assert_similar_emd_histogram->GetStartToken(), glReadPixels, 0,
@@ -551,17 +551,17 @@ bool Executor::VisitDumpRenderbuffer(
     return false;
   }
 
-  std::vector<std::uint8_t> data(width * height * CHANNELS);
+  std::vector<std::uint8_t> data(width * height * kNumRgbaChannels);
   GL_SAFECALL(&dump_renderbuffer->GetStartToken(), glReadBuffer,
               GL_COLOR_ATTACHMENT0);
   GL_SAFECALL(&dump_renderbuffer->GetStartToken(), glReadPixels, 0, 0,
               static_cast<GLint>(width), static_cast<GLint>(height), GL_RGBA,
               GL_UNSIGNED_BYTE, data.data());
-  std::vector<std::uint8_t> flipped_data(width * height * CHANNELS);
+  std::vector<std::uint8_t> flipped_data(width * height * kNumRgbaChannels);
   for (size_t h = 0; h < height; h++) {
-    for (size_t col = 0; col < width * CHANNELS; col++) {
-      flipped_data[h * width * CHANNELS + col] =
-          data[(height - h - 1) * width * CHANNELS + col];
+    for (size_t col = 0; col < width * kNumRgbaChannels; col++) {
+      flipped_data[h * width * kNumRgbaChannels + col] =
+          data[(height - h - 1) * width * kNumRgbaChannels + col];
     }
   }
   unsigned png_error = lodepng::encode(
@@ -1009,7 +1009,7 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
 
   std::vector<std::uint8_t> data[2];
   for (auto index : {0, 1}) {
-    data[index].resize(width[index] * height[index] * CHANNELS);
+    data[index].resize(width[index] * height[index] * kNumRgbaChannels);
     GL_SAFECALL(&assert_equal->GetStartToken(), glReadBuffer,
                 GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index));
     GL_SAFECALL(&assert_equal->GetStartToken(), glReadPixels, 0, 0,
