@@ -258,6 +258,7 @@ const std::unordered_map<std::string, Token::Type>
         {"INIT_VALUES", Token::Type::kKeywordInitValues},
         {"LINEAR", Token::Type::kKeywordLinear},
         {"LOCATION", Token::Type::kKeywordLocation},
+        {"NAME", Token::Type::kKeywordName},
         {"NEAREST", Token::Type::kKeywordNearest},
         {"NUM_GROUPS", Token::Type::kKeywordNumGroups},
         {"OFFSET_BYTES", Token::Type::kKeywordOffsetBytes},

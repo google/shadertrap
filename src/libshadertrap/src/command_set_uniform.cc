@@ -26,6 +26,17 @@ CommandSetUniform::CommandSetUniform(std::unique_ptr<Token> start_token,
     : Command(std::move(start_token)),
       program_identifier_(std::move(program_identifier)),
       location_(location),
+      name_(nullptr),
+      value_(std::move(value)) {}
+
+CommandSetUniform::CommandSetUniform(std::unique_ptr<Token> start_token,
+                                     std::unique_ptr<Token> program_identifier,
+                                     std::unique_ptr<Token> name,
+                                     UniformValue value)
+    : Command(std::move(start_token)),
+      program_identifier_(std::move(program_identifier)),
+      location_(0),
+      name_(std::move(name)),
       value_(std::move(value)) {}
 
 bool CommandSetUniform::Accept(CommandVisitor* visitor) {

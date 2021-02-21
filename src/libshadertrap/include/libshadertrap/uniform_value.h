@@ -79,6 +79,11 @@ class UniformValue {
     return reinterpret_cast<const int32_t*>(data_.data());
   }
 
+  const uint32_t* GetUintData() const {
+    // TODO(afd) Assert that the data is unsigned integer.
+    return reinterpret_cast<const uint32_t*>(data_.data());
+  }
+
  private:
   ElementType element_type_;
   // (false, 0) if there is no array size, otherwise (true, array_size).
