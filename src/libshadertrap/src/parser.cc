@@ -1200,7 +1200,8 @@ bool Parser::ParseCommandSetTextureParameter() {
 bool Parser::ParseCommandSetUniform() {
   auto start_token = tokenizer_->NextToken();
   std::unique_ptr<Token> program_identifier;
-  size_t location;
+  size_t location = 0;
+  std::unique_ptr<Token> name = nullptr;
   UniformValue::ElementType type;
   std::pair<bool, size_t> maybe_array_size;
   std::vector<std::unique_ptr<Token>> values;
@@ -1226,6 +1227,19 @@ bool Parser::ParseCommandSetUniform() {
                 return false;
               }
               location = maybe_location.second;
+              return true;
+            }},
+           {Token::Type::kKeywordName,
+            [this, &name]() -> bool {
+              auto token = tokenizer_->NextToken();
+              if (!token->IsIdentifier()) {
+                message_consumer_->Message(
+                    MessageConsumer::Severity::kError, token.get(),
+                    "Expected identifier for uniform name, got '" +
+                        token->GetText() + "'");
+                return false;
+              }
+              name = std::move(token);
               return true;
             }},
            {Token::Type::kKeywordType,
@@ -1297,13 +1311,16 @@ bool Parser::ParseCommandSetUniform() {
               }
               return true;
             }},
-           {Token::Type::kKeywordValues, [this, &values]() -> bool {
+           {Token::Type::kKeywordValues,
+            [this, &values]() -> bool {
               while (tokenizer_->PeekNextToken()->IsIntLiteral() ||
                      tokenizer_->PeekNextToken()->IsFloatLiteral()) {
                 values.push_back(tokenizer_->NextToken());
               }
               return true;
-            }}})) {
+            }}},
+          // LOCATION and NAME are mutually exclusive
+          {{Token::Type::kKeywordLocation, Token::Type::kKeywordName}})) {
     return false;
   }
   auto maybe_uniform_value =
@@ -1311,9 +1328,17 @@ bool Parser::ParseCommandSetUniform() {
   if (!maybe_uniform_value.first) {
     return false;
   }
-  parsed_commands_.push_back(MakeUnique<CommandSetUniform>(
-      std::move(start_token), std::move(program_identifier), location,
-      maybe_uniform_value.second));
+  if (name == nullptr) {
+    // The uniform has been specified via a location
+    parsed_commands_.push_back(MakeUnique<CommandSetUniform>(
+        std::move(start_token), std::move(program_identifier), location,
+        maybe_uniform_value.second));
+  } else {
+    // The uniform has been specified via a name
+    parsed_commands_.push_back(MakeUnique<CommandSetUniform>(
+        std::move(start_token), std::move(program_identifier), std::move(name),
+        maybe_uniform_value.second));
+  }
   return true;
 }
 
@@ -1438,7 +1463,7 @@ bool Parser::ParseParameters(
           MessageConsumer::Severity::kError, first_token,
           "Parameters '" + first_token->GetText() + "' and '" +
               second_token->GetText() +
-              "' are mutually-exclusive; both are present " +
+              "' are mutually exclusive; both are present at " +
               first_token->GetLocationString() + " and " +
               second_token->GetLocationString());
       found_errors = true;

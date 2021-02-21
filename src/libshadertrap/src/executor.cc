@@ -626,7 +626,22 @@ bool Executor::VisitSetTextureParameter(
 
 bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
   GLuint program = created_programs_.at(set_uniform->GetProgramIdentifier());
-  auto uniform_location = static_cast<GLint>(set_uniform->GetLocation());
+  GLint uniform_location;
+  if (set_uniform->HasLocation()) {
+    uniform_location = static_cast<GLint>(set_uniform->GetLocation());
+  } else {
+    uniform_location =
+        glGetUniformLocation(program, set_uniform->GetName().c_str());
+    GL_CHECKERR("glGetUniformLocation");
+    if (uniform_location == -1) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, &set_uniform->GetNameToken(),
+          "Program '" + set_uniform->GetProgramIdentifier() +
+              "' does not have a uniform named '" + set_uniform->GetName() +
+              "'");
+      return false;
+    }
+  }
   const UniformValue& uniform_value = set_uniform->GetValue();
   switch (uniform_value.GetElementType()) {
     case UniformValue::ElementType::kFloat:
@@ -682,6 +697,86 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
       } else {
         GL_SAFECALL(glProgramUniform1i, program, uniform_location,
                     uniform_value.GetIntData()[0]);
+      }
+      break;
+    case UniformValue::ElementType::kIvec2:
+      if (uniform_value.IsArray()) {
+        GL_SAFECALL(glProgramUniform2iv, program, uniform_location,
+                    static_cast<GLsizei>(uniform_value.GetArraySize()),
+                    uniform_value.GetIntData());
+      } else {
+        GL_SAFECALL(glProgramUniform2i, program, uniform_location,
+                    uniform_value.GetIntData()[0],
+                    uniform_value.GetIntData()[1]);
+      }
+      break;
+    case UniformValue::ElementType::kIvec3:
+      if (uniform_value.IsArray()) {
+        GL_SAFECALL(glProgramUniform3iv, program, uniform_location,
+                    static_cast<GLsizei>(uniform_value.GetArraySize()),
+                    uniform_value.GetIntData());
+      } else {
+        GL_SAFECALL(glProgramUniform3i, program, uniform_location,
+                    uniform_value.GetIntData()[0],
+                    uniform_value.GetIntData()[1],
+                    uniform_value.GetIntData()[2]);
+      }
+      break;
+    case UniformValue::ElementType::kIvec4:
+      if (uniform_value.IsArray()) {
+        GL_SAFECALL(glProgramUniform4iv, program, uniform_location,
+                    static_cast<GLsizei>(uniform_value.GetArraySize()),
+                    uniform_value.GetIntData());
+      } else {
+        GL_SAFECALL(
+            glProgramUniform4i, program, uniform_location,
+            uniform_value.GetIntData()[0], uniform_value.GetIntData()[1],
+            uniform_value.GetIntData()[2], uniform_value.GetIntData()[3]);
+      }
+      break;
+    case UniformValue::ElementType::kUint:
+      if (uniform_value.IsArray()) {
+        GL_SAFECALL(glProgramUniform1uiv, program, uniform_location,
+                    static_cast<GLsizei>(uniform_value.GetArraySize()),
+                    uniform_value.GetUintData());
+      } else {
+        GL_SAFECALL(glProgramUniform1ui, program, uniform_location,
+                    uniform_value.GetUintData()[0]);
+      }
+      break;
+    case UniformValue::ElementType::kUvec2:
+      if (uniform_value.IsArray()) {
+        GL_SAFECALL(glProgramUniform2uiv, program, uniform_location,
+                    static_cast<GLsizei>(uniform_value.GetArraySize()),
+                    uniform_value.GetUintData());
+      } else {
+        GL_SAFECALL(glProgramUniform2ui, program, uniform_location,
+                    uniform_value.GetUintData()[0],
+                    uniform_value.GetUintData()[1]);
+      }
+      break;
+    case UniformValue::ElementType::kUvec3:
+      if (uniform_value.IsArray()) {
+        GL_SAFECALL(glProgramUniform3uiv, program, uniform_location,
+                    static_cast<GLsizei>(uniform_value.GetArraySize()),
+                    uniform_value.GetUintData());
+      } else {
+        GL_SAFECALL(glProgramUniform3ui, program, uniform_location,
+                    uniform_value.GetUintData()[0],
+                    uniform_value.GetUintData()[1],
+                    uniform_value.GetUintData()[2]);
+      }
+      break;
+    case UniformValue::ElementType::kUvec4:
+      if (uniform_value.IsArray()) {
+        GL_SAFECALL(glProgramUniform4uiv, program, uniform_location,
+                    static_cast<GLsizei>(uniform_value.GetArraySize()),
+                    uniform_value.GetUintData());
+      } else {
+        GL_SAFECALL(
+            glProgramUniform4ui, program, uniform_location,
+            uniform_value.GetUintData()[0], uniform_value.GetUintData()[1],
+            uniform_value.GetUintData()[2], uniform_value.GetUintData()[3]);
       }
       break;
     default:

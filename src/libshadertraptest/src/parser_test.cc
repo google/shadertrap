@@ -68,5 +68,28 @@ END
       message_consumer.GetMessageString(0));
 }
 
+TEST(ParserTest, SetUniformNameAndValue) {
+  std::string program =
+      R"(DECLARE_SHADER shader COMPUTE
+layout(location = 1) uniform float f;
+void main() {
+  f;
+}
+END
+COMPILE_SHADER shader_compiled SHADER shader
+CREATE_PROGRAM compute_program SHADERS shader_compiled
+SET_UNIFORM PROGRAM compute_program LOCATION 1 NAME f TYPE float VALUES 1.0
+)";
+
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 9:37: Parameters 'LOCATION' and 'NAME' are mutually exclusive; "
+      "both are present at 9:37 and 9:48",
+      message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap

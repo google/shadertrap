@@ -61,6 +61,7 @@ class Token {
     kKeywordInitValues,
     kKeywordLinear,
     kKeywordLocation,
+    kKeywordName,
     kKeywordNearest,
     kKeywordNumGroups,
     kKeywordOffsetBytes,
