@@ -25,7 +25,6 @@
 #include <utility>
 #include <vector>
 
-#include "libshadertrap/helpers.h"
 #include "libshadertrap/texture_parameter.h"
 #include "libshadertrap/token.h"
 #include "libshadertrap/uniform_value.h"
@@ -36,6 +35,52 @@
 #define CHANNELS (4)
 
 namespace shadertrap {
+
+std::string OpenglErrorString(GLenum err) {
+  switch (err) {
+    case GL_INVALID_ENUM:
+      return "GL_INVALID_ENUM";
+    case GL_INVALID_VALUE:
+      return "GL_INVALID_VALUE";
+    case GL_INVALID_OPERATION:
+      return "GL_INVALID_OPERATION";
+    case GL_STACK_OVERFLOW:
+      return "GL_STACK_OVERFLOW";
+    case GL_STACK_UNDERFLOW:
+      return "GL_STACK_UNDERFLOW";
+    case GL_OUT_OF_MEMORY:
+      return "GL_OUT_OF_MEMORY";
+    default:
+      return "UNKNOW_ERROR";
+  }
+}
+
+#define GL_CHECKERR(token, function_name)                 \
+  do {                                                    \
+    GLenum __err = glGetError();                          \
+    if (__err != GL_NO_ERROR) {                           \
+      message_consumer_->Message(                         \
+          MessageConsumer::Severity::kError, token,       \
+          "OpenGL error: " + std::string(function_name) + \
+              "(): " + OpenglErrorString(__err));         \
+      return false;                                       \
+    }                                                     \
+  } while (0)
+
+#define GL_SAFECALL(token, function, ...) \
+  do {                                    \
+    function(__VA_ARGS__);                \
+    GL_CHECKERR(token, #function);        \
+  } while (0)
+
+#define GL_SAFECALL_NO_ARGS(token, function) \
+  do {                                       \
+    function();                              \
+    GL_CHECKERR(token, #function);           \
+  } while (0)
+
+#define COMPILE_ERROR_EXIT_CODE (101)
+#define LINK_ERROR_EXIT_CODE (102)
 
 Executor::Executor(MessageConsumer* message_consumer)
     : message_consumer_(message_consumer) {}
@@ -49,38 +94,43 @@ bool Executor::VisitAssertEqual(CommandAssertEqual* assert_equal) {
 
 bool Executor::VisitAssertPixels(CommandAssertPixels* assert_pixels) {
   GLuint framebuffer_object_id;
-  GL_SAFECALL(glGenFramebuffers, 1, &framebuffer_object_id);
-  GL_SAFECALL(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer_object_id);
+  GL_SAFECALL(&assert_pixels->GetStartToken(), glGenFramebuffers, 1,
+              &framebuffer_object_id);
+  GL_SAFECALL(&assert_pixels->GetStartToken(), glBindFramebuffer,
+              GL_FRAMEBUFFER, framebuffer_object_id);
   GL_SAFECALL(
-      glFramebufferRenderbuffer, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-      GL_RENDERBUFFER,
+      &assert_pixels->GetStartToken(), glFramebufferRenderbuffer,
+      GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER,
       created_renderbuffers_.at(assert_pixels->GetRenderbufferIdentifier()));
   size_t width;
   size_t height;
   {
     GLint temp_width;
-    GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
-                GL_RENDERBUFFER_WIDTH, &temp_width);
+    GL_SAFECALL(&assert_pixels->GetStartToken(), glGetRenderbufferParameteriv,
+                GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &temp_width);
     GLint temp_height;
-    GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
-                GL_RENDERBUFFER_HEIGHT, &temp_height);
+    GL_SAFECALL(&assert_pixels->GetStartToken(), glGetRenderbufferParameteriv,
+                GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &temp_height);
     width = static_cast<size_t>(temp_width);
     height = static_cast<size_t>(temp_height);
   }
 
   GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
-    crash(
-        "Problem with OpenGL framebuffer after specifying color render buffer: "
-        "n%xn",
-        status);
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, &assert_pixels->GetStartToken(),
+        "Incomplete framebuffer found for 'ASSERT_PIXELS' command; "
+        "glCheckFramebufferStatus returned status " +
+            std::to_string(status));
+    return false;
   }
 
   std::vector<std::uint8_t> data(width * height * CHANNELS);
-  GL_SAFECALL(glReadBuffer, GL_COLOR_ATTACHMENT0);
-  GL_SAFECALL(glReadPixels, 0, 0, static_cast<GLint>(width),
-              static_cast<GLint>(height), GL_RGBA, GL_UNSIGNED_BYTE,
-              data.data());
+  GL_SAFECALL(&assert_pixels->GetStartToken(), glReadBuffer,
+              GL_COLOR_ATTACHMENT0);
+  GL_SAFECALL(&assert_pixels->GetStartToken(), glReadPixels, 0, 0,
+              static_cast<GLint>(width), static_cast<GLint>(height), GL_RGBA,
+              GL_UNSIGNED_BYTE, data.data());
   for (size_t y = assert_pixels->GetRectangleY();
        y < assert_pixels->GetRectangleY() + assert_pixels->GetRectangleHeight();
        y++) {
@@ -135,14 +185,17 @@ bool Executor::VisitAssertSimilarEmdHistogram(
   for (auto index : {0, 1}) {
     {
       GLint temp_width;
-      GL_SAFECALL(glBindRenderbuffer, GL_RENDERBUFFER, renderbuffers[index]);
-      GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
+      GL_SAFECALL(&assert_similar_emd_histogram->GetStartToken(),
+                  glBindRenderbuffer, GL_RENDERBUFFER, renderbuffers[index]);
+      GL_SAFECALL(&assert_similar_emd_histogram->GetStartToken(),
+                  glGetRenderbufferParameteriv, GL_RENDERBUFFER,
                   GL_RENDERBUFFER_WIDTH, &temp_width);
       width[index] = static_cast<size_t>(temp_width);
     }
     {
       GLint temp_height;
-      GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
+      GL_SAFECALL(&assert_similar_emd_histogram->GetStartToken(),
+                  glGetRenderbufferParameteriv, GL_RENDERBUFFER,
                   GL_RENDERBUFFER_HEIGHT, &temp_height);
       height[index] = static_cast<size_t>(temp_height);
     }
@@ -175,27 +228,34 @@ bool Executor::VisitAssertSimilarEmdHistogram(
   }
 
   GLuint framebuffer_object_id;
-  GL_SAFECALL(glGenFramebuffers, 1, &framebuffer_object_id);
-  GL_SAFECALL(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer_object_id);
+  GL_SAFECALL(&assert_similar_emd_histogram->GetStartToken(), glGenFramebuffers,
+              1, &framebuffer_object_id);
+  GL_SAFECALL(&assert_similar_emd_histogram->GetStartToken(), glBindFramebuffer,
+              GL_FRAMEBUFFER, framebuffer_object_id);
   for (auto index : {0, 1}) {
-    GL_SAFECALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER,
+    GL_SAFECALL(&assert_similar_emd_histogram->GetStartToken(),
+                glFramebufferRenderbuffer, GL_FRAMEBUFFER,
                 GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index),
                 GL_RENDERBUFFER, renderbuffers[index]);
   }
   GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
-    crash(
-        "Problem with OpenGL framebuffer after specifying color render buffer: "
-        "n%xn",
-        status);
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        &assert_similar_emd_histogram->GetStartToken(),
+        "Incomplete framebuffer found for 'ASSERT_SIMILAR_EMD_HISTOGRAM' "
+        "command; glCheckFramebufferStatus returned status " +
+            std::to_string(status));
+    return false;
   }
 
   std::vector<std::uint8_t> data[2];
   for (auto index : {0, 1}) {
     data[index].resize(width[index] * height[index] * CHANNELS);
-    GL_SAFECALL(glReadBuffer,
+    GL_SAFECALL(&assert_similar_emd_histogram->GetStartToken(), glReadBuffer,
                 GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index));
-    GL_SAFECALL(glReadPixels, 0, 0, static_cast<GLint>(width[index]),
+    GL_SAFECALL(&assert_similar_emd_histogram->GetStartToken(), glReadPixels, 0,
+                0, static_cast<GLint>(width[index]),
                 static_cast<GLint>(height[index]), GL_RGBA, GL_UNSIGNED_BYTE,
                 data[index].data());
   }
@@ -258,7 +318,7 @@ bool Executor::VisitAssertSimilarEmdHistogram(
 }
 
 bool Executor::VisitBindSampler(CommandBindSampler* bind_sampler) {
-  GL_SAFECALL(glBindSampler,
+  GL_SAFECALL(&bind_sampler->GetStartToken(), glBindSampler,
               static_cast<GLuint>(bind_sampler->GetTextureUnit()),
               created_samplers_.at(bind_sampler->GetSamplerIdentifier()));
   return true;
@@ -266,7 +326,8 @@ bool Executor::VisitBindSampler(CommandBindSampler* bind_sampler) {
 
 bool Executor::VisitBindStorageBuffer(
     CommandBindStorageBuffer* bind_storage_buffer) {
-  GL_SAFECALL(glBindBufferBase, GL_SHADER_STORAGE_BUFFER,
+  GL_SAFECALL(&bind_storage_buffer->GetStartToken(), glBindBufferBase,
+              GL_SHADER_STORAGE_BUFFER,
               static_cast<GLuint>(bind_storage_buffer->GetBinding()),
               created_buffers_.at(bind_storage_buffer->GetBufferIdentifier()));
   return true;
@@ -274,16 +335,17 @@ bool Executor::VisitBindStorageBuffer(
 
 bool Executor::VisitBindTexture(CommandBindTexture* bind_texture) {
   GL_SAFECALL(
-      glActiveTexture,
+      &bind_texture->GetStartToken(), glActiveTexture,
       GL_TEXTURE0 + static_cast<GLenum>(bind_texture->GetTextureUnit()));
-  GL_SAFECALL(glBindTexture, GL_TEXTURE_2D,
+  GL_SAFECALL(&bind_texture->GetStartToken(), glBindTexture, GL_TEXTURE_2D,
               created_textures_.at(bind_texture->GetTextureIdentifier()));
   return true;
 }
 
 bool Executor::VisitBindUniformBuffer(
     CommandBindUniformBuffer* bind_uniform_buffer) {
-  GL_SAFECALL(glBindBufferBase, GL_UNIFORM_BUFFER,
+  GL_SAFECALL(&bind_uniform_buffer->GetStartToken(), glBindBufferBase,
+              GL_UNIFORM_BUFFER,
               static_cast<GLuint>(bind_uniform_buffer->GetBinding()),
               created_buffers_.at(bind_uniform_buffer->GetBufferIdentifier()));
   return true;
@@ -309,15 +371,31 @@ bool Executor::VisitCompileShader(CommandCompileShader* compile_shader) {
       break;
   }
   GLuint shader = glCreateShader(shader_kind);
-  GL_CHECKERR("glCreateShader");
+  GL_CHECKERR(&compile_shader->GetStartToken(), "glCreateShader");
   const char* temp = shader_declaration->GetShaderText().c_str();
-  GL_SAFECALL(glShaderSource, shader, 1, &temp, nullptr);
-  GL_SAFECALL(glCompileShader, shader);
+  GL_SAFECALL(&compile_shader->GetStartToken(), glShaderSource, shader, 1,
+              &temp, nullptr);
+  GL_SAFECALL(&compile_shader->GetStartToken(), glCompileShader, shader);
   GLint status = 0;
-  GL_SAFECALL(glGetShaderiv, shader, GL_COMPILE_STATUS, &status);
+  GL_SAFECALL(&compile_shader->GetStartToken(), glGetShaderiv, shader,
+              GL_COMPILE_STATUS, &status);
   if (status == 0) {
-    PrintShaderError(shader);
-    errcode_crash(COMPILE_ERROR_EXIT_CODE, "Shader compilation failed");
+    std::string message = "Shader compilation failed";
+    GLint info_log_length = 0;
+    GL_SAFECALL(&compile_shader->GetStartToken(), glGetShaderiv, shader,
+                GL_INFO_LOG_LENGTH, &info_log_length);
+    // The length includes the NULL character
+    std::vector<GLchar> error_log(static_cast<size_t>(info_log_length), 0);
+    GL_SAFECALL(&compile_shader->GetStartToken(), glGetShaderInfoLog, shader,
+                info_log_length, &info_log_length, &error_log[0]);
+    if (info_log_length > 0) {
+      message += ":\n" + std::string(error_log.data());
+    } else {
+      message += " (no details available)";
+    }
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               &compile_shader->GetStartToken(), message);
+    return false;
   }
   compiled_shaders_.insert({compile_shader->GetResultIdentifier(), shader});
   return true;
@@ -325,15 +403,16 @@ bool Executor::VisitCompileShader(CommandCompileShader* compile_shader) {
 
 bool Executor::VisitCreateBuffer(CommandCreateBuffer* create_buffer) {
   GLuint buffer;
-  GL_SAFECALL(glGenBuffers, 1, &buffer);
+  GL_SAFECALL(&create_buffer->GetStartToken(), glGenBuffers, 1, &buffer);
   // We arbitrarily bind to the ARRAY_BUFFER target.
-  GL_SAFECALL(glBindBuffer, GL_ARRAY_BUFFER, buffer);
+  GL_SAFECALL(&create_buffer->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
+              buffer);
   if (create_buffer->HasInitialData()) {
-    GL_SAFECALL(glBufferData, GL_ARRAY_BUFFER,
+    GL_SAFECALL(&create_buffer->GetStartToken(), glBufferData, GL_ARRAY_BUFFER,
                 static_cast<GLuint>(create_buffer->GetSizeBytes()),
                 create_buffer->GetInitialData().data(), GL_STREAM_DRAW);
   } else {
-    GL_SAFECALL(glBufferData, GL_ARRAY_BUFFER,
+    GL_SAFECALL(&create_buffer->GetStartToken(), glBufferData, GL_ARRAY_BUFFER,
                 static_cast<GLuint>(create_buffer->GetSizeBytes()), nullptr,
                 GL_STREAM_DRAW);
   }
@@ -343,7 +422,7 @@ bool Executor::VisitCreateBuffer(CommandCreateBuffer* create_buffer) {
 
 bool Executor::VisitCreateSampler(CommandCreateSampler* create_sampler) {
   GLuint sampler;
-  GL_SAFECALL(glGenSamplers, 1, &sampler);
+  GL_SAFECALL(&create_sampler->GetStartToken(), glGenSamplers, 1, &sampler);
   created_samplers_.insert({create_sampler->GetResultIdentifier(), sampler});
   return true;
 }
@@ -351,9 +430,12 @@ bool Executor::VisitCreateSampler(CommandCreateSampler* create_sampler) {
 bool Executor::VisitCreateEmptyTexture2D(
     CommandCreateEmptyTexture2D* create_empty_texture_2d) {
   GLuint texture;
-  GL_SAFECALL(glGenTextures, 1, &texture);
-  GL_SAFECALL(glBindTexture, GL_TEXTURE_2D, texture);
-  GL_SAFECALL(glTexImage2D, GL_TEXTURE_2D, 0, GL_RGBA,
+  GL_SAFECALL(&create_empty_texture_2d->GetStartToken(), glGenTextures, 1,
+              &texture);
+  GL_SAFECALL(&create_empty_texture_2d->GetStartToken(), glBindTexture,
+              GL_TEXTURE_2D, texture);
+  GL_SAFECALL(&create_empty_texture_2d->GetStartToken(), glTexImage2D,
+              GL_TEXTURE_2D, 0, GL_RGBA,
               static_cast<GLsizei>(create_empty_texture_2d->GetWidth()),
               static_cast<GLsizei>(create_empty_texture_2d->GetHeight()), 0,
               GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
@@ -366,25 +448,43 @@ bool Executor::VisitCreateProgram(CommandCreateProgram* create_program) {
   assert(created_programs_.count(create_program->GetResultIdentifier()) == 0 &&
          "Identifier already in use for created program.");
   GLuint program = glCreateProgram();
-  GL_CHECKERR("glCreateProgram");
+  GL_CHECKERR(&create_program->GetStartToken(), "glCreateProgram");
   if (program == 0) {
-    crash("glCreateProgram()");
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               &create_program->GetStartToken(),
+                               "glCreateProgram failed");
+    return false;
   }
   for (size_t index = 0; index < create_program->GetNumCompiledShaders();
        index++) {
     assert(compiled_shaders_.count(
                create_program->GetCompiledShaderIdentifier(index)) == 1 &&
            "Compiled shader not found.");
-    GL_SAFECALL(glAttachShader, program,
+    GL_SAFECALL(&create_program->GetStartToken(), glAttachShader, program,
                 compiled_shaders_.at(
                     create_program->GetCompiledShaderIdentifier(index)));
   }
-  GL_SAFECALL(glLinkProgram, program);
+  GL_SAFECALL(&create_program->GetStartToken(), glLinkProgram, program);
   GLint status = 0;
-  GL_SAFECALL(glGetProgramiv, program, GL_LINK_STATUS, &status);
+  GL_SAFECALL(&create_program->GetStartToken(), glGetProgramiv, program,
+              GL_LINK_STATUS, &status);
   if (status == 0) {
-    PrintProgramError(program);
-    errcode_crash(LINK_ERROR_EXIT_CODE, "Program linking failed");
+    std::string message = "Program linking failed";
+    GLint info_log_length = 0;
+    GL_SAFECALL(&create_program->GetStartToken(), glGetProgramiv, program,
+                GL_INFO_LOG_LENGTH, &info_log_length);
+    // The length includes the NULL character
+    std::vector<GLchar> error_log(static_cast<size_t>(info_log_length), 0);
+    GL_SAFECALL(&create_program->GetStartToken(), glGetProgramInfoLog, program,
+                info_log_length, &info_log_length, &error_log[0]);
+    if (info_log_length > 0) {
+      message += ":\n" + std::string(error_log.data());
+    } else {
+      message += " (no details available)";
+    }
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               &create_program->GetStartToken(), message);
+    return false;
   }
   created_programs_.insert({create_program->GetResultIdentifier(), program});
   return true;
@@ -393,10 +493,13 @@ bool Executor::VisitCreateProgram(CommandCreateProgram* create_program) {
 bool Executor::VisitCreateRenderbuffer(
     CommandCreateRenderbuffer* create_renderbuffer) {
   GLuint render_buffer;
-  GL_SAFECALL(glGenRenderbuffers, 1, &render_buffer);
-  GL_SAFECALL(glBindRenderbuffer, GL_RENDERBUFFER, render_buffer);
+  GL_SAFECALL(&create_renderbuffer->GetStartToken(), glGenRenderbuffers, 1,
+              &render_buffer);
+  GL_SAFECALL(&create_renderbuffer->GetStartToken(), glBindRenderbuffer,
+              GL_RENDERBUFFER, render_buffer);
 
-  GL_SAFECALL(glRenderbufferStorage, GL_RENDERBUFFER, GL_RGBA8,
+  GL_SAFECALL(&create_renderbuffer->GetStartToken(), glRenderbufferStorage,
+              GL_RENDERBUFFER, GL_RGBA8,
               static_cast<GLsizei>(create_renderbuffer->GetWidth()),
               static_cast<GLsizei>(create_renderbuffer->GetHeight()));
   created_renderbuffers_.insert(
@@ -415,20 +518,24 @@ bool Executor::VisitDeclareShader(CommandDeclareShader* declare_shader) {
 bool Executor::VisitDumpRenderbuffer(
     CommandDumpRenderbuffer* dump_renderbuffer) {
   GLuint framebuffer_object_id;
-  GL_SAFECALL(glGenFramebuffers, 1, &framebuffer_object_id);
-  GL_SAFECALL(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer_object_id);
-  GL_SAFECALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-              GL_RENDERBUFFER,
+  GL_SAFECALL(&dump_renderbuffer->GetStartToken(), glGenFramebuffers, 1,
+              &framebuffer_object_id);
+  GL_SAFECALL(&dump_renderbuffer->GetStartToken(), glBindFramebuffer,
+              GL_FRAMEBUFFER, framebuffer_object_id);
+  GL_SAFECALL(&dump_renderbuffer->GetStartToken(), glFramebufferRenderbuffer,
+              GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER,
               created_renderbuffers_.at(
                   dump_renderbuffer->GetRenderbufferIdentifier()));
   size_t width;
   size_t height;
   {
     GLint temp_width;
-    GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
+    GL_SAFECALL(&dump_renderbuffer->GetStartToken(),
+                glGetRenderbufferParameteriv, GL_RENDERBUFFER,
                 GL_RENDERBUFFER_WIDTH, &temp_width);
     GLint temp_height;
-    GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
+    GL_SAFECALL(&dump_renderbuffer->GetStartToken(),
+                glGetRenderbufferParameteriv, GL_RENDERBUFFER,
                 GL_RENDERBUFFER_HEIGHT, &temp_height);
     width = static_cast<size_t>(temp_width);
     height = static_cast<size_t>(temp_height);
@@ -436,17 +543,20 @@ bool Executor::VisitDumpRenderbuffer(
 
   GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
-    crash(
-        "Problem with OpenGL framebuffer after specifying color render buffer: "
-        "n%xn",
-        status);
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, &dump_renderbuffer->GetStartToken(),
+        "Incomplete framebuffer found for 'DUMP_RENDERBUFFER' command; "
+        "glCheckFramebufferStatus returned status " +
+            std::to_string(status));
+    return false;
   }
 
   std::vector<std::uint8_t> data(width * height * CHANNELS);
-  GL_SAFECALL(glReadBuffer, GL_COLOR_ATTACHMENT0);
-  GL_SAFECALL(glReadPixels, 0, 0, static_cast<GLint>(width),
-              static_cast<GLint>(height), GL_RGBA, GL_UNSIGNED_BYTE,
-              data.data());
+  GL_SAFECALL(&dump_renderbuffer->GetStartToken(), glReadBuffer,
+              GL_COLOR_ATTACHMENT0);
+  GL_SAFECALL(&dump_renderbuffer->GetStartToken(), glReadPixels, 0, 0,
+              static_cast<GLint>(width), static_cast<GLint>(height), GL_RGBA,
+              GL_UNSIGNED_BYTE, data.data());
   std::vector<std::uint8_t> flipped_data(width * height * CHANNELS);
   for (size_t h = 0; h < height; h++) {
     for (size_t col = 0; col < width * CHANNELS; col++) {
@@ -458,48 +568,58 @@ bool Executor::VisitDumpRenderbuffer(
       dump_renderbuffer->GetFilename(), flipped_data,
       static_cast<unsigned int>(width), static_cast<unsigned int>(height));
   if (png_error != 0) {
-    crash("lodepng: %s", lodepng_error_text(png_error));
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, &dump_renderbuffer->GetStartToken(),
+        "Writing PNG data to '" + dump_renderbuffer->GetFilename() +
+            "' failed");
   }
-  GL_SAFECALL(glDeleteFramebuffers, 1, &framebuffer_object_id);
+  GL_SAFECALL(&dump_renderbuffer->GetStartToken(), glDeleteFramebuffers, 1,
+              &framebuffer_object_id);
   return true;
 }
 
 bool Executor::VisitRunCompute(CommandRunCompute* run_compute) {
-  GL_SAFECALL(glMemoryBarrier, GL_ALL_BARRIER_BITS);
+  GL_SAFECALL(&run_compute->GetStartToken(), glMemoryBarrier,
+              GL_ALL_BARRIER_BITS);
 
-  GL_SAFECALL(glUseProgram,
+  GL_SAFECALL(&run_compute->GetStartToken(), glUseProgram,
               created_programs_.at(run_compute->GetProgramIdentifier()));
 
-  GL_SAFECALL(glDispatchCompute,
+  GL_SAFECALL(&run_compute->GetStartToken(), glDispatchCompute,
               static_cast<GLuint>(run_compute->GetNumGroupsX()),
               static_cast<GLuint>(run_compute->GetNumGroupsY()),
               static_cast<GLuint>(run_compute->GetNumGroupsZ()));
 
-  GL_SAFECALL_NO_ARGS(glFlush);
+  GL_SAFECALL_NO_ARGS(&run_compute->GetStartToken(), glFlush);
 
   return true;
 }
 
 bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
-  GL_SAFECALL(glMemoryBarrier, GL_ALL_BARRIER_BITS);
+  GL_SAFECALL(&run_graphics->GetStartToken(), glMemoryBarrier,
+              GL_ALL_BARRIER_BITS);
 
   const auto& vertex_data = run_graphics->GetVertexData();
   for (const auto& entry : vertex_data) {
-    GL_SAFECALL(glBindBuffer, GL_ARRAY_BUFFER,
+    GL_SAFECALL(&run_graphics->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
                 created_buffers_.at(entry.second.GetBufferIdentifier()));
-    GL_SAFECALL(glEnableVertexAttribArray, static_cast<GLuint>(entry.first));
-    GL_SAFECALL(glVertexAttribPointer, static_cast<GLuint>(entry.first),
+    GL_SAFECALL(&run_graphics->GetStartToken(), glEnableVertexAttribArray,
+                static_cast<GLuint>(entry.first));
+    GL_SAFECALL(&run_graphics->GetStartToken(), glVertexAttribPointer,
+                static_cast<GLuint>(entry.first),
                 static_cast<GLsizei>(entry.second.GetDimension()), GL_FLOAT,
                 GL_FALSE, static_cast<GLsizei>(entry.second.GetStrideBytes()),
                 reinterpret_cast<void*>(entry.second.GetOffsetBytes()));
   }
 
-  GL_SAFECALL(glUseProgram,
+  GL_SAFECALL(&run_graphics->GetStartToken(), glUseProgram,
               created_programs_.at(run_graphics->GetProgramIdentifier()));
 
   GLuint framebuffer_object_id;
-  GL_SAFECALL(glGenFramebuffers, 1, &framebuffer_object_id);
-  GL_SAFECALL(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer_object_id);
+  GL_SAFECALL(&run_graphics->GetStartToken(), glGenFramebuffers, 1,
+              &framebuffer_object_id);
+  GL_SAFECALL(&run_graphics->GetStartToken(), glBindFramebuffer, GL_FRAMEBUFFER,
+              framebuffer_object_id);
 
   const auto& framebuffer_attachments =
       run_graphics->GetFramebufferAttachments();
@@ -514,11 +634,12 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
       GLenum color_attachment = GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(i);
       auto framebuffer_attachment = framebuffer_attachments.at(i)->GetText();
       if (created_renderbuffers_.count(framebuffer_attachment) != 0) {
-        GL_SAFECALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER, color_attachment,
-                    GL_RENDERBUFFER,
+        GL_SAFECALL(&run_graphics->GetStartToken(), glFramebufferRenderbuffer,
+                    GL_FRAMEBUFFER, color_attachment, GL_RENDERBUFFER,
                     created_renderbuffers_.at(framebuffer_attachment));
       } else {
-        GL_SAFECALL(glFramebufferTexture, GL_FRAMEBUFFER, color_attachment,
+        GL_SAFECALL(&run_graphics->GetStartToken(), glFramebufferTexture,
+                    GL_FRAMEBUFFER, color_attachment,
                     created_textures_.at(framebuffer_attachment), 0);
       }
       draw_buffers.push_back(color_attachment);
@@ -529,20 +650,23 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
 
   GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
-    crash(
-        "Problem with OpenGL framebuffer after specifying color render buffer: "
-        "n%xn",
-        status);
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, &run_graphics->GetStartToken(),
+        "Incomplete framebuffer found for 'RUN_GRAPHICS' comment; "
+        "glCheckFramebufferStatus returned status " +
+            std::to_string(status));
+    return false;
   }
 
-  GL_SAFECALL(glDrawBuffers, static_cast<GLsizei>(draw_buffers.size()),
-              draw_buffers.data());
+  GL_SAFECALL(&run_graphics->GetStartToken(), glDrawBuffers,
+              static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
 
-  GL_SAFECALL(glClearColor, 0.0F, 0.0F, 0.0F, 1.0F);
-  GL_SAFECALL(glClear, GL_COLOR_BUFFER_BIT);
+  GL_SAFECALL(&run_graphics->GetStartToken(), glClearColor, 0.0F, 0.0F, 0.0F,
+              1.0F);
+  GL_SAFECALL(&run_graphics->GetStartToken(), glClear, GL_COLOR_BUFFER_BIT);
 
   GL_SAFECALL(
-      glBindBuffer, GL_ELEMENT_ARRAY_BUFFER,
+      &run_graphics->GetStartToken(), glBindBuffer, GL_ELEMENT_ARRAY_BUFFER,
       created_buffers_.at(run_graphics->GetIndexDataBufferIdentifier()));
   GLenum topology = GL_NONE;
   switch (run_graphics->GetTopology()) {
@@ -550,17 +674,19 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
       topology = GL_TRIANGLES;
       break;
   }
-  GL_SAFECALL(glDrawElements, topology,
+  GL_SAFECALL(&run_graphics->GetStartToken(), glDrawElements, topology,
               static_cast<GLsizei>(run_graphics->GetVertexCount()),
               GL_UNSIGNED_INT, reinterpret_cast<GLvoid*>(0));
 
-  GL_SAFECALL_NO_ARGS(glFlush);
+  GL_SAFECALL_NO_ARGS(&run_graphics->GetStartToken(), glFlush);
 
   for (const auto& entry : run_graphics->GetVertexData()) {
-    GL_SAFECALL(glDisableVertexAttribArray, static_cast<GLuint>(entry.first));
+    GL_SAFECALL(&run_graphics->GetStartToken(), glDisableVertexAttribArray,
+                static_cast<GLuint>(entry.first));
   }
 
-  GL_SAFECALL(glDeleteFramebuffers, 1, &framebuffer_object_id);
+  GL_SAFECALL(&run_graphics->GetStartToken(), glDeleteFramebuffers, 1,
+              &framebuffer_object_id);
   return true;
 }
 
@@ -588,7 +714,7 @@ bool Executor::VisitSetSamplerParameter(
              set_sampler_parameter->GetSamplerIdentifier()) > 0 &&
          "Unknown sampler.");
   GL_SAFECALL(
-      glSamplerParameteri,
+      &set_sampler_parameter->GetStartToken(), glSamplerParameteri,
       created_samplers_.at(set_sampler_parameter->GetSamplerIdentifier()),
       parameter, parameter_value);
   return true;
@@ -618,9 +744,10 @@ bool Executor::VisitSetTextureParameter(
              set_texture_parameter->GetTextureIdentifier()) > 0 &&
          "Unknown texture.");
   GL_SAFECALL(
-      glBindTexture, GL_TEXTURE_2D,
+      &set_texture_parameter->GetStartToken(), glBindTexture, GL_TEXTURE_2D,
       created_textures_.at(set_texture_parameter->GetTextureIdentifier()));
-  GL_SAFECALL(glTexParameteri, GL_TEXTURE_2D, parameter, parameter_value);
+  GL_SAFECALL(&set_texture_parameter->GetStartToken(), glTexParameteri,
+              GL_TEXTURE_2D, parameter, parameter_value);
   return true;
 }
 
@@ -632,7 +759,7 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
   } else {
     uniform_location =
         glGetUniformLocation(program, set_uniform->GetName().c_str());
-    GL_CHECKERR("glGetUniformLocation");
+    GL_CHECKERR(&set_uniform->GetStartToken(), "glGetUniformLocation");
     if (uniform_location == -1) {
       message_consumer_->Message(
           MessageConsumer::Severity::kError, &set_uniform->GetNameToken(),
@@ -646,137 +773,152 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
   switch (uniform_value.GetElementType()) {
     case UniformValue::ElementType::kFloat:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform1fv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform1fv, program,
+                    uniform_location,
                     static_cast<GLint>(uniform_value.GetArraySize()),
                     uniform_value.GetFloatData());
       } else {
-        GL_SAFECALL(glProgramUniform1f, program, uniform_location,
-                    uniform_value.GetFloatData()[0]);
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform1f, program,
+                    uniform_location, uniform_value.GetFloatData()[0]);
       }
       break;
     case UniformValue::ElementType::kVec2:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform2fv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform2fv, program,
+                    uniform_location,
                     static_cast<GLsizei>(uniform_value.GetArraySize()),
                     uniform_value.GetFloatData());
       } else {
-        GL_SAFECALL(glProgramUniform2f, program, uniform_location,
-                    uniform_value.GetFloatData()[0],
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform2f, program,
+                    uniform_location, uniform_value.GetFloatData()[0],
                     uniform_value.GetFloatData()[1]);
       }
       break;
     case UniformValue::ElementType::kVec3:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform3fv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform3fv, program,
+                    uniform_location,
                     static_cast<GLsizei>(uniform_value.GetArraySize()),
                     uniform_value.GetFloatData());
       } else {
-        GL_SAFECALL(glProgramUniform3f, program, uniform_location,
-                    uniform_value.GetFloatData()[0],
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform3f, program,
+                    uniform_location, uniform_value.GetFloatData()[0],
                     uniform_value.GetFloatData()[1],
                     uniform_value.GetFloatData()[2]);
       }
       break;
     case UniformValue::ElementType::kVec4:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform4fv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform4fv, program,
+                    uniform_location,
                     static_cast<GLsizei>(uniform_value.GetArraySize()),
                     uniform_value.GetFloatData());
       } else {
-        GL_SAFECALL(
-            glProgramUniform4f, program, uniform_location,
-            uniform_value.GetFloatData()[0], uniform_value.GetFloatData()[1],
-            uniform_value.GetFloatData()[2], uniform_value.GetFloatData()[3]);
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform4f, program,
+                    uniform_location, uniform_value.GetFloatData()[0],
+                    uniform_value.GetFloatData()[1],
+                    uniform_value.GetFloatData()[2],
+                    uniform_value.GetFloatData()[3]);
       }
       break;
     case UniformValue::ElementType::kInt:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform1iv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform1iv, program,
+                    uniform_location,
                     static_cast<GLsizei>(uniform_value.GetArraySize()),
                     uniform_value.GetIntData());
       } else {
-        GL_SAFECALL(glProgramUniform1i, program, uniform_location,
-                    uniform_value.GetIntData()[0]);
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform1i, program,
+                    uniform_location, uniform_value.GetIntData()[0]);
       }
       break;
     case UniformValue::ElementType::kIvec2:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform2iv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform2iv, program,
+                    uniform_location,
                     static_cast<GLsizei>(uniform_value.GetArraySize()),
                     uniform_value.GetIntData());
       } else {
-        GL_SAFECALL(glProgramUniform2i, program, uniform_location,
-                    uniform_value.GetIntData()[0],
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform2i, program,
+                    uniform_location, uniform_value.GetIntData()[0],
                     uniform_value.GetIntData()[1]);
       }
       break;
     case UniformValue::ElementType::kIvec3:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform3iv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform3iv, program,
+                    uniform_location,
                     static_cast<GLsizei>(uniform_value.GetArraySize()),
                     uniform_value.GetIntData());
       } else {
-        GL_SAFECALL(glProgramUniform3i, program, uniform_location,
-                    uniform_value.GetIntData()[0],
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform3i, program,
+                    uniform_location, uniform_value.GetIntData()[0],
                     uniform_value.GetIntData()[1],
                     uniform_value.GetIntData()[2]);
       }
       break;
     case UniformValue::ElementType::kIvec4:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform4iv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform4iv, program,
+                    uniform_location,
                     static_cast<GLsizei>(uniform_value.GetArraySize()),
                     uniform_value.GetIntData());
       } else {
-        GL_SAFECALL(
-            glProgramUniform4i, program, uniform_location,
-            uniform_value.GetIntData()[0], uniform_value.GetIntData()[1],
-            uniform_value.GetIntData()[2], uniform_value.GetIntData()[3]);
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform4i, program,
+                    uniform_location, uniform_value.GetIntData()[0],
+                    uniform_value.GetIntData()[1],
+                    uniform_value.GetIntData()[2],
+                    uniform_value.GetIntData()[3]);
       }
       break;
     case UniformValue::ElementType::kUint:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform1uiv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform1uiv,
+                    program, uniform_location,
                     static_cast<GLsizei>(uniform_value.GetArraySize()),
                     uniform_value.GetUintData());
       } else {
-        GL_SAFECALL(glProgramUniform1ui, program, uniform_location,
-                    uniform_value.GetUintData()[0]);
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform1ui, program,
+                    uniform_location, uniform_value.GetUintData()[0]);
       }
       break;
     case UniformValue::ElementType::kUvec2:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform2uiv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform2uiv,
+                    program, uniform_location,
                     static_cast<GLsizei>(uniform_value.GetArraySize()),
                     uniform_value.GetUintData());
       } else {
-        GL_SAFECALL(glProgramUniform2ui, program, uniform_location,
-                    uniform_value.GetUintData()[0],
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform2ui, program,
+                    uniform_location, uniform_value.GetUintData()[0],
                     uniform_value.GetUintData()[1]);
       }
       break;
     case UniformValue::ElementType::kUvec3:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform3uiv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform3uiv,
+                    program, uniform_location,
                     static_cast<GLsizei>(uniform_value.GetArraySize()),
                     uniform_value.GetUintData());
       } else {
-        GL_SAFECALL(glProgramUniform3ui, program, uniform_location,
-                    uniform_value.GetUintData()[0],
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform3ui, program,
+                    uniform_location, uniform_value.GetUintData()[0],
                     uniform_value.GetUintData()[1],
                     uniform_value.GetUintData()[2]);
       }
       break;
     case UniformValue::ElementType::kUvec4:
       if (uniform_value.IsArray()) {
-        GL_SAFECALL(glProgramUniform4uiv, program, uniform_location,
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform4uiv,
+                    program, uniform_location,
                     static_cast<GLsizei>(uniform_value.GetArraySize()),
                     uniform_value.GetUintData());
       } else {
-        GL_SAFECALL(
-            glProgramUniform4ui, program, uniform_location,
-            uniform_value.GetUintData()[0], uniform_value.GetUintData()[1],
-            uniform_value.GetUintData()[2], uniform_value.GetUintData()[3]);
+        GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform4ui, program,
+                    uniform_location, uniform_value.GetUintData()[0],
+                    uniform_value.GetUintData()[1],
+                    uniform_value.GetUintData()[2],
+                    uniform_value.GetUintData()[3]);
       }
       break;
     default:
@@ -808,15 +950,16 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
   for (auto index : {0, 1}) {
     {
       GLint temp_width;
-      GL_SAFECALL(glBindRenderbuffer, GL_RENDERBUFFER, renderbuffers[index]);
-      GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
-                  GL_RENDERBUFFER_WIDTH, &temp_width);
+      GL_SAFECALL(&assert_equal->GetStartToken(), glBindRenderbuffer,
+                  GL_RENDERBUFFER, renderbuffers[index]);
+      GL_SAFECALL(&assert_equal->GetStartToken(), glGetRenderbufferParameteriv,
+                  GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &temp_width);
       width[index] = static_cast<size_t>(temp_width);
     }
     {
       GLint temp_height;
-      GL_SAFECALL(glGetRenderbufferParameteriv, GL_RENDERBUFFER,
-                  GL_RENDERBUFFER_HEIGHT, &temp_height);
+      GL_SAFECALL(&assert_equal->GetStartToken(), glGetRenderbufferParameteriv,
+                  GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &temp_height);
       height[index] = static_cast<size_t>(temp_height);
     }
   }
@@ -844,27 +987,33 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
   }
 
   GLuint framebuffer_object_id;
-  GL_SAFECALL(glGenFramebuffers, 1, &framebuffer_object_id);
-  GL_SAFECALL(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer_object_id);
+  GL_SAFECALL(&assert_equal->GetStartToken(), glGenFramebuffers, 1,
+              &framebuffer_object_id);
+  GL_SAFECALL(&assert_equal->GetStartToken(), glBindFramebuffer, GL_FRAMEBUFFER,
+              framebuffer_object_id);
   for (auto index : {0, 1}) {
-    GL_SAFECALL(glFramebufferRenderbuffer, GL_FRAMEBUFFER,
+    GL_SAFECALL(&assert_equal->GetStartToken(), glFramebufferRenderbuffer,
+                GL_FRAMEBUFFER,
                 GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index),
                 GL_RENDERBUFFER, renderbuffers[index]);
   }
   GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
-    crash(
-        "Problem with OpenGL framebuffer after specifying color render buffer: "
-        "n%xn",
-        status);
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, &assert_equal->GetStartToken(),
+        "Incomplete framebuffer found for 'ASSERT_EQUAL' command; "
+        "glCheckFramebufferStatus returned status " +
+            std::to_string(status));
+    return false;
   }
 
   std::vector<std::uint8_t> data[2];
   for (auto index : {0, 1}) {
     data[index].resize(width[index] * height[index] * CHANNELS);
-    GL_SAFECALL(glReadBuffer,
+    GL_SAFECALL(&assert_equal->GetStartToken(), glReadBuffer,
                 GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index));
-    GL_SAFECALL(glReadPixels, 0, 0, static_cast<GLsizei>(width[index]),
+    GL_SAFECALL(&assert_equal->GetStartToken(), glReadPixels, 0, 0,
+                static_cast<GLsizei>(width[index]),
                 static_cast<GLsizei>(height[index]), GL_RGBA, GL_UNSIGNED_BYTE,
                 data[index].data());
   }
@@ -921,9 +1070,10 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
 
   GLint64 buffer_size[2]{0, 0};
   for (auto index : {0, 1}) {
-    GL_SAFECALL(glBindBuffer, GL_ARRAY_BUFFER, buffers[index]);
-    GL_SAFECALL(glGetBufferParameteri64v, GL_ARRAY_BUFFER, GL_BUFFER_SIZE,
-                &buffer_size[index]);
+    GL_SAFECALL(&assert_equal->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
+                buffers[index]);
+    GL_SAFECALL(&assert_equal->GetStartToken(), glGetBufferParameteri64v,
+                GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size[index]);
   }
 
   if (buffer_size[0] != buffer_size[1]) {
@@ -940,14 +1090,15 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
 
   uint8_t* mapped_buffer[2]{nullptr, nullptr};
   for (auto index : {0, 1}) {
-    GL_SAFECALL(glBindBuffer, GL_ARRAY_BUFFER, buffers[index]);
+    GL_SAFECALL(&assert_equal->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
+                buffers[index]);
     mapped_buffer[index] = static_cast<uint8_t*>(glMapBufferRange(
         GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size[index]),
         GL_MAP_READ_BIT));
     if (mapped_buffer[index] == nullptr) {
-      // TODO(afd): If index == 1 should we unmap buffers[0] before returning?
-      // Or are we OK so long as we eventually destroy that buffer?
-      GL_CHECKERR("glMapBufferRange");
+      // assert_equal(afd): If index == 1 should we unmap buffers[0] before
+      // returning? Or are we OK so long as we eventually destroy that buffer?
+      GL_CHECKERR(&assert_equal->GetStartToken(), "glMapBufferRange");
       return false;
     }
   }
@@ -975,8 +1126,9 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
   }
 
   for (auto index : {0, 1}) {
-    GL_SAFECALL(glBindBuffer, GL_ARRAY_BUFFER, buffers[index]);
-    GL_SAFECALL(glUnmapBuffer, GL_ARRAY_BUFFER);
+    GL_SAFECALL(&assert_equal->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
+                buffers[index]);
+    GL_SAFECALL(&assert_equal->GetStartToken(), glUnmapBuffer, GL_ARRAY_BUFFER);
   }
   return result;
 }
