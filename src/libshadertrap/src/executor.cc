@@ -775,8 +775,8 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
       } else {
         GL_SAFECALL(
             glProgramUniform4ui, program, uniform_location,
-            uniform_value.GetIntData()[0], uniform_value.GetIntData()[1],
-            uniform_value.GetIntData()[2], uniform_value.GetIntData()[3]);
+            uniform_value.GetUintData()[0], uniform_value.GetUintData()[1],
+            uniform_value.GetUintData()[2], uniform_value.GetUintData()[3]);
       }
       break;
     default:
