@@ -1,22 +1,48 @@
 # The ShaderTrap language
 
-TODO(afd): overview.
+ShaderTrap is a scripting language that aims to make it easy to write tests for OpenGL ES shader compilers, in the form of graphics pipelines that perform off screen rendering using vertex and fragment shaders, and compute pipelines. The language exposes a variety of OpenGL ES features but does not aim to expose them in their full generality. In particular the range of formats that can be used in textures and renderbuffers is limited. The aim is to provide enough control that a wide range of shader compiler tests can be written, without providing so much control that the language becomes as complex as the underlying API itself.
+
+The current prototype is hard-coded to use OpenGL ES 3.2, but future versions may support some older OpenGL ES versions, and possibly some OpenGL versions.
 
 ## Commands
+
+Every ShaderTrap command starts with a name, in all-caps `SNAKE_CASE`. Examples are `CREATE_PROGRAM`, `SET_UNIFORM` and `CREATE_RENDERBUFFER`.
+
+Some commands produce a *result*, e.g. `CREATE_PROGRAM` yields a compiled shader, while `CREATE_RENDERBUFFER` yields a renderbuffer. A result identifier always directly follow the command name, and should use no-caps `snake_case`.
+
+There is a single global scope for result identifiers, and the same result identifier cannot be produced by more than one command - i.e. ShaderTrap uses static single assignment form.
+
+Most commands take one or more parameters. Each parameter has a name, in all-caps `SNAKE_CASE`, and is followed by an appropriate sequence of values, the format of which depend on the parameter. For example, `CREATE_PROGRAM` has a `SHADERS` parameter, which is followed by the result identifiers of the compiled shader or shaders from which a program should be created. When a command accepts multiple parameters it does not matter in which order the parameters appear. For example, `SET_UNIFORM` has parameters `PROGRAM`, `LOCATION`, `TYPE` and `VALUES` to specify the program in which the uniform should be set, the location of the uniform within that program, the type of the uniform, and the series of values used to populate that uniform. The following two instances of this command are equivalent:
+
+```
+# Sets the vec2 uniform at location 1 in my_prog to (1.0, 2.0)
+SET_UNIFORM LOCATION 1 TYPE vec2 VALUES 1.0 2.0 PROGRAM my_prog
+
+# Also sets the vec2 uniform at location 1 in my_prog to (1.0, 2.0)
+SET_UNIFORM PROGRAM my_prog VALUES 1.0 2.0 TYPE vec2 LOCATION 1
+```
+
+A number of complete ShaderTrap programs are provided in the `examples` directory.
 
 A brief description of each ShaderTrap command now follows. The commands are presented in alphabetical order.
 
 ### ASSERT_EQUAL
 
+Checks whether two buffers or two renderbuffers are identical.
+
+The form for buffers is:
+
 ```
 ASSERT_EQUAL BUFFERS buffer1 buffer2
 ```
+
+where `buffer1` and `buffer2` must be buffers produced by `CREATE_BUFFER`. Performs a byte-level comparison of the buffers. Yields an error if the buffers have different sizes, or if they have the same size but differ at any single byte.
 
 ```
 ASSERT_EQUAL RENDERBUFFERS renderbuffer1 renderbuffer2
 ```
 
-TODO(afd)
+where `renderbuffer1` and `renderbuffer2` must be renderbuffers produced by `CREATE_RENDERBUFFER`. Performs a pixel-by-pixel comparison of the renderbuffers. Yields an error if the renderbuffers have different widths or different heights, or if they have the same dimensions but differ at any single pixel.
 
 ### ASSERT_PIXELS
 
