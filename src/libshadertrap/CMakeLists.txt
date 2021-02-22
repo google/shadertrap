@@ -40,7 +40,6 @@ add_library(libshadertrap STATIC
         include/libshadertrap/command_visitor.h
         include/libshadertrap/compound_visitor.h
         include/libshadertrap/executor.h
-        include/libshadertrap/helpers.h
         include/libshadertrap/make_unique.h
         include/libshadertrap/message_consumer.h
         include/libshadertrap/parser.h
@@ -76,7 +75,6 @@ add_library(libshadertrap STATIC
         src/command_visitor.cc
         src/compound_visitor.cc
         src/executor.cc
-        src/helpers.cc
         src/message_consumer.cc
         src/parser.cc
         src/shadertrap_program.cc

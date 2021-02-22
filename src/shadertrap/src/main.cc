@@ -28,7 +28,6 @@
 #include "libshadertrap/compound_visitor.h"
 #include "libshadertrap/executor.h"
 #include "libshadertrap/glslang.h"
-#include "libshadertrap/helpers.h"
 #include "libshadertrap/make_unique.h"
 #include "libshadertrap/message_consumer.h"
 #include "libshadertrap/parser.h"
@@ -124,13 +123,15 @@ int main(int argc, const char** argv) {
   EGLint minor;
 
   if (eglInitialize(display, &major, &minor) == EGL_FALSE) {
-    crash("%s", "eglInitialize failed.");
+    std::cerr << "eglInitialize failed." << std::endl;
+    return 1;
   }
 
   EGLint num_config;
   if (eglChooseConfig(display, config_attribute_list, &config, 1,
                       &num_config) == EGL_FALSE) {
-    crash("%s", "eglChooseConfig failed.");
+    std::cerr << "eglChooseConfig failed." << std::endl;
+    return 1;
   }
 
   if (num_config != 1) {
@@ -142,19 +143,22 @@ int main(int argc, const char** argv) {
   context =
       eglCreateContext(display, config, EGL_NO_CONTEXT, context_attrib_list);
   if (context == EGL_NO_CONTEXT) {
-    crash("eglCreateContext failed: %x", eglGetError());
+    std::cerr << "eglCreateContext failed." << std::endl;
+    return 1;
   }
 
   surface = eglCreatePbufferSurface(display, config, pbuffer_attrib_list);
   if (surface == EGL_NO_SURFACE) {
-    crash("eglCreatePbufferSurface failed: %x", eglGetError());
+    std::cerr << "eglCreatePbufferSurface failed." << std::endl;
+    return 1;
   }
 
   eglMakeCurrent(display, surface, surface, context);
 
   if (gladLoadGLES2Loader(reinterpret_cast<GLADloadproc>(eglGetProcAddress)) ==
       0) {
-    crash("gladLoadGLES2Loader failed");
+    std::cerr << "gladLoadGLES2Loader failed." << std::endl;
+    return 1;
   }
 
   std::unique_ptr<shadertrap::ShaderTrapProgram> shadertrap_program =
