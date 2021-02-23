@@ -15,11 +15,12 @@
 #include "libshadertrap/values_segment.h"
 
 #include <cstring>
+#include <utility>
 
 namespace shadertrap {
 
-ValuesSegment::ValuesSegment(const std::vector<uint8_t>& byte_data)
-    : element_type_(ElementType::kByte), data_(byte_data) {}
+ValuesSegment::ValuesSegment(std::vector<uint8_t> byte_data)
+    : element_type_(ElementType::kByte), data_(std::move(byte_data)) {}
 
 ValuesSegment::ValuesSegment(const std::vector<float>& float_data)
     : element_type_(ElementType::kFloat) {

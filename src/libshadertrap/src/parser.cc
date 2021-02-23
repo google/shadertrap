@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include <initializer_list>
+#include <numeric>
 #include <set>
 #include <sstream>
 #include <type_traits>
@@ -553,10 +554,11 @@ bool Parser::ParseCommandCreateBuffer() {
             }}})) {
     return false;
   }
-  size_t actual_size = 0;
-  for (auto& segment : values) {
-    actual_size += segment.GetSizeBytes();
-  }
+  size_t actual_size =
+      std::accumulate(values.begin(), values.end(), 0U,
+                      [](size_t a, const ValuesSegment& segment) {
+                        return a + segment.GetSizeBytes();
+                      });
   if (size_bytes != actual_size) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError, size_in_bytes_token.get(),

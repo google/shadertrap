@@ -14,6 +14,8 @@
 
 #include "libshadertrap/parser.h"
 
+#include <cstring>
+
 #include "libshadertrap/command_create_buffer.h"
 #include "libshadertraptest/collecting_message_consumer.h"
 #include "libshadertraptest/gtest.h"
@@ -165,7 +167,7 @@ TEST(ParserTest, CreateBufferVariousTypes) {
          sizeof(int32_t));
   ASSERT_EQ(5, int_temp);
   memcpy(&int_temp,
-         data.data() + 5 * sizeof(int32_t) + 3 * sizeof(float) +
+         data.data() + 5 * sizeof(int32_t) + 3 * sizeof(float) +  // NOLINT
              3 * sizeof(uint32_t) + 4,
          sizeof(int32_t));
   ASSERT_EQ(6, int_temp);

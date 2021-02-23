@@ -15,6 +15,8 @@
 #include "libshadertrap/command_create_buffer.h"
 
 #include <cstring>
+#include <numeric>
+#include <utility>
 
 #include "libshadertrap/command_visitor.h"
 
@@ -26,10 +28,11 @@ CommandCreateBuffer::CommandCreateBuffer(
     const std::vector<ValuesSegment>& values)
     : Command(std::move(start_token)),
       result_identifier_(std::move(result_identifier)) {
-  size_t size_bytes = 0;
-  for (const auto& segment : values) {
-    size_bytes += segment.GetSizeBytes();
-  }
+  size_t size_bytes =
+      std::accumulate(values.begin(), values.end(), 0U,
+                      [](size_t a, const ValuesSegment& segment) {
+                        return a + segment.GetSizeBytes();
+                      });
   data_.resize(size_bytes);
   size_t offset = 0;
   for (const auto& segment : values) {

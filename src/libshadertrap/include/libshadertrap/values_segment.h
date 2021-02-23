@@ -15,14 +15,15 @@
 #ifndef LIBSHADERTRAP_VALUES_SEGMENT_H
 #define LIBSHADERTRAP_VALUES_SEGMENT_H
 
-#include <cinttypes>
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 namespace shadertrap {
 
 class ValuesSegment {
  public:
-  explicit ValuesSegment(const std::vector<uint8_t>& byte_data);
+  explicit ValuesSegment(std::vector<uint8_t> byte_data);
 
   explicit ValuesSegment(const std::vector<float>& float_data);
 
@@ -32,11 +33,20 @@ class ValuesSegment {
 
   size_t GetSizeBytes() const { return data_.size(); }
 
-  const std::vector<uint8_t>& GetData() const { return data_; }
+  const std::vector<uint8_t>& GetData() const {
+    // TODO(afd): Stop compiles complaining about |element_type_| being unused;
+    //  see comment below regarding why we might want this field in the future.
+    (void)element_type_;
+    return data_;
+  }
 
  private:
   enum class ElementType { kByte, kFloat, kInt, kUint };
 
+  // TODO(afd): This field is not currently used, but in the future we might
+  //  want to be able to reconstruct the original form of a ValuesSegment, e.g.
+  //  if we wanted to pretty-print a ShaderTrap program. We thus keep track of
+  //  the element type.
   ElementType element_type_;
   std::vector<uint8_t> data_;
 };
