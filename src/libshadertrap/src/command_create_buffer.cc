@@ -29,7 +29,7 @@ CommandCreateBuffer::CommandCreateBuffer(
     : Command(std::move(start_token)),
       result_identifier_(std::move(result_identifier)) {
   size_t size_bytes =
-      std::accumulate(values.begin(), values.end(), 0U,
+      std::accumulate(values.begin(), values.end(), size_t{0U},
                       [](size_t a, const ValuesSegment& segment) {
                         return a + segment.GetSizeBytes();
                       });

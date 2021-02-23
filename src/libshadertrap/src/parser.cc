@@ -555,7 +555,7 @@ bool Parser::ParseCommandCreateBuffer() {
     return false;
   }
   size_t actual_size =
-      std::accumulate(values.begin(), values.end(), 0U,
+      std::accumulate(values.begin(), values.end(), size_t{0U},
                       [](size_t a, const ValuesSegment& segment) {
                         return a + segment.GetSizeBytes();
                       });
