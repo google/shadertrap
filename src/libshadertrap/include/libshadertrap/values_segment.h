@@ -22,13 +22,13 @@ namespace shadertrap {
 
 class ValuesSegment {
  public:
-  ValuesSegment(const std::vector<uint8_t>& byte_data);
+  explicit ValuesSegment(const std::vector<uint8_t>& byte_data);
 
-  ValuesSegment(const std::vector<float>& float_data);
+  explicit ValuesSegment(const std::vector<float>& float_data);
 
-  ValuesSegment(const std::vector<int32_t>& int_data);
+  explicit ValuesSegment(const std::vector<int32_t>& int_data);
 
-  ValuesSegment(const std::vector<uint32_t>& uint_data);
+  explicit ValuesSegment(const std::vector<uint32_t>& uint_data);
 
   size_t GetSizeBytes() const { return data_.size(); }
 
