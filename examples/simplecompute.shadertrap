@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CREATE_BUFFER ssbo SIZE_BYTES 4 INIT_TYPE uint INIT_VALUES 1
+CREATE_BUFFER ssbo SIZE_BYTES 4 INIT_VALUES UINT 1
 
-CREATE_BUFFER expected SIZE_BYTES 4 INIT_TYPE uint INIT_VALUES 42
+CREATE_BUFFER expected SIZE_BYTES 4 INIT_VALUES UINT 42
 
 BIND_STORAGE_BUFFER BUFFER ssbo BINDING 0
 

@@ -40,14 +40,16 @@ add_library(libshadertrap STATIC
         include/libshadertrap/command_visitor.h
         include/libshadertrap/compound_visitor.h
         include/libshadertrap/executor.h
+        include/libshadertrap/glslang.h
         include/libshadertrap/make_unique.h
         include/libshadertrap/message_consumer.h
         include/libshadertrap/parser.h
         include/libshadertrap/shadertrap_program.h
+        include/libshadertrap/texture_parameter.h
         include/libshadertrap/token.h
         include/libshadertrap/uniform_value.h
+        include/libshadertrap/values_segment.h
         include/libshadertrap/vertex_attribute_info.h
-        include/libshadertrap/texture_parameter.h
         include_private/include/libshadertrap/tokenizer.h
 
         src/checker.cc
@@ -81,8 +83,9 @@ add_library(libshadertrap STATIC
         src/token.cc
         src/tokenizer.cc
         src/uniform_value.cc
+        src/values_segment.cc
         src/vertex_attribute_info.cc
-        include/libshadertrap/glslang.h include/libshadertrap/texture_parameter.h)
+        )
 
 target_include_directories(libshadertrap PUBLIC include PRIVATE include_private/include)
 target_link_libraries(libshadertrap PRIVATE glad glslang lodepng)

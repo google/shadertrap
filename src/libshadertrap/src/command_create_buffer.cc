@@ -14,8 +14,8 @@
 
 #include "libshadertrap/command_create_buffer.h"
 
-#include <cassert>
 #include <cstring>
+#include <numeric>
 #include <utility>
 
 #include "libshadertrap/command_visitor.h"
@@ -24,58 +24,22 @@ namespace shadertrap {
 
 CommandCreateBuffer::CommandCreateBuffer(
     std::unique_ptr<Token> start_token,
-    std::unique_ptr<Token> result_identifier, size_t size_bytes,
-    const std::vector<uint8_t>& byte_data)
+    std::unique_ptr<Token> result_identifier,
+    const std::vector<ValuesSegment>& values)
     : Command(std::move(start_token)),
-      result_identifier_(std::move(result_identifier)),
-      size_bytes_(size_bytes),
-      has_initial_data_(true),
-      initial_data_type_(InitialDataType::kByte) {
-  assert(size_bytes == byte_data.size() && "Size mismatch.");
-  initial_data_.resize(size_bytes);
-  memcpy(initial_data_.data(), byte_data.data(), size_bytes);
-}
-
-CommandCreateBuffer::CommandCreateBuffer(
-    std::unique_ptr<Token> start_token,
-    std::unique_ptr<Token> result_identifier, size_t size_bytes,
-    const std::vector<float>& float_data)
-    : Command(std::move(start_token)),
-      result_identifier_(std::move(result_identifier)),
-      size_bytes_(size_bytes),
-      has_initial_data_(true),
-      initial_data_type_(InitialDataType::kFloat) {
-  assert(size_bytes == sizeof(float) * float_data.size() && "Size mismatch.");
-  initial_data_.resize(size_bytes);
-  memcpy(initial_data_.data(), float_data.data(), size_bytes);
-}
-
-CommandCreateBuffer::CommandCreateBuffer(
-    std::unique_ptr<Token> start_token,
-    std::unique_ptr<Token> result_identifier, size_t size_bytes,
-    const std::vector<int32_t>& int_data)
-    : Command(std::move(start_token)),
-      result_identifier_(std::move(result_identifier)),
-      size_bytes_(size_bytes),
-      has_initial_data_(true),
-      initial_data_type_(InitialDataType::kInt) {
-  assert(size_bytes == sizeof(int32_t) * int_data.size() && "Size mismatch.");
-  initial_data_.resize(size_bytes);
-  memcpy(initial_data_.data(), int_data.data(), size_bytes);
-}
-
-CommandCreateBuffer::CommandCreateBuffer(
-    std::unique_ptr<Token> start_token,
-    std::unique_ptr<Token> result_identifier, size_t size_bytes,
-    const std::vector<uint32_t>& uint_data)
-    : Command(std::move(start_token)),
-      result_identifier_(std::move(result_identifier)),
-      size_bytes_(size_bytes),
-      has_initial_data_(true),
-      initial_data_type_(InitialDataType::kUint) {
-  assert(size_bytes == sizeof(uint32_t) * uint_data.size() && "Size mismatch.");
-  initial_data_.resize(size_bytes);
-  memcpy(initial_data_.data(), uint_data.data(), size_bytes);
+      result_identifier_(std::move(result_identifier)) {
+  size_t size_bytes =
+      std::accumulate(values.begin(), values.end(), size_t{0U},
+                      [](size_t a, const ValuesSegment& segment) {
+                        return a + segment.GetSizeBytes();
+                      });
+  data_.resize(size_bytes);
+  size_t offset = 0;
+  for (const auto& segment : values) {
+    memcpy(data_.data() + offset, segment.GetData().data(),
+           segment.GetSizeBytes());
+    offset += segment.GetSizeBytes();
+  }
 }
 
 bool CommandCreateBuffer::Accept(CommandVisitor* visitor) {

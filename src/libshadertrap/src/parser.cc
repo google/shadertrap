@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include <initializer_list>
+#include <numeric>
 #include <set>
 #include <sstream>
 #include <type_traits>
@@ -518,11 +519,12 @@ bool Parser::ParseCommandCreateBuffer() {
     return false;
   }
   size_t size_bytes;
-  std::vector<std::unique_ptr<Token>> values;
-  CommandCreateBuffer::InitialDataType type;
+  std::vector<ValuesSegment> values;
+  std::unique_ptr<Token> size_in_bytes_token = nullptr;
   if (!ParseParameters(
           {{Token::Type::kKeywordSizeBytes,
-            [this, &size_bytes]() -> bool {
+            [this, &size_bytes, &size_in_bytes_token]() -> bool {
+              size_in_bytes_token = tokenizer_->PeekNextToken();
               auto maybe_size = ParseUint32("size");
               if (!maybe_size.first) {
                 return false;
@@ -530,138 +532,44 @@ bool Parser::ParseCommandCreateBuffer() {
               size_bytes = maybe_size.second;
               return true;
             }},
-           {Token::Type::kKeywordInitType,
-            [this, &type]() -> bool {
-              auto token = tokenizer_->NextToken();
-              if (token->GetText() == "byte") {
-                type = CommandCreateBuffer::InitialDataType::kByte;
-              } else if (token->GetText() == "float") {
-                type = CommandCreateBuffer::InitialDataType::kFloat;
-              } else if (token->GetText() == "int") {
-                type = CommandCreateBuffer::InitialDataType::kInt;
-              } else if (token->GetText() == "uint") {
-                type = CommandCreateBuffer::InitialDataType::kUint;
-              } else {
-                message_consumer_->Message(
-                    MessageConsumer::Severity::kError, token.get(),
-                    "The type for buffer initialization must be one of "
-                    "'float', 'int' or 'uint', got '" +
-                        token->GetText() + "'");
-                return false;
-              }
-              return true;
-            }},
            {Token::Type::kKeywordInitValues, [this, &values]() -> bool {
-              while (tokenizer_->PeekNextToken()->IsIntLiteral() ||
-                     tokenizer_->PeekNextToken()->IsFloatLiteral()) {
-                values.push_back(tokenizer_->NextToken());
+              while (true) {
+                switch (tokenizer_->PeekNextToken()->GetType()) {
+                  case Token::Type::kKeywordByte:
+                  case Token::Type::kKeywordFloat:
+                  case Token::Type::kKeywordInt:
+                  case Token::Type::kKeywordUint: {
+                    std::pair<bool, ValuesSegment> maybe_values_segment =
+                        ParseValuesSegment();
+                    if (!maybe_values_segment.first) {
+                      return false;
+                    }
+                    values.push_back(maybe_values_segment.second);
+                    break;
+                  }
+                  default:
+                    return true;
+                }
               }
-              return true;
             }}})) {
     return false;
   }
-  size_t element_size =
-      type == CommandCreateBuffer::InitialDataType::kByte ? 1U : 4U;
-  if (size_bytes != element_size * values.size()) {
-    std::stringstream stringstream;
-    stringstream << "Size mismatch: buffer '" << result_identifier->GetText()
-                 << "' declared with size " << size_bytes
-                 << " bytes, but initialized with " << values.size() << " "
-                 << element_size << "-byte elements";
-    message_consumer_->Message(MessageConsumer::Severity::kError,
-                               start_token.get(), stringstream.str());
+  size_t actual_size =
+      std::accumulate(values.begin(), values.end(), size_t{0U},
+                      [](size_t a, const ValuesSegment& segment) {
+                        return a + segment.GetSizeBytes();
+                      });
+  if (size_bytes != actual_size) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, size_in_bytes_token.get(),
+        "Declared size in bytes " + std::to_string(size_bytes) +
+            " does not match the combined size of the provided initial values, "
+            "which is " +
+            std::to_string(actual_size));
     return false;
   }
-  switch (type) {
-    case CommandCreateBuffer::InitialDataType::kByte: {
-      std::vector<uint8_t> byte_data;
-      for (const auto& value : values) {
-        if (!value->IsIntLiteral()) {
-          message_consumer_->Message(
-              MessageConsumer::Severity::kError, value.get(),
-              "Byte literal expected, got '" + value->GetText() + "'");
-          return false;
-        }
-        int32_t parsed_value = std::stoi(value->GetText());
-        if (parsed_value < 0 || parsed_value >= UINT8_MAX) {
-          message_consumer_->Message(
-              MessageConsumer::Severity::kError, value.get(),
-              "Byte literal in range [0, 255] expected, got '" +
-                  value->GetText() + "'");
-          return false;
-        }
-        byte_data.emplace_back(static_cast<uint8_t>(parsed_value));
-      }
-      parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
-          std::move(start_token), std::move(result_identifier), size_bytes,
-          byte_data));
-      break;
-    }
-    case CommandCreateBuffer::InitialDataType::kFloat: {
-      std::vector<float> float_data;
-      for (const auto& value : values) {
-        if (!value->IsFloatLiteral()) {
-          message_consumer_->Message(
-              MessageConsumer::Severity::kError, value.get(),
-              "Expected float literal, got '" + value->GetText() + "'");
-          return false;
-        }
-        float_data.emplace_back(std::stof(value->GetText()));
-      }
-      parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
-          std::move(start_token), std::move(result_identifier), size_bytes,
-          float_data));
-      break;
-    }
-    case CommandCreateBuffer::InitialDataType::kInt: {
-      std::vector<int32_t> int_data;
-      for (const auto& value : values) {
-        if (!value->IsIntLiteral()) {
-          message_consumer_->Message(
-              MessageConsumer::Severity::kError, value.get(),
-              "Expected int literal, got '" + value->GetText() + "'");
-          return false;
-        }
-        int_data.emplace_back(std::stoi(value->GetText()));
-      }
-      parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
-          std::move(start_token), std::move(result_identifier), size_bytes,
-          int_data));
-      break;
-    }
-    default: {
-      assert(type == CommandCreateBuffer::InitialDataType::kUint &&
-             "Unexpected type.");
-      std::vector<uint32_t> uint_data;
-      for (const auto& value : values) {
-        if (!value->IsIntLiteral()) {
-          message_consumer_->Message(
-              MessageConsumer::Severity::kError, value.get(),
-              "Expected uint literal, got '" + value->GetText() + "'");
-          return false;
-        }
-        int64_t uint_value = std::stoi(value->GetText());
-        if (uint_value < 0) {
-          message_consumer_->Message(
-              MessageConsumer::Severity::kError, value.get(),
-              "uint literal value cannot be negative, got '" +
-                  value->GetText() + "'");
-          return false;
-        }
-        if (uint_value > UINT32_MAX) {
-          message_consumer_->Message(
-              MessageConsumer::Severity::kError, value.get(),
-              "uint literal out of range, got '" + value->GetText() + "'");
-          return false;
-        }
-        uint_data.emplace_back(static_cast<uint32_t>(uint_value));
-      }
-      parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
-          std::move(start_token), std::move(result_identifier), size_bytes,
-          uint_data));
-      break;
-    }
-  }
+  parsed_commands_.push_back(MakeUnique<CommandCreateBuffer>(
+      std::move(start_token), std::move(result_identifier), values));
   return true;
 }
 
@@ -1600,6 +1508,68 @@ std::pair<bool, float> Parser::ParseFloat(const std::string& result_name) {
     return {false, 0.0F};
   }
   return {true, std::stof(token->GetText())};
+}
+
+std::pair<bool, ValuesSegment> Parser::ParseValuesSegment() {
+  std::pair<bool, ValuesSegment> failure = {
+      false, ValuesSegment(std::vector<uint8_t>())};
+  auto token = tokenizer_->NextToken();
+  switch (token->GetType()) {
+    case Token::Type::kKeywordByte: {
+      std::vector<uint8_t> byte_data;
+      while (tokenizer_->PeekNextToken()->GetType() ==
+             Token::Type::kIntLiteral) {
+        auto maybe_byte = ParseUint8("value");
+        if (!maybe_byte.first) {
+          return failure;
+        }
+        byte_data.push_back(maybe_byte.second);
+      }
+      if ((byte_data.size() % 4) != 0) {
+        message_consumer_->Message(
+            MessageConsumer::Severity::kError, token.get(),
+            "The number of byte literals supplied in a buffer initializer must "
+            "be a multiple of 4; found a sequence of " +
+                std::to_string(byte_data.size()) + " literals");
+        return failure;
+      }
+      return {true, ValuesSegment(byte_data)};
+    }
+    case Token::Type::kKeywordFloat: {
+      std::vector<float> float_data;
+      while (tokenizer_->PeekNextToken()->GetType() ==
+             Token::Type::kFloatLiteral) {
+        auto maybe_float = ParseFloat("value");
+        if (!maybe_float.first) {
+          return failure;
+        }
+        float_data.push_back(maybe_float.second);
+      }
+      return {true, ValuesSegment(float_data)};
+    }
+    case Token::Type::kKeywordInt: {
+      std::vector<int32_t> int_data;
+      while (tokenizer_->PeekNextToken()->GetType() ==
+             Token::Type::kIntLiteral) {
+        int_data.push_back(std::stoi(tokenizer_->NextToken()->GetText()));
+      }
+      return {true, ValuesSegment(int_data)};
+    }
+    default: {
+      assert(token->GetType() == Token::Type::kKeywordUint &&
+             "Unexpected type for values segment.");
+      std::vector<uint32_t> uint_data;
+      while (tokenizer_->PeekNextToken()->GetType() ==
+             Token::Type::kIntLiteral) {
+        auto maybe_uint = ParseUint32("value");
+        if (!maybe_uint.first) {
+          return failure;
+        }
+        uint_data.push_back(maybe_uint.second);
+      }
+      return {true, ValuesSegment(uint_data)};
+    }
+  }
 }
 
 std::unique_ptr<ShaderTrapProgram> Parser::GetParsedProgram() {

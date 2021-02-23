@@ -129,7 +129,7 @@ COMPILE_SHADER frag_compiled SHADER fragment_shader
 
 CREATE_PROGRAM texgen_program SHADERS vert_compiled texgen_frag_compiled
 
-CREATE_BUFFER quad_vertex_buffer SIZE_BYTES 48 INIT_TYPE float INIT_VALUES
+CREATE_BUFFER quad_vertex_buffer SIZE_BYTES 48 INIT_VALUES FLOAT
                            -1.0 -1.0
                             -1.0 1.0
                             1.0 -1.0
@@ -137,7 +137,7 @@ CREATE_BUFFER quad_vertex_buffer SIZE_BYTES 48 INIT_TYPE float INIT_VALUES
                             -1.0 1.0
                             1.0 -1.0
 
-CREATE_BUFFER quad_index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+CREATE_BUFFER quad_index_buffer SIZE_BYTES 24 INIT_VALUES UINT
                            0 1 2 3 4 5
 
 RUN_GRAPHICS

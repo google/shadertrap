@@ -69,7 +69,7 @@ COMPILE_SHADER vert_compiled SHADER vert
 
 CREATE_PROGRAM program SHADERS vert_compiled frag_compiled
 
-CREATE_BUFFER quad_vertex_buffer SIZE_BYTES 48 INIT_TYPE float INIT_VALUES
+CREATE_BUFFER quad_vertex_buffer SIZE_BYTES 48 INIT_VALUES FLOAT
                            -1.0 -1.0
                             -1.0 1.0
                             1.0 -1.0
@@ -77,12 +77,12 @@ CREATE_BUFFER quad_vertex_buffer SIZE_BYTES 48 INIT_TYPE float INIT_VALUES
                             -1.0 1.0
                             1.0 -1.0
 
-CREATE_BUFFER quad_index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+CREATE_BUFFER quad_index_buffer SIZE_BYTES 24 INIT_VALUES UINT
                            0 1 2 3 4 5
 
-CREATE_BUFFER ubo0 SIZE_BYTES 8 INIT_TYPE float INIT_VALUES 1.0 0.0
+CREATE_BUFFER ubo0 SIZE_BYTES 8 INIT_VALUES FLOAT 1.0 0.0
 
-CREATE_BUFFER ubo1 SIZE_BYTES 16 INIT_TYPE uint INIT_VALUES 1 0 3 4
+CREATE_BUFFER ubo1 SIZE_BYTES 16 INIT_VALUES UINT 1 0 3 4
 
 CREATE_RENDERBUFFER renderbuffer WIDTH 256 HEIGHT 256
 
