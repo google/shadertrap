@@ -107,7 +107,7 @@ TEST(ParserTest, CreateBufferVariousTypes) {
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  auto data = reinterpret_cast<CommandCreateBuffer*>(
+  auto data = dynamic_cast<CommandCreateBuffer*>(
                   parser.GetParsedProgram()->GetCommand(0))
                   ->GetData();
 
