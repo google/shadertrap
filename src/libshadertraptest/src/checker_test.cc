@@ -170,7 +170,7 @@ TEST_F(CheckerTestFixture, CreateBufferNameAlreadyUsed) {
 void main() { }
 END
 
-CREATE_BUFFER vert SIZE_BYTES 8 INIT_TYPE float INIT_VALUES 1.0 2.0
+CREATE_BUFFER vert SIZE_BYTES 8 INIT_VALUES FLOAT 1.0 2.0
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -504,8 +504,8 @@ ASSERT_EQUAL RENDERBUFFERS buf1 buf2
 
 TEST_F(CheckerTestFixture, AssertEqualDifferentSizedBuffers) {
   std::string program =
-      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_TYPE uint INIT_VALUES 0
-CREATE_BUFFER buf2 SIZE_BYTES 8 INIT_TYPE uint INIT_VALUES 0 0
+      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_VALUES UINT 0
+CREATE_BUFFER buf2 SIZE_BYTES 8 INIT_VALUES UINT 0 0
 ASSERT_EQUAL BUFFERS buf1 buf2
 )";
 
@@ -523,7 +523,7 @@ ASSERT_EQUAL BUFFERS buf1 buf2
 
 TEST_F(CheckerTestFixture, AssertEqualBufferVsRenderbuffer) {
   std::string program =
-      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_TYPE uint INIT_VALUES 0
+      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_VALUES UINT 0
 CREATE_RENDERBUFFER buf2 WIDTH 1 HEIGHT 1
 ASSERT_EQUAL BUFFERS buf1 buf2
 )";
@@ -571,7 +571,7 @@ ASSERT_EQUAL RENDERBUFFERS buf1 buf2
 
 TEST_F(CheckerTestFixture, AssertEqualBadSecondArgumentBuffer) {
   std::string program =
-      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_TYPE int INIT_VALUES 0
+      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_VALUES UINT 0
 CREATE_SAMPLER buf2
 ASSERT_EQUAL BUFFERS buf1 buf2
 )";
@@ -588,7 +588,7 @@ ASSERT_EQUAL BUFFERS buf1 buf2
 
 TEST_F(CheckerTestFixture, AssertPixelsNotRenderbuffer) {
   std::string program =
-      R"(CREATE_BUFFER buf SIZE_BYTES 4 INIT_TYPE int INIT_VALUES 0
+      R"(CREATE_BUFFER buf SIZE_BYTES 4 INIT_VALUES INT 0
 ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 0 0 2 2 EXPECTED 0 0 0 0
 )";
 
@@ -885,12 +885,12 @@ COMPILE_SHADER frag_compiled SHADER frag
 
 COMPILE_SHADER vert_compiled SHADER vert
 
-CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_TYPE float INIT_VALUES
+CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_VALUES FLOAT
                            0.0 -1.0
                            -1.0 1.0
                             1.0 1.0
 
-CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_VALUES UINT
                            0 1 2 3 4 5
 
 CREATE_RENDERBUFFER renderbuffer WIDTH 256 HEIGHT 256
@@ -941,7 +941,7 @@ COMPILE_SHADER vert_compiled SHADER vert
 
 CREATE_PROGRAM program SHADERS vert_compiled frag_compiled
 
-CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_VALUES UINT
                            0 1 2 3 4 5
 
 CREATE_RENDERBUFFER renderbuffer WIDTH 256 HEIGHT 256
@@ -992,7 +992,7 @@ COMPILE_SHADER vert_compiled SHADER vert
 
 CREATE_PROGRAM program SHADERS vert_compiled frag_compiled
 
-CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_TYPE float INIT_VALUES
+CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_VALUES FLOAT
                            0.0 -1.0
                            -1.0 1.0
                             1.0 1.0
@@ -1045,12 +1045,12 @@ COMPILE_SHADER vert_compiled SHADER vert
 
 CREATE_PROGRAM program SHADERS vert_compiled frag_compiled
 
-CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_TYPE float INIT_VALUES
+CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_VALUES FLOAT
                            0.0 -1.0
                            -1.0 1.0
                             1.0 1.0
 
-CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_VALUES UINT
                            0 1 2 3 4 5
 
 RUN_GRAPHICS
@@ -1087,12 +1087,12 @@ COMPILE_SHADER comp_compiled SHADER comp
 
 CREATE_PROGRAM program SHADERS comp_compiled
 
-CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_TYPE float INIT_VALUES
+CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_VALUES FLOAT
                            0.0 -1.0
                            -1.0 1.0
                             1.0 1.0
 
-CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_VALUES UINT
                            0 1 2 3 4 5
 
 CREATE_RENDERBUFFER renderbuffer WIDTH 256 HEIGHT 256

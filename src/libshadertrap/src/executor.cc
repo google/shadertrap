@@ -407,15 +407,9 @@ bool Executor::VisitCreateBuffer(CommandCreateBuffer* create_buffer) {
   // We arbitrarily bind to the ARRAY_BUFFER target.
   GL_SAFECALL(&create_buffer->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
               buffer);
-  if (create_buffer->HasInitialData()) {
-    GL_SAFECALL(&create_buffer->GetStartToken(), glBufferData, GL_ARRAY_BUFFER,
-                static_cast<GLuint>(create_buffer->GetSizeBytes()),
-                create_buffer->GetInitialData().data(), GL_STREAM_DRAW);
-  } else {
-    GL_SAFECALL(&create_buffer->GetStartToken(), glBufferData, GL_ARRAY_BUFFER,
-                static_cast<GLuint>(create_buffer->GetSizeBytes()), nullptr,
-                GL_STREAM_DRAW);
-  }
+  GL_SAFECALL(&create_buffer->GetStartToken(), glBufferData, GL_ARRAY_BUFFER,
+              static_cast<GLuint>(create_buffer->GetSizeBytes()),
+              create_buffer->GetData().data(), GL_STREAM_DRAW);
   created_buffers_.insert({create_buffer->GetResultIdentifier(), buffer});
   return true;
 }

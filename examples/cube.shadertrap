@@ -102,7 +102,7 @@ CREATE_PROGRAM texgen_program SHADERS texgen_vert_compiled texgen_frag_compiled
 
 CREATE_PROGRAM cube_program SHADERS cube_vert_compiled cube_frag_compiled
 
-CREATE_BUFFER quad_vertex_buffer SIZE_BYTES 48 INIT_TYPE float INIT_VALUES
+CREATE_BUFFER quad_vertex_buffer SIZE_BYTES 48 INIT_VALUES FLOAT
                            -1.0 -1.0
                             -1.0 1.0
                             1.0 -1.0
@@ -110,10 +110,10 @@ CREATE_BUFFER quad_vertex_buffer SIZE_BYTES 48 INIT_TYPE float INIT_VALUES
                             -1.0 1.0
                             1.0 -1.0
 
-CREATE_BUFFER quad_index_buffer SIZE_BYTES 24 INIT_TYPE uint INIT_VALUES
+CREATE_BUFFER quad_index_buffer SIZE_BYTES 24 INIT_VALUES UINT
                            0 1 2 3 4 5
 
-CREATE_BUFFER cube_vertex_buffer SIZE_BYTES 432 INIT_TYPE float INIT_VALUES
+CREATE_BUFFER cube_vertex_buffer SIZE_BYTES 432 INIT_VALUES FLOAT
 
   -1.0 -1.0 -1.0
   -1.0 1.0 -1.0
@@ -163,7 +163,7 @@ CREATE_BUFFER cube_vertex_buffer SIZE_BYTES 432 INIT_TYPE float INIT_VALUES
   1.0 1.0 -1.0
   -1.0 1.0 -1.0
 
-CREATE_BUFFER cube_texcoord_buffer SIZE_BYTES 288 INIT_TYPE float INIT_VALUES
+CREATE_BUFFER cube_texcoord_buffer SIZE_BYTES 288 INIT_VALUES FLOAT
     0.0 0.0
     1.0 0.0
     1.0 1.0
@@ -212,7 +212,7 @@ CREATE_BUFFER cube_texcoord_buffer SIZE_BYTES 288 INIT_TYPE float INIT_VALUES
     0.0 1.0
     1.0 1.0
 
-CREATE_BUFFER cube_index_buffer SIZE_BYTES 144 INIT_TYPE uint INIT_VALUES
+CREATE_BUFFER cube_index_buffer SIZE_BYTES 144 INIT_VALUES UINT
                            0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35
 
 RUN_GRAPHICS

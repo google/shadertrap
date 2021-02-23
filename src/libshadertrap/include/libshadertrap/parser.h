@@ -29,6 +29,7 @@
 #include "libshadertrap/shadertrap_program.h"
 #include "libshadertrap/token.h"
 #include "libshadertrap/uniform_value.h"
+#include "libshadertrap/values_segment.h"
 #include "libshadertrap/vertex_attribute_info.h"
 
 namespace shadertrap {
@@ -115,6 +116,8 @@ class Parser {
   std::pair<bool, float> ParseFloat(const std::string& result_name);
 
   std::pair<bool, VertexAttributeInfo> ParseVertexAttributeInfo();
+
+  std::pair<bool, ValuesSegment> ParseValuesSegment();
 
   std::unique_ptr<Tokenizer> tokenizer_;
 
