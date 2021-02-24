@@ -1195,6 +1195,9 @@ bool Parser::ParseCommandSetUniform() {
                 type = UniformValue::ElementType::kMat4x3;
               } else if (token->GetType() == Token::Type::kKeywordTypeMat4x4) {
                 type = UniformValue::ElementType::kMat4x4;
+              } else if (token->GetType() ==
+                         Token::Type::kKeywordTypeSampler2d) {
+                type = UniformValue::ElementType::kSampler2d;
               } else {
                 message_consumer_->Message(
                     MessageConsumer::Severity::kError, token.get(),
@@ -1264,7 +1267,8 @@ std::pair<bool, UniformValue> Parser::ProcessUniformValue(
     case UniformValue::ElementType::kInt:
     case UniformValue::ElementType::kIvec2:
     case UniformValue::ElementType::kIvec3:
-    case UniformValue::ElementType::kIvec4: {
+    case UniformValue::ElementType::kIvec4:
+    case UniformValue::ElementType::kSampler2d: {
       std::vector<int32_t> int_values;
       for (const auto& value : values) {
         if (!value->IsIntLiteral()) {
