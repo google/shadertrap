@@ -73,9 +73,9 @@ The form of the command is:
 BIND_SAMPLER SAMPLER sampler TEXTURE_UNIT unit
 ```
 
-TODO(afd)
+where `sampler` is a sampler produced by `CREATE_SAMPLER` and `unit` is a non-negative integer specifying which texture unit `sampler` should be bound to.
 
-### BIND_STORAGE_BUFFER
+### BIND_SHADER_STORAGE_BUFFER
 
 Binds a buffer to a storage buffer binding point.
 
@@ -85,7 +85,7 @@ The form of the command is:
 BIND_STORAGE_BUFFER BUFFER buffer BINDING binding
 ```
 
-TODO(afd)
+where `buffer` is a buffer produced by `CREATE_BUFFER` and `binding` is a non-negative integer specifying a shader storage buffer binding point.
 
 ### BIND_TEXTURE
 
@@ -97,7 +97,7 @@ The form of the command is:
 BIND_TEXTURE TEXTURE texture TEXTURE_UNIT unit
 ```
 
-TODO(afd)
+where `texture` is a texture produced by `CREATE_EMPTY_TEXTURE_2D` and `unit` is a non-negative integer specifying which texture unit `texture` should be bound to.
 
 ### BIND_UNIFORM_BUFFER
 
@@ -109,7 +109,7 @@ The form of the command is:
 BIND_UNIFORM_BUFFER BUFFER buffer BINDING binding
 ```
 
-TODO(afd)
+where `buffer` is a buffer produced by `CREATE_BUFFER` and `binding` is a non-negative integer specifying a uniform buffer binding point.
 
 ### COMPILE_SHADER
 
