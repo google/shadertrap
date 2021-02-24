@@ -1195,7 +1195,8 @@ bool Parser::ParseCommandSetUniform() {
                 type = UniformValue::ElementType::kMat4x3;
               } else if (token->GetType() == Token::Type::kKeywordTypeMat4x4) {
                 type = UniformValue::ElementType::kMat4x4;
-              } else if (token->GetType() == Token::Type::kKeywordTypeSampler2d) {
+              } else if (token->GetType() ==
+                         Token::Type::kKeywordTypeSampler2d) {
                 type = UniformValue::ElementType::kSampler2d;
               } else {
                 message_consumer_->Message(
