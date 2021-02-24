@@ -324,12 +324,13 @@ bool Executor::VisitBindSampler(CommandBindSampler* bind_sampler) {
   return true;
 }
 
-bool Executor::VisitBindStorageBuffer(
-    CommandBindStorageBuffer* bind_storage_buffer) {
-  GL_SAFECALL(&bind_storage_buffer->GetStartToken(), glBindBufferBase,
-              GL_SHADER_STORAGE_BUFFER,
-              static_cast<GLuint>(bind_storage_buffer->GetBinding()),
-              created_buffers_.at(bind_storage_buffer->GetBufferIdentifier()));
+bool Executor::VisitBindShaderStorageBuffer(
+    CommandBindShaderStorageBuffer* bind_shader_storage_buffer) {
+  GL_SAFECALL(
+      &bind_shader_storage_buffer->GetStartToken(), glBindBufferBase,
+      GL_SHADER_STORAGE_BUFFER,
+      static_cast<GLuint>(bind_shader_storage_buffer->GetBinding()),
+      created_buffers_.at(bind_shader_storage_buffer->GetBufferIdentifier()));
   return true;
 }
 

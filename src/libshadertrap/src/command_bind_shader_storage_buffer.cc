@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "libshadertrap/command_bind_storage_buffer.h"
+#include "libshadertrap/command_bind_shader_storage_buffer.h"
 
 #include <utility>
 
@@ -20,15 +20,15 @@
 
 namespace shadertrap {
 
-CommandBindStorageBuffer::CommandBindStorageBuffer(
+CommandBindShaderStorageBuffer::CommandBindShaderStorageBuffer(
     std::unique_ptr<Token> start_token,
     std::unique_ptr<Token> buffer_identifier, size_t binding)
     : Command(std::move(start_token)),
       buffer_identifier_(std::move(buffer_identifier)),
       binding_(binding) {}
 
-bool CommandBindStorageBuffer::Accept(CommandVisitor* visitor) {
-  return visitor->VisitBindStorageBuffer(this);
+bool CommandBindShaderStorageBuffer::Accept(CommandVisitor* visitor) {
+  return visitor->VisitBindShaderStorageBuffer(this);
 }
 
 }  // namespace shadertrap

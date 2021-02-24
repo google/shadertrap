@@ -750,8 +750,9 @@ TEST_F(CheckerTestFixture, BindSamplerBadSampler) {
             message_consumer.GetMessageString(0));
 }
 
-TEST_F(CheckerTestFixture, BindStorageBufferBadStorageBuffer) {
-  std::string program = R"(BIND_STORAGE_BUFFER BUFFER doesnotexist BINDING 1
+TEST_F(CheckerTestFixture, BindShaderStorageBufferBadStorageBuffer) {
+  std::string program =
+      R"(BIND_SHADER_STORAGE_BUFFER BUFFER doesnotexist BINDING 1
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -760,7 +761,7 @@ TEST_F(CheckerTestFixture, BindStorageBufferBadStorageBuffer) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 1:28: 'doesnotexist' must be a buffer",
+  ASSERT_EQ("ERROR: 1:35: 'doesnotexist' must be a buffer",
             message_consumer.GetMessageString(0));
 }
 

@@ -48,9 +48,9 @@ bool CompoundVisitor::VisitBindSampler(CommandBindSampler* bind_sampler) {
   return ApplyVisitors(bind_sampler);
 }
 
-bool CompoundVisitor::VisitBindStorageBuffer(
-    CommandBindStorageBuffer* bind_storage_buffer) {
-  return ApplyVisitors(bind_storage_buffer);
+bool CompoundVisitor::VisitBindShaderStorageBuffer(
+    CommandBindShaderStorageBuffer* bind_shader_storage_buffer) {
+  return ApplyVisitors(bind_shader_storage_buffer);
 }
 
 bool CompoundVisitor::VisitBindTexture(CommandBindTexture* bind_texture) {

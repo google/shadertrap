@@ -27,7 +27,7 @@
 #include "libshadertrap/command_assert_pixels.h"
 #include "libshadertrap/command_assert_similar_emd_histogram.h"
 #include "libshadertrap/command_bind_sampler.h"
-#include "libshadertrap/command_bind_storage_buffer.h"
+#include "libshadertrap/command_bind_shader_storage_buffer.h"
 #include "libshadertrap/command_bind_texture.h"
 #include "libshadertrap/command_bind_uniform_buffer.h"
 #include "libshadertrap/command_compile_shader.h"
@@ -76,8 +76,8 @@ bool Parser::ParseCommand() {
       return ParseCommandAssertSimilarEmdHistogram();
     case Token::Type::kKeywordBindSampler:
       return ParseCommandBindSampler();
-    case Token::Type::kKeywordBindStorageBuffer:
-      return ParseCommandBindStorageBuffer();
+    case Token::Type::kKeywordBindShaderStorageBuffer:
+      return ParseCommandBindShaderStorageBuffer();
     case Token::Type::kKeywordBindTexture:
       return ParseCommandBindTexture();
     case Token::Type::kKeywordBindUniformBuffer:
@@ -340,7 +340,7 @@ bool Parser::ParseCommandBindSampler() {
   return true;
 }
 
-bool Parser::ParseCommandBindStorageBuffer() {
+bool Parser::ParseCommandBindShaderStorageBuffer() {
   auto start_token = tokenizer_->NextToken();
   std::unique_ptr<Token> buffer_identifier;
   size_t binding;
@@ -368,7 +368,7 @@ bool Parser::ParseCommandBindStorageBuffer() {
             }}})) {
     return false;
   }
-  parsed_commands_.push_back(MakeUnique<CommandBindStorageBuffer>(
+  parsed_commands_.push_back(MakeUnique<CommandBindShaderStorageBuffer>(
       std::move(start_token), std::move(buffer_identifier), binding));
   return true;
 }

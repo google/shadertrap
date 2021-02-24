@@ -292,14 +292,14 @@ bool Checker::VisitBindSampler(CommandBindSampler* command_bind_sampler) {
   return true;
 }
 
-bool Checker::VisitBindStorageBuffer(
-    CommandBindStorageBuffer* command_bind_storage_buffer) {
+bool Checker::VisitBindShaderStorageBuffer(
+    CommandBindShaderStorageBuffer* command_bind_shader_storage_buffer) {
   if (created_buffers_.count(
-          command_bind_storage_buffer->GetBufferIdentifier()) == 0) {
+          command_bind_shader_storage_buffer->GetBufferIdentifier()) == 0) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
-        &command_bind_storage_buffer->GetBufferIdentifierToken(),
-        "'" + command_bind_storage_buffer->GetBufferIdentifier() +
+        &command_bind_shader_storage_buffer->GetBufferIdentifierToken(),
+        "'" + command_bind_shader_storage_buffer->GetBufferIdentifier() +
             "' must be a buffer");
     return false;
   }

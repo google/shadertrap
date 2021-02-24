@@ -21,7 +21,7 @@ add_library(libshadertrap STATIC
         include/libshadertrap/command_assert_pixels.h
         include/libshadertrap/command_assert_similar_emd_histogram.h
         include/libshadertrap/command_bind_sampler.h
-        include/libshadertrap/command_bind_storage_buffer.h
+        include/libshadertrap/command_bind_shader_storage_buffer.h
         include/libshadertrap/command_bind_texture.h
         include/libshadertrap/command_bind_uniform_buffer.h
         include/libshadertrap/command_compile_shader.h
@@ -58,7 +58,7 @@ add_library(libshadertrap STATIC
         src/command_assert_pixels.cc
         src/command_assert_similar_emd_histogram.cc
         src/command_bind_sampler.cc
-        src/command_bind_storage_buffer.cc
+        src/command_bind_shader_storage_buffer.cc
         src/command_bind_texture.cc
         src/command_bind_uniform_buffer.cc
         src/command_compile_shader.cc

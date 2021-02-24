@@ -24,7 +24,7 @@
 #include "libshadertrap/command_assert_pixels.h"
 #include "libshadertrap/command_assert_similar_emd_histogram.h"
 #include "libshadertrap/command_bind_sampler.h"
-#include "libshadertrap/command_bind_storage_buffer.h"
+#include "libshadertrap/command_bind_shader_storage_buffer.h"
 #include "libshadertrap/command_bind_texture.h"
 #include "libshadertrap/command_bind_uniform_buffer.h"
 #include "libshadertrap/command_compile_shader.h"
@@ -60,8 +60,8 @@ class Checker : public CommandVisitor {
 
   bool VisitBindSampler(CommandBindSampler* bind_sampler) override;
 
-  bool VisitBindStorageBuffer(
-      CommandBindStorageBuffer* bind_storage_buffer) override;
+  bool VisitBindShaderStorageBuffer(
+      CommandBindShaderStorageBuffer* bind_shader_storage_buffer) override;
 
   bool VisitBindTexture(CommandBindTexture* bind_texture) override;
 
