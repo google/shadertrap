@@ -535,10 +535,10 @@ bool Parser::ParseCommandCreateBuffer() {
            {Token::Type::kKeywordInitValues, [this, &values]() -> bool {
               while (true) {
                 switch (tokenizer_->PeekNextToken()->GetType()) {
-                  case Token::Type::kKeywordByte:
-                  case Token::Type::kKeywordFloat:
-                  case Token::Type::kKeywordInt:
-                  case Token::Type::kKeywordUint: {
+                  case Token::Type::kKeywordTypeByte:
+                  case Token::Type::kKeywordTypeFloat:
+                  case Token::Type::kKeywordTypeInt:
+                  case Token::Type::kKeywordTypeUint: {
                     std::pair<bool, ValuesSegment> maybe_values_segment =
                         ParseValuesSegment();
                     if (!maybe_values_segment.first) {
@@ -1153,47 +1153,47 @@ bool Parser::ParseCommandSetUniform() {
            {Token::Type::kKeywordType,
             [this, &maybe_array_size, &type]() -> bool {
               auto token = tokenizer_->NextToken();
-              if (token->GetText() == "float") {
+              if (token->GetType() == Token::Type::kKeywordTypeFloat) {
                 type = UniformValue::ElementType::kFloat;
-              } else if (token->GetText() == "vec2") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeVec2) {
                 type = UniformValue::ElementType::kVec2;
-              } else if (token->GetText() == "vec3") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeVec3) {
                 type = UniformValue::ElementType::kVec3;
-              } else if (token->GetText() == "vec4") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeVec4) {
                 type = UniformValue::ElementType::kVec4;
-              } else if (token->GetText() == "int") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeInt) {
                 type = UniformValue::ElementType::kInt;
-              } else if (token->GetText() == "ivec2") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeIvec2) {
                 type = UniformValue::ElementType::kIvec2;
-              } else if (token->GetText() == "ivec3") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeIvec3) {
                 type = UniformValue::ElementType::kIvec3;
-              } else if (token->GetText() == "ivec4") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeIvec4) {
                 type = UniformValue::ElementType::kIvec4;
-              } else if (token->GetText() == "uint") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeUint) {
                 type = UniformValue::ElementType::kUint;
-              } else if (token->GetText() == "uvec2") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeUvec2) {
                 type = UniformValue::ElementType::kUvec2;
-              } else if (token->GetText() == "uvec3") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeUvec3) {
                 type = UniformValue::ElementType::kUvec3;
-              } else if (token->GetText() == "uvec4") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeUvec4) {
                 type = UniformValue::ElementType::kUvec4;
-              } else if (token->GetText() == "mat2x2") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeMat2x2) {
                 type = UniformValue::ElementType::kMat2x2;
-              } else if (token->GetText() == "mat2x3") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeMat2x3) {
                 type = UniformValue::ElementType::kMat2x3;
-              } else if (token->GetText() == "mat2x4") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeMat2x4) {
                 type = UniformValue::ElementType::kMat2x4;
-              } else if (token->GetText() == "mat3x2") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeMat3x2) {
                 type = UniformValue::ElementType::kMat3x2;
-              } else if (token->GetText() == "mat3x3") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeMat3x3) {
                 type = UniformValue::ElementType::kMat3x3;
-              } else if (token->GetText() == "mat3x4") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeMat3x4) {
                 type = UniformValue::ElementType::kMat3x4;
-              } else if (token->GetText() == "mat4x2") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeMat4x2) {
                 type = UniformValue::ElementType::kMat4x2;
-              } else if (token->GetText() == "mat4x3") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeMat4x3) {
                 type = UniformValue::ElementType::kMat4x3;
-              } else if (token->GetText() == "mat4x4") {
+              } else if (token->GetType() == Token::Type::kKeywordTypeMat4x4) {
                 type = UniformValue::ElementType::kMat4x4;
               } else {
                 message_consumer_->Message(
@@ -1515,7 +1515,7 @@ std::pair<bool, ValuesSegment> Parser::ParseValuesSegment() {
       false, ValuesSegment(std::vector<uint8_t>())};
   auto token = tokenizer_->NextToken();
   switch (token->GetType()) {
-    case Token::Type::kKeywordByte: {
+    case Token::Type::kKeywordTypeByte: {
       std::vector<uint8_t> byte_data;
       while (tokenizer_->PeekNextToken()->GetType() ==
              Token::Type::kIntLiteral) {
@@ -1535,7 +1535,7 @@ std::pair<bool, ValuesSegment> Parser::ParseValuesSegment() {
       }
       return {true, ValuesSegment(byte_data)};
     }
-    case Token::Type::kKeywordFloat: {
+    case Token::Type::kKeywordTypeFloat: {
       std::vector<float> float_data;
       while (tokenizer_->PeekNextToken()->GetType() ==
              Token::Type::kFloatLiteral) {
@@ -1547,7 +1547,7 @@ std::pair<bool, ValuesSegment> Parser::ParseValuesSegment() {
       }
       return {true, ValuesSegment(float_data)};
     }
-    case Token::Type::kKeywordInt: {
+    case Token::Type::kKeywordTypeInt: {
       std::vector<int32_t> int_data;
       while (tokenizer_->PeekNextToken()->GetType() ==
              Token::Type::kIntLiteral) {
@@ -1556,7 +1556,7 @@ std::pair<bool, ValuesSegment> Parser::ParseValuesSegment() {
       return {true, ValuesSegment(int_data)};
     }
     default: {
-      assert(token->GetType() == Token::Type::kKeywordUint &&
+      assert(token->GetType() == Token::Type::kKeywordTypeUint &&
              "Unexpected type for values segment.");
       std::vector<uint32_t> uint_data;
       while (tokenizer_->PeekNextToken()->GetType() ==

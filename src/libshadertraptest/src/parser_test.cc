@@ -97,11 +97,11 @@ SET_UNIFORM PROGRAM compute_program LOCATION 1 NAME f TYPE float VALUES 1.0
 TEST(ParserTest, CreateBufferVariousTypes) {
   std::string program =
       R"(CREATE_BUFFER buf SIZE_BYTES 52 INIT_VALUES
-   INT 1 2 3
-   FLOAT 1.0 2.0 3.0
-   UINT 10 11 12
-   BYTE 1 2 3 4
-   INT 4 5 6
+   int 1 2 3
+   float 1.0 2.0 3.0
+   uint 10 11 12
+   byte 1 2 3 4
+   int 4 5 6
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -176,8 +176,8 @@ TEST(ParserTest, CreateBufferVariousTypes) {
 TEST(ParserTest, CreateBufferBadByteMultiple) {
   std::string program =
       R"(CREATE_BUFFER buf SIZE_BYTES 3 INIT_VALUES
-   INT 3 6
-   FLOAT 3.0 BYTE 1 2 3 4 5 6
+   int 3 6
+   float 3.0 byte 1 2 3 4 5 6
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -193,11 +193,11 @@ TEST(ParserTest, CreateBufferBadByteMultiple) {
 TEST(ParserTest, CreateBufferWrongSize) {
   std::string program =
       R"(CREATE_BUFFER buf SIZE_BYTES 51 INIT_VALUES
-   INT 1 2 3
-   FLOAT 1.0 2.0 3.0
-   UINT 10 11 12
-   BYTE 1 2 3 4
-   INT 4 5 6
+   int 1 2 3
+   float 1.0 2.0 3.0
+   uint 10 11 12
+   byte 1 2 3 4
+   int 4 5 6
 )";
 
   CollectingMessageConsumer message_consumer;
