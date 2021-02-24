@@ -28,88 +28,78 @@ A brief description of each ShaderTrap command now follows. The commands are pre
 
 ### ASSERT_EQUAL
 
-Checks whether two buffers or two renderbuffers are identical.
-
-The form for buffers is:
+This command has two forms.
 
 ```
-ASSERT_EQUAL BUFFERS buffer1 buffer2
+ASSERT_EQUAL BUFFERS buffer_1 buffer_2
 ```
 
-where `buffer1` and `buffer2` must be buffers produced by `CREATE_BUFFER`. Performs a byte-level comparison of the buffers. Yields an error if the buffers have different sizes, or if they have the same size but differ at any single byte.
+Checks whether `buffer_1` and `buffer_2`, which must be buffers produced by `CREATE_BUFFER`, contain equal contents. Performs a byte-level comparison of the buffers. Yields an error if the buffers have different sizes, or if they have the same size but differ at any single byte.
 
 ```
-ASSERT_EQUAL RENDERBUFFERS renderbuffer1 renderbuffer2
+ASSERT_EQUAL RENDERBUFFERS renderbuffer_1 renderbuffer_2
 ```
 
-where `renderbuffer1` and `renderbuffer2` must be renderbuffers produced by `CREATE_RENDERBUFFER`. Performs a pixel-by-pixel comparison of the renderbuffers. Yields an error if the renderbuffers have different widths or different heights, or if they have the same dimensions but differ at any single pixel.
+Checks whether `renderbuffer_1` and `renderbuffer_2`, which must be renderbuffers produced by `CREATE_RENDERBUFFER`, contain equal contents. Performs a pixel-by-pixel comparison of the renderbuffers. Yields an error if the renderbuffers have different widths or different heights, or if they have the same dimensions but differ at any single pixel.
 
 ### ASSERT_PIXELS
 
-Checks whether every pixel in a particular rectangular region of a renderbuffer has a specific value.
-
-The form of the command is:
 ```
 ASSERT_PIXELS RENDERBUFFER renderbuffer RECTANGLE x y w h EXPECTED r g b a
 ```
 
-where `renderbuffer` must be a renderbuffer produced by `CREATE_RENDERBUFFER`, `x`, `y`, `w`, `h` defines a rectangle with top-left coordinate (`x`, `y`), width `w` and height `h` that is required to be within the bounds of `renderbuffer`, and `r`, `g`, `b` and `a` are integer values in the range [0, 255] that define the expected value for every pixel in the rectangular region.
+Checks whether every pixel in a particular rectangular region of a renderbuffer has a specific value.
+- `renderbuffer` must be a renderbuffer produced by `CREATE_RENDERBUFFER`
+- `x`, `y`, `w`, `h` defines a rectangle with top-left coordinate (`x`, `y`), width `w` and height `h` that is required to be within the bounds of `renderbuffer`
+- `r`, `g`, `b` and `a` are integer values in the range [0, 255] that define the expected value for every pixel in the rectangular region
 
 ### ASSERT_SIMILAR_EMD_HISTOGRAM
 
 ```
-ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS renderbuffer1 renderbuffer2 TOLERANCE value
+ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS renderbuffer_1 renderbuffer_2 TOLERANCE value
 ```
 
 TODO(afd)
 
 ### BIND_SAMPLER
 
-Binds a sampler to a texture unit.
-
-The form of the command is:
-
 ```
 BIND_SAMPLER SAMPLER sampler TEXTURE_UNIT unit
 ```
 
-where `sampler` is a sampler produced by `CREATE_SAMPLER` and `unit` is a non-negative integer specifying which texture unit `sampler` should be bound to.
+Binds a sampler to a texture unit.
+- `sampler` is a sampler produced by `CREATE_SAMPLER`
+`unit` is a non-negative integer specifying which texture unit `sampler` should be bound to
 
 ### BIND_SHADER_STORAGE_BUFFER
-
-Binds a buffer to a storage buffer binding point.
-
-The form of the command is:
 
 ```
 BIND_STORAGE_BUFFER BUFFER buffer BINDING binding
 ```
 
-where `buffer` is a buffer produced by `CREATE_BUFFER` and `binding` is a non-negative integer specifying a shader storage buffer binding point.
+Binds a buffer to a storage buffer binding point.
+- `buffer` is a buffer produced by `CREATE_BUFFER`
+- `binding` is a non-negative integer specifying a shader storage buffer binding point
 
 ### BIND_TEXTURE
-
-Binds a texture to a texture unit.
-
-The form of the command is:
 
 ```
 BIND_TEXTURE TEXTURE texture TEXTURE_UNIT unit
 ```
 
-where `texture` is a texture produced by `CREATE_EMPTY_TEXTURE_2D` and `unit` is a non-negative integer specifying which texture unit `texture` should be bound to.
+Binds a texture to a texture unit.
+- `texture` is a texture produced by `CREATE_EMPTY_TEXTURE_2D`
+- `unit` is a non-negative integer specifying which texture unit `texture` should be bound to
 
 ### BIND_UNIFORM_BUFFER
-
-Binds a buffer to a uniform buffer binding point.
-
-The form of the command is:
 
 ```
 BIND_UNIFORM_BUFFER BUFFER buffer BINDING binding
 ```
 
-where `buffer` is a buffer produced by `CREATE_BUFFER` and `binding` is a non-negative integer specifying a uniform buffer binding point.
+Binds a buffer to a uniform buffer binding point.
+- `buffer` is a buffer produced by `CREATE_BUFFER`
+- `binding` is a non-negative integer specifying a uniform buffer binding point
 
 ### COMPILE_SHADER
 
@@ -117,19 +107,30 @@ where `buffer` is a buffer produced by `CREATE_BUFFER` and `binding` is a non-ne
 COMPILE_SHADER result SHADER shader
 ```
 
-TODO(afd)
+Compiles the shader associated with `shader`, which must be produced by the `DECLARE_SHADER` command. The compiled shader is identified by `result`.
 
 ### CREATE_BUFFER
 
 ```
-CREATE_BUFFER result SIZE_BYTES size INIT VALUES
-  type_1 value+
-  type_2 value+
+CREATE_BUFFER result SIZE_BYTES size INIT_VALUES
+  type_1 value_sequence_1
+  type_2 value_sequence_2
   ...
-  type_n value+
+  type_n value_sequence_n
 ```
 
-TODO(afd)
+Creates a buffer of bytes that can be subsequently accessed by the GPU for various purposes, e.g. as a shader storage buffer, uniform buffer, vertex buffer or index buffer. The creation command does not specify for which purpose the buffer will later be used, and the buffer could in fact be used for multiple purposes, e.g. a compute shader could be used to modify the contents of the buffer, after which it could be fed to a graphics pipeline as vertex data.
+
+- The created buffer is identified by `result`
+- `size` is the size of the buffer in bytes
+- The `INIT_VALUES` parameter specifies the initial contents of the buffer as follows:
+  - Each of `type_1`, ..., `type_n` is one of `float`, `int`, `uint` or `byte`
+  - If `type_i` is `float` then `value_sequence_i` must be a sequence of floating-point literals.
+  - If `type_i` is `int` then `value_sequence_i` must be a sequence of 32-bit signed integer literals.
+  - If `type_i` is `uint` then `value_sequence_i` must be a sequence of 32-bit unsigned integer literals.
+  - If `type_i` is `byte` then `value_sequence_i` must be a sequence of byte literals (values in the range [0, 255]), and the length of `value_sequence_i` must be a multiple of 4
+  - The buffer is populated with the values provided by the value sequence in order. Each `float`, `int` and `uint` value occupies 4 bytes. Each `byte` value occupies 1 byte. There is no padding between elements.
+  - The total number of bytes occupied by the value sequences combined must match `size`. While this makes the `size` parameter technically redundant, requiring the expected size to be specified allows it to be cross-checked against the combined size of the provided values.
 
 ### CREATE_EMPTY_TEXTURE_2D
 
@@ -142,10 +143,14 @@ TODO(afd)
 ### CREATE_PROGRAM
 
 ```
-CREATE_PROGRAM result SHADERS shader1 shader2?
+CREATE_PROGRAM result SHADERS compiled_shader_1 compiled_shader_2?
 ```
 
-TODO(afd)
+Creates a program by linking a compiled shader or pair of compiled shaders, each produced by `COMPILE_SHADER`.
+
+- The created program is identified by `result`
+- If `compiled_shader_1` was obtained by compiling a compute shader then `compiled_shader_2` must not be present. In this case `result` is a *compute* program.
+- If `compiled_shader_1` was obtained by compiling a vertex or fragment shader then `compiled_shader_2` must be present and collectively the two compiled shaders must have been obtained by compiling a vertex and a fragment shader. In this case `result` is a *graphics* program.
 
 ### CREATE_RENDERBUFFER
 
@@ -211,7 +216,7 @@ RUN_GRAPHICS
     ]
 ```
 
-TODO(afd)
+TODO(afd): `program` must be a *graphics* program produced by `CREATE_PROGRAM`.
 
 ### SET_SAMPLER_PARAMETER
 
