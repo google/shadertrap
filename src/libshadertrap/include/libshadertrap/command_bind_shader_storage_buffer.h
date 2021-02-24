@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSHADERTRAP_COMMAND_BIND_STORAGE_BUFFER_H
-#define LIBSHADERTRAP_COMMAND_BIND_STORAGE_BUFFER_H
+#ifndef LIBSHADERTRAP_COMMAND_BIND_SHADER_STORAGE_BUFFER_H
+#define LIBSHADERTRAP_COMMAND_BIND_SHADER_STORAGE_BUFFER_H
 
 #include <cstddef>
 #include <memory>
@@ -24,11 +24,11 @@
 
 namespace shadertrap {
 
-class CommandBindStorageBuffer : public Command {
+class CommandBindShaderStorageBuffer : public Command {
  public:
-  CommandBindStorageBuffer(std::unique_ptr<Token> start_token,
-                           std::unique_ptr<Token> buffer_identifier,
-                           size_t binding);
+  CommandBindShaderStorageBuffer(std::unique_ptr<Token> start_token,
+                                 std::unique_ptr<Token> buffer_identifier,
+                                 size_t binding);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -47,4 +47,4 @@ class CommandBindStorageBuffer : public Command {
 
 }  // namespace shadertrap
 
-#endif  // LIBSHADERTRAP_COMMAND_BIND_STORAGE_BUFFER_H
+#endif  // LIBSHADERTRAP_COMMAND_BIND_SHADER_STORAGE_BUFFER_H

@@ -72,7 +72,7 @@ class Parser {
 
   bool ParseCommandBindSampler();
 
-  bool ParseCommandBindStorageBuffer();
+  bool ParseCommandBindShaderStorageBuffer();
 
   bool ParseCommandBindTexture();
 

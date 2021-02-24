@@ -19,7 +19,7 @@
 #include "libshadertrap/command_assert_pixels.h"
 #include "libshadertrap/command_assert_similar_emd_histogram.h"
 #include "libshadertrap/command_bind_sampler.h"
-#include "libshadertrap/command_bind_storage_buffer.h"
+#include "libshadertrap/command_bind_shader_storage_buffer.h"
 #include "libshadertrap/command_bind_texture.h"
 #include "libshadertrap/command_bind_uniform_buffer.h"
 #include "libshadertrap/command_compile_shader.h"
@@ -64,8 +64,8 @@ class CommandVisitor {
 
   virtual bool VisitBindSampler(CommandBindSampler* bind_sampler) = 0;
 
-  virtual bool VisitBindStorageBuffer(
-      CommandBindStorageBuffer* bind_storage_buffer) = 0;
+  virtual bool VisitBindShaderStorageBuffer(
+      CommandBindShaderStorageBuffer* bind_shader_storage_buffer) = 0;
 
   virtual bool VisitBindTexture(CommandBindTexture* bind_texture) = 0;
 

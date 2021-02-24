@@ -34,7 +34,7 @@ class Token {
     kKeywordAssertSimilarEmdHistogram,
     kKeywordBinding,
     kKeywordBindSampler,
-    kKeywordBindStorageBuffer,
+    kKeywordBindShaderStorageBuffer,
     kKeywordBindTexture,
     kKeywordBindUniformBuffer,
     kKeywordBuffer,
