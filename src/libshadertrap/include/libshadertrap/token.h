@@ -103,6 +103,7 @@ class Token {
     kKeywordTypeMat4x2,
     kKeywordTypeMat4x3,
     kKeywordTypeMat4x4,
+    kKeywordTypeSampler2d,
     kKeywordTypeUint,
     kKeywordTypeUvec2,
     kKeywordTypeUvec3,

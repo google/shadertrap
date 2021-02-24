@@ -300,6 +300,7 @@ const std::unordered_map<std::string, Token::Type>
         {"mat4x2", Token::Type::kKeywordTypeMat4x2},
         {"mat4x3", Token::Type::kKeywordTypeMat4x3},
         {"mat4x4", Token::Type::kKeywordTypeMat4x4},
+        {"sampler2D", Token::Type::kKeywordTypeSampler2d},
         {"uint", Token::Type::kKeywordTypeUint},
         {"uvec2", Token::Type::kKeywordTypeUvec2},
         {"uvec3", Token::Type::kKeywordTypeUvec3},

@@ -816,6 +816,7 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
       }
       break;
     case UniformValue::ElementType::kInt:
+    case UniformValue::ElementType::kSampler2d:
       if (uniform_value.IsArray()) {
         GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniform1iv, program,
                     uniform_location,

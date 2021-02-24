@@ -44,7 +44,8 @@ class UniformValue {
     kMat3x4,
     kMat4x2,
     kMat4x3,
-    kMat4x4
+    kMat4x4,
+    kSampler2d
   };
 
   UniformValue(ElementType element_type, const std::vector<float>& float_data);

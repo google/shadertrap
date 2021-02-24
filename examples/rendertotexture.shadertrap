@@ -54,7 +54,7 @@ layout(location = 1) out vec4 _GLF_color2;
 
 layout(location = 0) uniform vec2 time;
 
-layout(binding = 1) uniform sampler2D tex;
+layout(binding = 2) uniform sampler2D tex;
 
 float ReallyApproxNormalizedAtan2(vec2 v)
 {
@@ -158,8 +158,8 @@ CREATE_RENDERBUFFER renderbuffer2 WIDTH 256 HEIGHT 256
 
 SET_UNIFORM PROGRAM my_program LOCATION 0 TYPE vec2 VALUES 5.0 0.0
 
-BIND_TEXTURE TEXTURE my_tex TEXTURE_UNIT 1
-BIND_SAMPLER SAMPLER my_sampler TEXTURE_UNIT 1
+BIND_TEXTURE TEXTURE my_tex TEXTURE_UNIT 2
+BIND_SAMPLER SAMPLER my_sampler TEXTURE_UNIT 2
 
 RUN_GRAPHICS
   PROGRAM my_program
