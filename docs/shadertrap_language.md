@@ -46,11 +46,14 @@ where `renderbuffer1` and `renderbuffer2` must be renderbuffers produced by `CRE
 
 ### ASSERT_PIXELS
 
+Checks whether every pixel in a particular rectangular region of a renderbuffer has a specific value.
+
+The form of the command is:
 ```
 ASSERT_PIXELS RENDERBUFFER renderbuffer RECTANGLE x y w h EXPECTED r g b a
 ```
 
-TODO(afd)
+where `renderbuffer` must be a renderbuffer produced by `CREATE_RENDERBUFFER`, `x`, `y`, `w`, `h` defines a rectangle with top-left coordinate (`x`, `y`), width `w` and height `h` that is required to be within the bounds of `renderbuffer`, and `r`, `g`, `b` and `a` are integer values in the range [0, 255] that define the expected value for every pixel in the rectangular region.
 
 ### ASSERT_SIMILAR_EMD_HISTOGRAM
 
@@ -62,6 +65,10 @@ TODO(afd)
 
 ### BIND_SAMPLER
 
+Binds a sampler to a texture unit.
+
+The form of the command is:
+
 ```
 BIND_SAMPLER SAMPLER sampler TEXTURE_UNIT unit
 ```
@@ -69,6 +76,10 @@ BIND_SAMPLER SAMPLER sampler TEXTURE_UNIT unit
 TODO(afd)
 
 ### BIND_STORAGE_BUFFER
+
+Binds a buffer to a storage buffer binding point.
+
+The form of the command is:
 
 ```
 BIND_STORAGE_BUFFER BUFFER buffer BINDING binding
@@ -78,6 +89,10 @@ TODO(afd)
 
 ### BIND_TEXTURE
 
+Binds a texture to a texture unit.
+
+The form of the command is:
+
 ```
 BIND_TEXTURE TEXTURE texture TEXTURE_UNIT unit
 ```
@@ -85,6 +100,10 @@ BIND_TEXTURE TEXTURE texture TEXTURE_UNIT unit
 TODO(afd)
 
 ### BIND_UNIFORM_BUFFER
+
+Binds a buffer to a uniform buffer binding point.
+
+The form of the command is:
 
 ```
 BIND_UNIFORM_BUFFER BUFFER buffer BINDING binding
@@ -103,7 +122,11 @@ TODO(afd)
 ### CREATE_BUFFER
 
 ```
-CREATE_BUFFER result SIZE_BYTES size INIT_TYPE type INIT VALUES value+
+CREATE_BUFFER result SIZE_BYTES size INIT VALUES
+  type_1 value+
+  type_2 value+
+  ...
+  type_n value+
 ```
 
 TODO(afd)
