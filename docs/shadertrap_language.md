@@ -71,6 +71,8 @@ Binds a sampler to a texture unit.
 - `sampler` is a sampler produced by `CREATE_SAMPLER`
 `unit` is a non-negative integer specifying which texture unit `sampler` should be bound to
 
+To make a sampler uniform in a shader use the texture unit `unit` to which this sampler has been bound, use `SET_UNIFORM` (supplying the value of `unit` as the value of the uniform).
+
 ### BIND_SHADER_STORAGE_BUFFER
 
 ```
@@ -90,6 +92,8 @@ BIND_TEXTURE TEXTURE texture TEXTURE_UNIT unit
 Binds a texture to a texture unit.
 - `texture` is a texture produced by `CREATE_EMPTY_TEXTURE_2D`
 - `unit` is a non-negative integer specifying which texture unit `texture` should be bound to
+
+To make a sampler uniform in a shader use the texture unit `unit` to which this texture has been bound, use `SET_UNIFORM` (supplying the value of `unit` as the value of the uniform).
 
 ### BIND_UNIFORM_BUFFER
 
@@ -138,7 +142,19 @@ Creates a buffer of bytes that can be subsequently accessed by the GPU for vario
 CREATE_EMPTY_TEXTURE_2D result WIDTH w HEIGHT h
 ```
 
-TODO(afd)
+Creates and empty 2D texture, with RGBA pixel format.
+
+- The created texture is identified by `result`
+- The texture has width `w`
+- The texture has height `h`
+
+Before sampling from the texture during rendering it is necessary to populate the texture, and set texture parameters appropriately.
+
+Populating the texture should be done by rendering to it using a `RUN_GRAPHICS` command, supplying the texture as a framebuffer attachment via the `FRAMEBUFFER_ATTACHMENTS` parameter of that command.
+
+Setting parameters for the texture can be done using `SET_TEXTURE_PARAMETER`. The texture can be bound to a texture unit via the `BIND_TEXTURE` command.
+
+There is currently no way to load a texture from a file or to explicitly specify the initial contents of the texture.
 
 ### CREATE_PROGRAM
 
@@ -158,7 +174,14 @@ Creates a program by linking a compiled shader or pair of compiled shaders, each
 CREATE_RENDERBUFFER result WIDTH w HEIGHT h
 ```
 
-TODO(afd)
+Creates a renderbuffer with undefined contents, using the RGBA8 format.
+
+- The created renderbuffer is identified by `result`
+- The renderbuffer has width `w`
+- The renderbuffer has height `r`
+
+The renderbuffer can be rendered to by supplying it as a framebuffer attachment to a `RUN_GRAPHICS` command, via the `FRAMEBUFFER_ATTACHMENTS` parameter of that command. It can be dumped to a file using `DUMP_RENDERBUFFER`.
+
 
 ### CREATE_SAMPLER
 
@@ -166,7 +189,7 @@ TODO(afd)
 CREATE_SAMPLER result
 ```
 
-TODO(afd)
+Creates a sampler identified via `result`. Parameters of the the sampler can then be set via `SET_SAMPLER_PARAMETER`. The sampler can be bound to a texture unit via `BIND_SAMPLER`.
 
 ### DECLARE_SHADER
 
@@ -184,7 +207,10 @@ TODO(afd)
 DUMP_RENDERBUFFER RENDERBUFFER renderbuffer FILE file
 ```
 
-TODO(afd)
+Dumps a renderbuffer to a file, in PNG format.
+
+- `renderbuffer` is the renderbuffer to be dumped, and must be the result of a `CREATE_RENDERBUFFER` command
+- `file` is the file to which the PNG will be written
 
 ### RUN_COMPUTE
 
@@ -192,7 +218,8 @@ TODO(afd)
 RUN_COMPUTE PROGRAM compute_program NUM_GROUPS x y z
 ```
 
-TODO(afd)
+- `compute_program` must be a *compute* program produced by `CREATE_PROGRAM`
+- `x`, `y` and `z` must be non-negative integers specifying the number of work groups in the *x*, *y* and *z* dimensions, respectively, that should execute the compute program
 
 ### RUN_GRAPHICS
 
@@ -216,7 +243,17 @@ RUN_GRAPHICS
     ]
 ```
 
-TODO(afd): `program` must be a *graphics* program produced by `CREATE_PROGRAM`.
+Runs a graphics workload.
+
+- `graphics_program` must be a *graphics* program produced by `CREATE_PROGRAM`.
+- The `VERTEX_DATA` parameter is a mapping with one entry for each vertex attribute associated with the vertex shader of `graphics_program`. If the vertex shader declares an `in` variable with `layout(location = i)` then `VERTEX_DATA` must provide an entry of the form `i -> ...`.  In this entry:
+  - `vertex_buffer_i` specifies a buffer from which vertex data for vertex attribute `i` will be taken. This must be the result of a `CREATE_BUFFER` command
+  - `offset_i` is a non-negative integer specifying the byte offset into `vertex_buffer_i` at which vertex data begins
+  - `stride_i` is a non-negative integer specifying the distance in bytes between successive pieces of vertex data in `vertex_buffer_i`
+  - `dimension_i` is a positive integer specifying the dimensionality of vertices associated with vertex attribute `i`
+- `index_buffer` specifies a buffer of index data, which must be the result of a `CREATE_BUFFER` command. It will be interpreted as a buffer of unsigned 32-bit integers.
+
+TODO(afd) continue this. Specify that vertex data are 32-bit floating point values.
 
 ### SET_SAMPLER_PARAMETER
 
@@ -236,12 +273,24 @@ TODO(afd)
 
 ### SET_UNIFORM
 
+This command has two forms, both of which set a uniform in a program's default uniform block to a value.
+
 ```
 SET_UNIFORM PROGRAM program LOCATION location TYPE type VALUES value+
 ```
+
+Sets a uniform according to its location.
+
+- `program` is the program in which the uniform is to be set, and must be the result of a `CREATE_PROGRAM` command
+
+- `location` is a non-negative integer corresponding to the location of the uniform to be set; if the uniform delcaration in the shader(s) associated with `program` features the layout qualifier `layout(location = l)` then `l` should be provided as the value of `location`
+
+- `type` is the type of the uniform, and should match the type declaration for the uniform in the shader(s) of `program`. This can be `sampler2D`, any scalar, vector or matrix type, or an array of any of these types (e.g., `vec2[5]`).
+
+- `value+` should be a whitespace-separated sequence of values that collectively provide the uniform's value. TODO(afd) explain this.
 
 ```
 SET_UNIFORM PROGRAM program NAME name TYPE type VALUES value+
 ```
 
-TODO(afd)
+Sets a uniform according to its name. The parameters have the same meaning as in the previous version of `SET_UNIFORM`, except that instead of the `location`, `name` is used to specify which uniform should be set. This must correspond to the name of a uniform declared in the shader(s) associated with `program`.
