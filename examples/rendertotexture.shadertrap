@@ -20,7 +20,7 @@ SET_TEXTURE_PARAMETER TEXTURE my_tex PARAMETER TEXTURE_MAG_FILTER VALUE NEAREST
 
 SET_SAMPLER_PARAMETER SAMPLER my_sampler PARAMETER TEXTURE_MIN_FILTER VALUE NEAREST
 
-DECLARE_SHADER texgen_frag FRAGMENT
+DECLARE_SHADER texgen_frag KIND FRAGMENT
 #version 320 es
 precision highp float;
 
@@ -35,7 +35,7 @@ void main()
 }
 END
 
-DECLARE_SHADER vertex_shader VERTEX
+DECLARE_SHADER vertex_shader KIND VERTEX
 #version 320 es
 layout(location = 0) in vec2 _GLF_vertexPosition;
 void main(void) {
@@ -43,7 +43,7 @@ void main(void) {
 }
 END
 
-DECLARE_SHADER fragment_shader FRAGMENT
+DECLARE_SHADER fragment_shader KIND FRAGMENT
 #version 320 es
 
 precision highp float;

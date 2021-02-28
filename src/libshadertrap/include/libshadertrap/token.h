@@ -59,6 +59,7 @@ class Token {
     kKeywordIndexData,
     kKeywordInitType,
     kKeywordInitValues,
+    kKeywordKind,
     kKeywordLinear,
     kKeywordLocation,
     kKeywordName,

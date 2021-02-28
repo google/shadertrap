@@ -53,7 +53,7 @@ class CheckerTestFixture : public ::testing::Test {
 };
 
 TEST_F(CheckerTestFixture, RedeclareShader) {
-  std::string program = R"(DECLARE_SHADER s VERTEX
+  std::string program = R"(DECLARE_SHADER s KIND VERTEX
 #version 320 es
 layout(location = 0) in vec2 _GLF_vertexPosition;
 void main(void) {
@@ -61,7 +61,7 @@ void main(void) {
 }
 END
 
-DECLARE_SHADER s VERTEX
+DECLARE_SHADER s KIND VERTEX
 #version 320 es
 layout(location = 0) in vec2 _GLF_vertexPosition;
 void main(void) {
@@ -82,7 +82,7 @@ END
 
 TEST_F(CheckerTestFixture, GlslangParseError) {
   // glslang should fail to parse the program.
-  std::string program = R"(DECLARE_SHADER s VERTEX
+  std::string program = R"(DECLARE_SHADER s KIND VERTEX
 notversion
 END
   )";
@@ -104,7 +104,7 @@ END
 TEST_F(CheckerTestFixture, GlslangPrecisionError) {
   // glslang will complain that a float is declared with no default precision
   // qualifier.
-  std::string program = R"(DECLARE_SHADER s FRAGMENT
+  std::string program = R"(DECLARE_SHADER s KIND FRAGMENT
 #version 320 es
 float f;
 void main() {
@@ -143,7 +143,7 @@ TEST_F(CheckerTestFixture, CompileShaderUnknownShader) {
 }
 
 TEST_F(CheckerTestFixture, CompileShaderNameAlreadyUsed) {
-  std::string program = R"(DECLARE_SHADER s VERTEX
+  std::string program = R"(DECLARE_SHADER s KIND VERTEX
 #version 320 es
 layout(location = 0) in vec2 _GLF_vertexPosition;
 void main(void) {
@@ -165,7 +165,7 @@ COMPILE_SHADER s SHADER s
 }
 
 TEST_F(CheckerTestFixture, CreateBufferNameAlreadyUsed) {
-  std::string program = R"(DECLARE_SHADER vert VERTEX
+  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
@@ -184,12 +184,12 @@ CREATE_BUFFER vert SIZE_BYTES 8 INIT_VALUES float 1.0 2.0
 }
 
 TEST_F(CheckerTestFixture, CreateProgramUnknownShader) {
-  std::string program = R"(DECLARE_SHADER vert VERTEX
+  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
 
-DECLARE_SHADER frag FRAGMENT
+DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 void main() { }
 END
@@ -213,12 +213,12 @@ CREATE_PROGRAM prog SHADERS vert_compiled mysampler frag_compiled
 }
 
 TEST_F(CheckerTestFixture, CreateProgramNameAlreadyUsed) {
-  std::string program = R"(DECLARE_SHADER vert VERTEX
+  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
 
-DECLARE_SHADER frag FRAGMENT
+DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 void main() { }
 END
@@ -239,7 +239,7 @@ CREATE_PROGRAM frag_compiled SHADERS vert_compiled frag_compiled
 }
 
 TEST_F(CheckerTestFixture, CreateProgramNoFragmentShader) {
-  std::string program = R"(DECLARE_SHADER vert VERTEX
+  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
@@ -260,7 +260,7 @@ CREATE_PROGRAM prog SHADERS vert_compiled
 }
 
 TEST_F(CheckerTestFixture, CreateProgramNoVertexShader) {
-  std::string program = R"(DECLARE_SHADER frag FRAGMENT
+  std::string program = R"(DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 void main() { }
 END
@@ -281,12 +281,12 @@ CREATE_PROGRAM prog SHADERS frag_compiled
 }
 
 TEST_F(CheckerTestFixture, CreateProgramMultipleFragmentShaders) {
-  std::string program = R"(DECLARE_SHADER vert VERTEX
+  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
 
-DECLARE_SHADER frag FRAGMENT
+DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 void main() { }
 END
@@ -309,12 +309,12 @@ CREATE_PROGRAM prog SHADERS vert_compiled frag_compiled frag_compiled
 }
 
 TEST_F(CheckerTestFixture, CreateProgramMultipleVertexShaders) {
-  std::string program = R"(DECLARE_SHADER vert VERTEX
+  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
 
-DECLARE_SHADER frag FRAGMENT
+DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 void main() { }
 END
@@ -337,7 +337,7 @@ CREATE_PROGRAM prog SHADERS frag_compiled vert_compiled vert_compiled
 }
 
 TEST_F(CheckerTestFixture, CreateProgramMultipleComputeShaders) {
-  std::string program = R"(DECLARE_SHADER comp COMPUTE
+  std::string program = R"(DECLARE_SHADER comp KIND COMPUTE
 #version 320 es
 void main() { }
 END
@@ -359,12 +359,12 @@ CREATE_PROGRAM prog SHADERS comp_compiled comp_compiled
 }
 
 TEST_F(CheckerTestFixture, CreateProgramComputeAndFragmentShaders) {
-  std::string program = R"(DECLARE_SHADER comp COMPUTE
+  std::string program = R"(DECLARE_SHADER comp KIND COMPUTE
 #version 320 es
 void main() { }
 END
 
-DECLARE_SHADER frag FRAGMENT
+DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 void main() { }
 END
@@ -389,12 +389,12 @@ CREATE_PROGRAM prog SHADERS frag_compiled comp_compiled
 }
 
 TEST_F(CheckerTestFixture, CreateProgramComputeAndVertexShaders) {
-  std::string program = R"(DECLARE_SHADER comp COMPUTE
+  std::string program = R"(DECLARE_SHADER comp KIND COMPUTE
 #version 320 es
 void main() { }
 END
 
-DECLARE_SHADER vert VERTEX
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
@@ -419,7 +419,7 @@ CREATE_PROGRAM prog SHADERS comp_compiled vert_compiled
 }
 
 TEST_F(CheckerTestFixture, CreateRenderbufferNameAlreadyUsed) {
-  std::string program = R"(DECLARE_SHADER vert VERTEX
+  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
@@ -840,10 +840,10 @@ TEST_F(CheckerTestFixture, RunComputeNonexistentProgram) {
 
 TEST_F(CheckerTestFixture, RunComputeWithGraphicsProgram) {
   std::string program =
-      R"(DECLARE_SHADER frag FRAGMENT
+      R"(DECLARE_SHADER frag KIND FRAGMENT
 void main() { }
 END
-DECLARE_SHADER vert VERTEX
+DECLARE_SHADER vert KIND VERTEX
 void main() { }
 END
 COMPILE_SHADER frag_compiled SHADER frag
@@ -865,7 +865,7 @@ RUN_COMPUTE PROGRAM prog NUM_GROUPS 1 1 1
 
 TEST_F(CheckerTestFixture, RunGraphicsNonexistentProgram) {
   std::string program =
-      R"(DECLARE_SHADER frag FRAGMENT
+      R"(DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 precision highp float;
 layout(location = 0) out vec4 color;
@@ -874,7 +874,7 @@ void main() {
 }
 END
 
-DECLARE_SHADER vert VERTEX
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 layout(location = 0) in vec2 pos;
 void main(void) {
@@ -919,7 +919,7 @@ RUN_GRAPHICS
 
 TEST_F(CheckerTestFixture, RunGraphicsNonexistentVertexBuffer) {
   std::string program =
-      R"(DECLARE_SHADER frag FRAGMENT
+      R"(DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 precision highp float;
 layout(location = 0) out vec4 color;
@@ -928,7 +928,7 @@ void main() {
 }
 END
 
-DECLARE_SHADER vert VERTEX
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 layout(location = 0) in vec2 pos;
 void main(void) {
@@ -970,7 +970,7 @@ RUN_GRAPHICS
 
 TEST_F(CheckerTestFixture, RunGraphicsNonexistentIndexBuffer) {
   std::string program =
-      R"(DECLARE_SHADER frag FRAGMENT
+      R"(DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 precision highp float;
 layout(location = 0) out vec4 color;
@@ -979,7 +979,7 @@ void main() {
 }
 END
 
-DECLARE_SHADER vert VERTEX
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 layout(location = 0) in vec2 pos;
 void main(void) {
@@ -1023,7 +1023,7 @@ RUN_GRAPHICS
 
 TEST_F(CheckerTestFixture, RunGraphicsNonexistentFramebufferAttachment) {
   std::string program =
-      R"(DECLARE_SHADER frag FRAGMENT
+      R"(DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 precision highp float;
 layout(location = 0) out vec4 color;
@@ -1032,7 +1032,7 @@ void main() {
 }
 END
 
-DECLARE_SHADER vert VERTEX
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 layout(location = 0) in vec2 pos;
 void main(void) {
@@ -1079,7 +1079,7 @@ RUN_GRAPHICS
 
 TEST_F(CheckerTestFixture, RunGraphicsWithComputeProgram) {
   std::string program =
-      R"(DECLARE_SHADER comp COMPUTE
+      R"(DECLARE_SHADER comp KIND COMPUTE
 #version 320 es
 void main() { }
 END

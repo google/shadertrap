@@ -873,6 +873,17 @@ bool Parser::ParseCommandDeclareShader() {
             result_identifier->GetText() + "'");
     return false;
   }
+
+  auto kind_keyword = tokenizer_->NextToken();
+  if (kind_keyword->GetType() != Token::Type::kKeywordKind) {
+    message_consumer_->Message(MessageConsumer::Severity::kError,
+                               kind_keyword.get(),
+                               "Missing parameter 'KIND' to specify which kind "
+                               "of shader this is, got '" +
+                                   kind_keyword->GetText() + "'");
+    return false;
+  }
+
   auto shader_kind = tokenizer_->NextToken();
   if (shader_kind->GetType() != Token::Type::kKeywordVertex &&
       shader_kind->GetType() != Token::Type::kKeywordFragment &&
