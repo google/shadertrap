@@ -59,7 +59,22 @@ Checks whether every pixel in a particular rectangular region of a renderbuffer 
 ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS renderbuffer_1 renderbuffer_2 TOLERANCE value
 ```
 
-TODO(afd)
+Checks whether two renderbuffers are similar according to the [Earth Mover's Distance](https://en.wikipedia.org/wiki/Earth_mover%27s_distance) metric.
+
+- `renderbuffer_1` and `renderbuffer_2` must be renderbuffers produced by `CREATE_RENDERBUFFER`
+- `value` must be a floating-point value specifying the tolerance to be used for the comparison. It is a unit-less number.
+
+The following description of Earth Mover's Distance is taken from the [Amber source code](https://github.com/google/amber/blob/dabae26164714abf951c6815a2b4513260f7c6a4/src/buffer.cc#L230):
+
+  >Earth movers's distance: Calculate the minimal cost of moving "earth" to
+  >transform the first histogram into the second, where each bin of the
+  >histogram can be thought of as a column of units of earth. The cost is the
+  >amount of earth moved times the distance carried (the distance is the
+  >number of adjacent bins over which the earth is carried). Calculate this
+  >using the cumulative difference of the bins, which works as long as both
+  >histograms have the same amount of earth. Sum the absolute values of the
+  >cumulative difference to get the final cost of how much (and how far) the
+  >earth was moved.
 
 ### BIND_SAMPLER
 
@@ -111,7 +126,7 @@ Binds a buffer to a uniform buffer binding point.
 COMPILE_SHADER result SHADER shader
 ```
 
-Compiles the shader associated with `shader`, which must be produced by the `DECLARE_SHADER` command. The compiled shader is identified by `result`.
+Compiles the shader associated with `shader`, which must be produced by `DECLARE_SHADER`. The compiled shader is identified by `result`.
 
 ### CREATE_BUFFER
 
@@ -150,9 +165,9 @@ Creates and empty 2D texture, with RGBA pixel format.
 
 Before sampling from the texture during rendering it is necessary to populate the texture, and set texture parameters appropriately.
 
-Populating the texture should be done by rendering to it using a `RUN_GRAPHICS` command, supplying the texture as a framebuffer attachment via the `FRAMEBUFFER_ATTACHMENTS` parameter of that command.
+Populating the texture should be done by rendering to it using `RUN_GRAPHICS`, supplying the texture as a framebuffer attachment via the `FRAMEBUFFER_ATTACHMENTS` parameter of that command.
 
-Setting parameters for the texture can be done using `SET_TEXTURE_PARAMETER`. The texture can be bound to a texture unit via the `BIND_TEXTURE` command.
+Setting parameters for the texture can be done using `SET_TEXTURE_PARAMETER`. The texture can be bound to a texture unit via `BIND_TEXTURE`.
 
 There is currently no way to load a texture from a file or to explicitly specify the initial contents of the texture.
 
@@ -180,7 +195,7 @@ Creates a renderbuffer with undefined contents, using the RGBA8 format.
 - The renderbuffer has width `w`
 - The renderbuffer has height `r`
 
-The renderbuffer can be rendered to by supplying it as a framebuffer attachment to a `RUN_GRAPHICS` command, via the `FRAMEBUFFER_ATTACHMENTS` parameter of that command. It can be dumped to a file using `DUMP_RENDERBUFFER`.
+The renderbuffer can be rendered to by supplying it as a framebuffer attachment to `RUN_GRAPHICS`, via the `FRAMEBUFFER_ATTACHMENTS` parameter of that command. It can be dumped to a file using `DUMP_RENDERBUFFER`.
 
 
 ### CREATE_SAMPLER
@@ -194,12 +209,18 @@ Creates a sampler identified via `result`. Parameters of the the sampler can the
 ### DECLARE_SHADER
 
 ```
-DECLARE_SHADER result VERTEX|FRAGMENT|COMPUTE
+DECLARE_SHADER result KIND kind
 // GLSL code
 END
 ```
 
-TODO(afd)
+Declares a shader, which can subsequently be compiled. The shader will be validated using [`glslang`](https://github.com/KhronosGroup/glslang).
+
+- The declared shader is identified by `result`
+- `kind` specifies the kind of shader this is, and must be one of `VERTEX`, `FRAGMENT` or `COMPUTE`, for a vertex, fragment or compute shader, respectively. Other shader kinds are not supported.
+- The shader text is taken from the lines following `DECLARE_SHADER`, up to but not including a line starting with `END`
+
+The reason for separating the declaration and compilation of shaders into two separate commands is that it allows writing a test that compiles the same shader multiple times without having to duplicate the text of the shader.
 
 ### DUMP_RENDERBUFFER
 
@@ -209,7 +230,7 @@ DUMP_RENDERBUFFER RENDERBUFFER renderbuffer FILE file
 
 Dumps a renderbuffer to a file, in PNG format.
 
-- `renderbuffer` is the renderbuffer to be dumped, and must be the result of a `CREATE_RENDERBUFFER` command
+- `renderbuffer` is the renderbuffer to be dumped, and must be produced by `CREATE_RENDERBUFFER`
 - `file` is the file to which the PNG will be written
 
 ### RUN_COMPUTE
@@ -247,13 +268,14 @@ Runs a graphics workload.
 
 - `graphics_program` must be a *graphics* program produced by `CREATE_PROGRAM`.
 - The `VERTEX_DATA` parameter is a mapping with one entry for each vertex attribute associated with the vertex shader of `graphics_program`. If the vertex shader declares an `in` variable with `layout(location = i)` then `VERTEX_DATA` must provide an entry of the form `i -> ...`.  In this entry:
-  - `vertex_buffer_i` specifies a buffer from which vertex data for vertex attribute `i` will be taken. This must be the result of a `CREATE_BUFFER` command
+  - `vertex_buffer_i` specifies a buffer from which vertex data for vertex attribute `i` will be taken. This must be produced by `CREATE_BUFFER`. The elements of this buffer will be interpreted as 32-bit floating-point numbers - i.e. the `GL_FLOAT` type is used for vertex data.
   - `offset_i` is a non-negative integer specifying the byte offset into `vertex_buffer_i` at which vertex data begins
   - `stride_i` is a non-negative integer specifying the distance in bytes between successive pieces of vertex data in `vertex_buffer_i`
   - `dimension_i` is a positive integer specifying the dimensionality of vertices associated with vertex attribute `i`
-- `index_buffer` specifies a buffer of index data, which must be the result of a `CREATE_BUFFER` command. It will be interpreted as a buffer of unsigned 32-bit integers.
-
-TODO(afd) continue this. Specify that vertex data are 32-bit floating point values.
+- `index_buffer` specifies a buffer of index data, which must be produced by `CREATE_BUFFER`. It will be interpreted as a buffer of unsigned 32-bit integers - i.e. the `GL_UNSIGNED_INT` type is used for index data.
+- `count` is a non-negative integer specifying how many vertices should be processed. Thus `index_buffer` should contain at least this many unsigned integers, and for each unsigned integer `index` in `index_buffer` the vertex buffers associated with each vertex attribute should contain suitable data.
+- `topology` specifies the kind of primitive to be drawn using the vertex data. At present only `TRIANGLES` is supported. [More kinds of primitive should be supported](https://github.com/google/shadertrap/issues/25).
+- For every `out` variable in the fragment shader associated with `graphics_program` there should be a corresponding entry in the `FRAMEBUFFER_ATTACHMENTS` parameter. If the fragment shader has a declaration of the form `out layout(location = l)` then `FRAMEBUFFER_ATTACHMENTS` should have an entry `location_i -> attachment_i` such that `location_i` = `l`, and `attachment_i` is a renderbuffer produced by `CREATE_RENDERBUFFER` or a texture produced by `CREATE_EMPTY_TEXTURE_2D`. This supports off-screen rendering to both renderbuffers and textures. On-screen rendering is not supported.
 
 ### SET_SAMPLER_PARAMETER
 
@@ -261,7 +283,16 @@ TODO(afd) continue this. Specify that vertex data are 32-bit floating point valu
 SET_SAMPLER_PARAMETER SAMPLER sampler PARAMETER parameter VALUE value
 ```
 
-TODO(afd)
+Sets a parameter of a sampler.
+
+- `sampler` is the sampler for which the parameter should be set, and must be produced by `CREATE_SAMPLER`
+- `parameter` is the name of the parameter to be set, and must be one of:
+  - `TEXTURE_MAG_FILTER`
+  - `TEXTURE_MIN_FILTER`
+- `value` is the value to which the parameter should be set, and must be one of:
+  - `NEAREST`
+  - `NONE`
+- [Other parameters and values should be supported in future as needed](https://github.com/google/shadertrap/issues/26)
 
 ### SET_TEXTURE_PARAMETER
 
@@ -269,7 +300,9 @@ TODO(afd)
 SET_TEXTURE_PARAMETER TEXTURE texture PARAMETER parameter VALUE value
 ```
 
-TODO(afd)
+Sets a parameter of a sampler.
+
+See the description of `SET_SAMPLER_PARAMETER`; this command does the same thing except that the parameter is set for the texture identified by `texture`, which must be produced by `CREATE_EMPTY_TEXTURE_2D`.
 
 ### SET_UNIFORM
 
@@ -281,13 +314,22 @@ SET_UNIFORM PROGRAM program LOCATION location TYPE type VALUES value+
 
 Sets a uniform according to its location.
 
-- `program` is the program in which the uniform is to be set, and must be the result of a `CREATE_PROGRAM` command
+- `program` is the program in which the uniform is to be set, and must be produced by `CREATE_PROGRAM`
 
-- `location` is a non-negative integer corresponding to the location of the uniform to be set; if the uniform delcaration in the shader(s) associated with `program` features the layout qualifier `layout(location = l)` then `l` should be provided as the value of `location`
+- `location` is a non-negative integer corresponding to the location of the uniform to be set; if the uniform declaration in the shader(s) associated with `program` features the layout qualifier `layout(location = l)` then `l` should be provided as the value of `location`
 
 - `type` is the type of the uniform, and should match the type declaration for the uniform in the shader(s) of `program`. This can be `sampler2D`, any scalar, vector or matrix type, or an array of any of these types (e.g., `vec2[5]`).
 
-- `value+` should be a whitespace-separated sequence of values that collectively provide the uniform's value. TODO(afd) explain this.
+- `value+` should be a whitespace-separated sequence of values that collectively provide the uniform's value.
+  - If `type` is `sampler2D` then `value+` should be a single non-negative integer corresponding to the texture unit the sampler uniform should sample from
+  - If `type` is `float` then `value+` should be a single floating-point value
+  - If `type` is `vecn` then `value+` should be a sequence of `n` floating-point values, one per component of the vector
+  - If `type` is `matmxn` then `value+` should be a sequence of `m` x `n` floating-point values, one per element of the matrix, in column-major order
+  - If `type` is `int` then `value+` should be a single integer value
+  - If `type` is `ivecn` then `value+` should be a sequence of `n` integer values
+  - If `type` is `uint` then `value+` should be a single non-negative integer value
+  - If `type` is `uvecn` then `value+` should be a sequence of `n` non-negative integer values
+  - If `type` is `element_type[n]` then `value+` should be the concatenation of `n` sequences of values, where each sequence is suitable for an element of type `element_type`
 
 ```
 SET_UNIFORM PROGRAM program NAME name TYPE type VALUES value+
