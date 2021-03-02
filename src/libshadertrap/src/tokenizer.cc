@@ -257,6 +257,7 @@ const std::unordered_map<std::string, Token::Type>
         {"INDEX_DATA", Token::Type::kKeywordIndexData},
         {"INIT_TYPE", Token::Type::kKeywordInitType},
         {"INIT_VALUES", Token::Type::kKeywordInitValues},
+        {"KIND", Token::Type::kKeywordKind},
         {"LINEAR", Token::Type::kKeywordLinear},
         {"LOCATION", Token::Type::kKeywordLocation},
         {"NAME", Token::Type::kKeywordName},

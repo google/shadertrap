@@ -37,7 +37,7 @@ TEST(ParserTest, NoShaders) {
 }
 
 TEST(ParserTest, ShaderStartsOnSameLineAsDeclaration) {
-  std::string program = R"(DECLARE_SHADER s FRAGMENT version 320 es
+  std::string program = R"(DECLARE_SHADER s KIND FRAGMENT version 320 es
 void main() {
 }
 END
@@ -48,13 +48,13 @@ END
   ASSERT_FALSE(parser.Parse());
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 1:18: Shader text should begin on the line directly following "
+      "ERROR: 1:23: Shader text should begin on the line directly following "
       "the 'FRAGMENT' keyword",
       message_consumer.GetMessageString(0));
 }
 
 TEST(ParserTest, WarningIfVersionStringStartsOnSameLineAsDeclaration) {
-  std::string program = R"(DECLARE_SHADER s FRAGMENT        #version 320 es
+  std::string program = R"(DECLARE_SHADER s KIND FRAGMENT        #version 320 es
 void main() {
 }
 END
@@ -65,7 +65,7 @@ END
   ASSERT_TRUE(parser.Parse());
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "WARNING: 1:34: '#version ...' will be treated as a comment. If it is "
+      "WARNING: 1:39: '#version ...' will be treated as a comment. If it is "
       "supposed to be the first line of shader code, it should start on the "
       "following line",
       message_consumer.GetMessageString(0));
@@ -73,7 +73,7 @@ END
 
 TEST(ParserTest, SetUniformNameAndValue) {
   std::string program =
-      R"(DECLARE_SHADER shader COMPUTE
+      R"(DECLARE_SHADER shader KIND COMPUTE
 layout(location = 1) uniform float f;
 void main() {
   f;

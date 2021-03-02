@@ -17,7 +17,7 @@ CREATE_EMPTY_TEXTURE_2D my_tex WIDTH 256 HEIGHT 256
 SET_TEXTURE_PARAMETER TEXTURE my_tex PARAMETER TEXTURE_MAG_FILTER VALUE NEAREST
 SET_TEXTURE_PARAMETER TEXTURE my_tex PARAMETER TEXTURE_MIN_FILTER VALUE NEAREST
 
-DECLARE_SHADER texgen_frag FRAGMENT
+DECLARE_SHADER texgen_frag KIND FRAGMENT
 #version 320 es
 precision highp float;
 
@@ -32,7 +32,7 @@ void main()
 }
 END
 
-DECLARE_SHADER texgen_vert VERTEX
+DECLARE_SHADER texgen_vert KIND VERTEX
 #version 320 es
 layout(location = 0) in vec2 _GLF_vertexPosition;
 void main(void) {
@@ -40,7 +40,7 @@ void main(void) {
 }
 END
 
-DECLARE_SHADER cube_frag FRAGMENT
+DECLARE_SHADER cube_frag KIND FRAGMENT
 #version 320 es
 
 precision highp float;
@@ -56,7 +56,7 @@ void main() {
 }
 END
 
-DECLARE_SHADER cube_vert VERTEX
+DECLARE_SHADER cube_vert KIND VERTEX
 #version 320 es
 
 layout(location = 0) in vec3 a_position;
