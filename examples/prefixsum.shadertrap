@@ -1,0 +1,94 @@
+# Copyright 2021 The ShaderTrap Project Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# Work efficient inclusive prefix sum
+# The algorithm depends on two phases:
+#  - computing pair-wise values by increasing the second element index
+#       by the current power of two
+#  - adding missing values from the current thread to the second element
+#       by decreasing the second index by a power of two
+
+CREATE_BUFFER data_buffer SIZE_BYTES 64 INIT_VALUES int 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+CREATE_BUFFER expected SIZE_BYTES 64 INIT_VALUES int 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+
+BIND_SHADER_STORAGE_BUFFER BUFFER data_buffer BINDING 0
+
+DECLARE_SHADER shader KIND COMPUTE
+#version 320 es
+
+layout(local_size_x=8, local_size_y=1, local_size_z=1) in;
+
+layout(binding=0) buffer data_buffer{
+  int[16] data;
+};
+
+//Coherent memory for all threads
+shared int shared_memory[16];
+
+void main() {
+
+  //Shorthand for the id (between 0 and 7)
+  int id = int(gl_LocalInvocationID.x);
+
+  //The maximum number of steps for a thread in subsequent loops is the minimal power of two
+  //for which the result of the modulo is not 0 when indexes are between 1 and 8 
+  int max_step = findLSB(gl_LocalInvocationID.x + uint(1));
+
+  //Computes the number of bits necessary to represent the data
+  int n = data.length();
+  int log2_n = findMSB(n);
+
+  //Each thread copies the two values it is responsible for in the coherent memory
+  shared_memory[2 * id] = data[2 * id];
+  shared_memory[2 * id + 1] = data[2 * id + 1];
+
+  barrier();
+
+  //First step: adds a previous value to the second value on the thread
+  //The previous value index is offsetted by the power of two of the loop index (2**i)
+  for(int i = 0; i <= max_step; i++){
+    shared_memory[2 * id + 1] += shared_memory[2 * id +1 - (1<<i)];
+    barrier();
+  }
+
+  //Second step: adds the second value on the thread to another value
+  //The next value index is offsetted by the power of two of the loop index
+  //The steps are computed from the biggest offset to the smallest
+  //No work for the last thread
+  if(max_step == log2_n - 1){
+	max_step = -1;
+  }
+  //All the thread go through the max of the max_step iterations to ensure synchronization 
+  for(int i = log2_n - 2; i >= 0; i--){
+    if (i <= max_step){
+    	shared_memory[2 * id + 1 + (1<<i)] +=shared_memory[2 * id + 1];
+    }
+    barrier();
+  }
+
+  //Updates back the external  buffer
+  data[2 * id] = shared_memory[2 * id];
+  data[2 * id + 1] = shared_memory[2 * id + 1];
+}
+END
+
+COMPILE_SHADER shader_compiled SHADER shader
+CREATE_PROGRAM compute_prog SHADERS shader_compiled
+
+RUN_COMPUTE
+    PROGRAM compute_prog
+    NUM_GROUPS 1 1 1
+
+ASSERT_EQUAL BUFFERS expected data_buffer
