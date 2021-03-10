@@ -8,7 +8,12 @@ The current prototype is hard-coded to use OpenGL ES 3.2, but future versions ma
 
 Every ShaderTrap command starts with a name, in all-caps `SNAKE_CASE`. Examples are `CREATE_PROGRAM`, `SET_UNIFORM` and `CREATE_RENDERBUFFER`.
 
-Some commands produce a *result*, e.g. `CREATE_PROGRAM` yields a compiled shader, while `CREATE_RENDERBUFFER` yields a renderbuffer. A result identifier always directly follow the command name, and should use no-caps `snake_case`.
+Some commands produce a *result*, e.g. `COMPILE_SHADER` yields a compiled shader, while `CREATE_RENDERBUFFER` yields a renderbuffer. A result identifier always directly follows the command name, and should use no-caps `snake_case`. Here is an example of such a command:
+
+```
+# Compiles "shader" and returns the compiled shader in "result"
+COMPILE_SHADER result SHADER shader
+```
 
 There is a single global scope for result identifiers, and the same result identifier cannot be produced by more than one command - i.e. ShaderTrap uses static single assignment form.
 
@@ -50,7 +55,7 @@ ASSERT_PIXELS RENDERBUFFER renderbuffer RECTANGLE x y w h EXPECTED r g b a
 
 Checks whether every pixel in a particular rectangular region of a renderbuffer has a specific value.
 - `renderbuffer` must be a renderbuffer produced by `CREATE_RENDERBUFFER`
-- `x`, `y`, `w`, `h` defines a rectangle with top-left coordinate (`x`, `y`), width `w` and height `h` that is required to be within the bounds of `renderbuffer`
+- `x`, `y`, `w`, `h` are non-negative integers that define a rectangle with top-left coordinate (`x`, `y`), width `w` and height `h` that is required to be within the bounds of `renderbuffer`
 - `r`, `g`, `b` and `a` are integer values in the range [0, 255] that define the expected value for every pixel in the rectangular region
 
 ### ASSERT_SIMILAR_EMD_HISTOGRAM
@@ -62,7 +67,7 @@ ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS renderbuffer_1 renderbuffer_2 TOLERAN
 Checks whether two renderbuffers are similar according to the [Earth Mover's Distance](https://en.wikipedia.org/wiki/Earth_mover%27s_distance) metric.
 
 - `renderbuffer_1` and `renderbuffer_2` must be renderbuffers produced by `CREATE_RENDERBUFFER`
-- `value` must be a floating-point value specifying the tolerance to be used for the comparison. It is a unit-less number.
+- `value` must be a floating-point number in the range [0, 1] specifying the tolerance to be used for the comparison. It is a unit-less number.
 
 The following description of Earth Mover's Distance is taken from the [Amber source code](https://github.com/google/amber/blob/dabae26164714abf951c6815a2b4513260f7c6a4/src/buffer.cc#L230):
 
@@ -84,7 +89,7 @@ BIND_SAMPLER SAMPLER sampler TEXTURE_UNIT unit
 
 Binds a sampler to a texture unit.
 - `sampler` is a sampler produced by `CREATE_SAMPLER`
-`unit` is a non-negative integer specifying which texture unit `sampler` should be bound to
+- `unit` is a non-negative integer specifying which texture unit `sampler` should be bound to
 
 To make a sampler uniform in a shader use the texture unit `unit` to which this sampler has been bound, use `SET_UNIFORM` (supplying the value of `unit` as the value of the uniform).
 
@@ -126,7 +131,10 @@ Binds a buffer to a uniform buffer binding point.
 COMPILE_SHADER result SHADER shader
 ```
 
-Compiles the shader associated with `shader`, which must be produced by `DECLARE_SHADER`. The compiled shader is identified by `result`.
+Compiles a shader.
+
+- The compiled shader is identified by `result`
+- `shader` is the shader to be compiled, and must be produced by `DECLARE_SHADER`
 
 ### CREATE_BUFFER
 
@@ -142,14 +150,16 @@ Creates a buffer of bytes that can be subsequently accessed by the GPU for vario
 
 - The created buffer is identified by `result`
 - `size` is the size of the buffer in bytes
-- The `INIT_VALUES` parameter specifies the initial contents of the buffer as follows:
+- `INIT_VALUES` specifies the initial contents of the buffer as follows:
   - Each of `type_1`, ..., `type_n` is one of `float`, `int`, `uint` or `byte`
   - If `type_i` is `float` then `value_sequence_i` must be a sequence of floating-point literals.
   - If `type_i` is `int` then `value_sequence_i` must be a sequence of 32-bit signed integer literals.
   - If `type_i` is `uint` then `value_sequence_i` must be a sequence of 32-bit unsigned integer literals.
   - If `type_i` is `byte` then `value_sequence_i` must be a sequence of byte literals (values in the range [0, 255]), and the length of `value_sequence_i` must be a multiple of 4
-  - The buffer is populated with the values provided by the value sequence in order. Each `float`, `int` and `uint` value occupies 4 bytes. Each `byte` value occupies 1 byte. There is no padding between elements.
-  - The total number of bytes occupied by the value sequences combined must match `size`. While this makes the `size` parameter technically redundant, requiring the expected size to be specified allows it to be cross-checked against the combined size of the provided values.
+
+The buffer is populated with the values provided by the value sequence in order. Each `float`, `int` and `uint` value occupies 4 bytes. Each `byte` value occupies 1 byte. There is no padding between elements.
+
+The total number of bytes occupied by the value sequences combined must match `size`. While this makes the `size` parameter technically redundant, requiring the expected size to be specified allows it to be cross-checked against the combined size of the provided values.
 
 ### CREATE_EMPTY_TEXTURE_2D
 
@@ -267,7 +277,7 @@ RUN_GRAPHICS
 Runs a graphics workload.
 
 - `graphics_program` must be a *graphics* program produced by `CREATE_PROGRAM`.
-- The `VERTEX_DATA` parameter is a mapping with one entry for each vertex attribute associated with the vertex shader of `graphics_program`. If the vertex shader declares an `in` variable with `layout(location = i)` then `VERTEX_DATA` must provide an entry of the form `i -> ...`.  In this entry:
+- `VERTEX_DATA` is a mapping with one entry for each vertex attribute associated with the vertex shader of `graphics_program`. If the vertex shader declares an `in` variable with `layout(location = i)` then `VERTEX_DATA` must provide an entry of the form `i -> ...`.  In this entry:
   - `vertex_buffer_i` specifies a buffer from which vertex data for vertex attribute `i` will be taken. This must be produced by `CREATE_BUFFER`. The elements of this buffer will be interpreted as 32-bit floating-point numbers - i.e. the `GL_FLOAT` type is used for vertex data.
   - `offset_i` is a non-negative integer specifying the byte offset into `vertex_buffer_i` at which vertex data begins
   - `stride_i` is a non-negative integer specifying the distance in bytes between successive pieces of vertex data in `vertex_buffer_i`
@@ -276,6 +286,8 @@ Runs a graphics workload.
 - `count` is a non-negative integer specifying how many vertices should be processed. Thus `index_buffer` should contain at least this many unsigned integers, and for each unsigned integer `index` in `index_buffer` the vertex buffers associated with each vertex attribute should contain suitable data.
 - `topology` specifies the kind of primitive to be drawn using the vertex data. At present only `TRIANGLES` is supported. [More kinds of primitive should be supported](https://github.com/google/shadertrap/issues/25).
 - For every `out` variable in the fragment shader associated with `graphics_program` there should be a corresponding entry in the `FRAMEBUFFER_ATTACHMENTS` parameter. If the fragment shader has a declaration of the form `out layout(location = l)` then `FRAMEBUFFER_ATTACHMENTS` should have an entry `location_i -> attachment_i` such that `location_i` = `l`, and `attachment_i` is a renderbuffer produced by `CREATE_RENDERBUFFER` or a texture produced by `CREATE_EMPTY_TEXTURE_2D`. This supports off-screen rendering to both renderbuffers and textures. On-screen rendering is not supported.
+
+TODO(afd): The `RUN_GRAPHICS` command is complex, so it would be useful to have an illustrative example to accompany the description.
 
 ### SET_SAMPLER_PARAMETER
 
