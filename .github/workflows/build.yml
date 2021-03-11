@@ -85,7 +85,7 @@ jobs:
       LINUX_CXX: ${{ matrix.linux_cxx }}
     steps:
 
-      - name: Cancel previous
+      - name: cancel_previous
         uses: styfle/cancel-workflow-action@0.8.0
         with:
           access_token: ${{ github.token }}
