@@ -1,4 +1,4 @@
-# Copyright 2020 The ShaderTrap Project Authors
+# Copyright 2021 The ShaderTrap Project Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-project(egl_headers C)
+project(gl_headers C)
 
-if(NOT IS_DIRECTORY ${SHADERTRAP_EGL_REGISTRY_REPO_DIR})
+if(NOT IS_DIRECTORY ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR})
     message(
             FATAL_ERROR
-            "Could not find EGL registry at ${SHADERTRAP_EGL_REGISTRY_REPO_DIR}. "
-            "Try fetching submodules or set SHADERTRAP_EGL_REGISTRY_REPO_DIR.")
+            "Could not find OpenGL registry at ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR}. "
+            "Try fetching submodules or set SHADERTRAP_OPENGL_REGISTRY_REPO_DIR.")
 
-    add_library(egl_headers INTERFACE)
+    add_library(gl_headers INTERFACE)
 
-    target_include_directories(egl_headers SYSTEM INTERFACE ${SHADERTRAP_EGL_REGISTRY_REPO_DIR}/api)
+    target_include_directories(gl_headers SYSTEM INTERFACE ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR}/api)
 
 endif()

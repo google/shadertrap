@@ -167,7 +167,7 @@ int main(int argc, const char** argv) {
   temp.push_back(
       shadertrap::MakeUnique<shadertrap::Checker>(&message_consumer));
   temp.push_back(
-      shadertrap::MakeUnique<shadertrap::Executor>(&message_consumer));
+      shadertrap::MakeUnique<shadertrap::Executor>(nullptr, &message_consumer));
   shadertrap::CompoundVisitor checker_and_executor(std::move(temp));
   ShInitialize();
   bool success = checker_and_executor.VisitCommands(shadertrap_program.get());

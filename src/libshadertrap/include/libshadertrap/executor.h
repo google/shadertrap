@@ -15,8 +15,6 @@
 #ifndef LIBSHADERTRAP_EXECUTOR_H
 #define LIBSHADERTRAP_EXECUTOR_H
 
-#include <glad/glad.h>
-
 #include <map>
 #include <string>
 
@@ -41,13 +39,14 @@
 #include "libshadertrap/command_set_texture_parameter.h"
 #include "libshadertrap/command_set_uniform.h"
 #include "libshadertrap/command_visitor.h"
+#include "libshadertrap/gl_functions.h"
 #include "libshadertrap/message_consumer.h"
 
 namespace shadertrap {
 
 class Executor : public CommandVisitor {
  public:
-  explicit Executor(MessageConsumer* message_consumer);
+  explicit Executor(GlFunctions* gl_functions, MessageConsumer* message_consumer);
 
   bool VisitAssertEqual(CommandAssertEqual* assert_equal) override;
 
@@ -102,6 +101,7 @@ class Executor : public CommandVisitor {
 
   bool CheckEqualRenderbuffers(CommandAssertEqual* assert_equal);
 
+  GlFunctions* gl_functions_;
   MessageConsumer* message_consumer_;
   std::map<std::string, CommandDeclareShader*> declared_shaders_;
   std::map<std::string, GLuint> created_buffers_;
