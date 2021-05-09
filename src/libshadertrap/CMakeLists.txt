@@ -14,6 +14,17 @@
 
 cmake_minimum_required(VERSION 3.13)
 
+set(STRUCT_GENERATOR_SOURCE ${CMAKE_SOURCE_DIR}/src/generators/generate_gl_struct.py)
+set(OPENGL_XML ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR}/xml/gl.xml)
+
+add_custom_command(
+        OUTPUT include/libshadertrap/gl_functions.h
+        COMMAND ${CMAKE_COMMAND} -E make_directory include/libshadertrap
+        COMMAND python ${STRUCT_GENERATOR_SOURCE} ${OPENGL_XML} ${CMAKE_CURRENT_BINARY_DIR}/include/libshadertrap
+        #DEPENDS ${STRUCT_GENERATOR_SOURCE} ${OPENGL_XML}
+        COMMENT "Generate struct of functions from the OpenGL spec."
+)
+
 add_library(libshadertrap STATIC
         include/libshadertrap/checker.h
         include/libshadertrap/command.h
@@ -51,6 +62,7 @@ add_library(libshadertrap STATIC
         include/libshadertrap/values_segment.h
         include/libshadertrap/vertex_attribute_info.h
         include_private/include/libshadertrap/tokenizer.h
+        ${CMAKE_CURRENT_BINARY_DIR}/include/libshadertrap/gl_functions.h
 
         src/checker.cc
         src/command.cc
@@ -87,7 +99,7 @@ add_library(libshadertrap STATIC
         src/vertex_attribute_info.cc
         )
 
-target_include_directories(libshadertrap PUBLIC include PRIVATE include_private/include)
+target_include_directories(libshadertrap PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include PRIVATE include_private/include)
 target_link_libraries(libshadertrap PRIVATE gl_headers glslang lodepng)
 target_compile_features(libshadertrap PUBLIC cxx_std_11)
 target_compile_definitions(libshadertrap PRIVATE GL_GLES_PROTOTYPES=0)

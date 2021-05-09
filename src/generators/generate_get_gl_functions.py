@@ -16,22 +16,15 @@
 
 
 import argparse
-import os
-import re
 import sys
 
 import xml.etree.ElementTree as ET
 
 from pathlib import Path
-from typing import List, Any, Optional
 
 doc = """
-Generates a struct of std::functions for all OpenGL ES functions
+Generates a function that produces a populated struct of functions from the gles2 API
 """
-
-
-def tidy_type(type_text: str) -> str:
-    return re.sub(' \*', '*', type_text).strip()
 
 
 def main(args) -> None:
@@ -44,21 +37,20 @@ def main(args) -> None:
     )
 
     parser.add_argument(
-        "--check_only",
-        help="Don't change any files; just check that they would not change. If the files would have changed then "
-             "exits with error status 2.",
-        action="store_true",
+        "xml",
+        help="Path to gl.xml",
+        type=Path,
     )
 
+    parser.add_argument(
+        "output_dir",
+        help="Directory in which files should be generated",
+        type=Path,
+    )
+    
     parsed_args = parser.parse_args(args[1:])
 
-    check_only: bool = parsed_args.check_only
-
-    os.chdir(os.environ["SHADERTRAP_REPO_ROOT"])
-
-    xml_path = Path() / "third_party" / "OpenGL-Registry" / "OpenGL-Registry" / "xml" / "gl.xml"
-
-    tree = ET.parse(xml_path)
+    tree = ET.parse(parsed_args.xml)
     registry = tree.getroot()
     required_command_names = set()
     commands = None
@@ -73,9 +65,8 @@ def main(args) -> None:
                         if requirement.tag == 'command':
                             required_command_names.add(requirement.attrib['name'])
 
-    structure = 'struct GlFunctions {\n'
-    initialization = 'shadertrap::GlFunctions functions{};\n'
-                            
+    get_gl_functions = 'shadertrap::GlFunctions GetGlFunctions() {\n'
+    get_gl_functions += '  shadertrap::GlFunctions result{};\n'
     for command in commands:
         assert command.tag == 'command'
         proto = command[0]
@@ -87,33 +78,44 @@ def main(args) -> None:
                 break
         assert name != None
         if name.text in required_command_names:
-            return_type = ''
-            if proto.text is not None:
-               return_type = proto.text
-            return_ptype = proto.find('ptype') 
-            if return_ptype is not None:
-                return_type += return_ptype.text
-                if return_ptype.tail is not None:
-                    return_type += return_ptype.tail
-            param_types = []
-            for param in command.findall('param'):
-                param_type = ''
-                if param.text is not None:
-                    param_type += param.text
-                param_ptype = param.find('ptype')
-                if param_ptype is not None:
-                    param_type += param_ptype.text
-                    if param_ptype.tail is not None:
-                        param_type += param_ptype.tail
-                param_types.append(tidy_type(param_type))
-                
-            structure += '  std::function<' + tidy_type(return_type) + '(' + ', '.join(param_types) + ')> ' + name.text + '_;\n'
-            initialization += '  functions.' + name.text + '_ = ' + name.text + ';\n'
+            get_gl_functions += '  result.' + name.text + '_ = ' + name.text + ';\n'
 
-    structure += '};\n'
-    print(structure)
-    print()
-    print(initialization)
+    get_gl_functions += '  return result;\n'
+    get_gl_functions += '}\n'
+
+    PROLOGUE = """// Copyright 2021 The ShaderTrap Project Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Automatically-generated file - DO NOT EDIT
+
+#include <glad/glad.h>
+
+#include "libshadertrap/gl_functions.h"
+
+namespace shadertrap {
+
+"""
+
+    EPILOGUE = """
+
+}  // namespace shadertrap
+"""
+    
+    with open(parsed_args.output_dir / 'get_gl_functions.cc', 'w') as outfile:
+        outfile.write(PROLOGUE)
+        outfile.write(get_gl_functions)
+        outfile.write(EPILOGUE)
 
 if __name__ == "__main__":
     main(sys.argv)
