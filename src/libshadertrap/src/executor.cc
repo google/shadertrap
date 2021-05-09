@@ -60,7 +60,7 @@ const size_t kNumRgbaChannels = 4;
 
 #define GL_CHECKERR(token, function_name)                 \
   do {                                                    \
-    GLenum __err = gl_functions_->glGetError();           \
+    GLenum __err = gl_functions_->glGetError_();          \
     if (__err != GL_NO_ERROR) {                           \
       message_consumer_->Message(                         \
           MessageConsumer::Severity::kError, token,       \
@@ -70,15 +70,15 @@ const size_t kNumRgbaChannels = 4;
     }                                                     \
   } while (0)
 
-#define GL_SAFECALL(token, function, ...) \
-  do {                                    \
-    gl_functions_->function(__VA_ARGS__);                \
-    GL_CHECKERR(token, #function);        \
+#define GL_SAFECALL(token, function, ...)     \
+  do {                                        \
+    gl_functions_->function##_(__VA_ARGS__);  \
+    GL_CHECKERR(token, #function);            \
   } while (0)
 
 #define GL_SAFECALL_NO_ARGS(token, function) \
   do {                                       \
-    gl_functions_->function();                              \
+    gl_functions_->function##_();            \
     GL_CHECKERR(token, #function);           \
   } while (0)
 
@@ -115,7 +115,7 @@ bool Executor::VisitAssertPixels(CommandAssertPixels* assert_pixels) {
     height = static_cast<size_t>(temp_height);
   }
 
-  GLenum status = gl_functions_->glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  GLenum status = gl_functions_->glCheckFramebufferStatus_(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError, &assert_pixels->GetStartToken(),
@@ -238,7 +238,7 @@ bool Executor::VisitAssertSimilarEmdHistogram(
                 GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index),
                 GL_RENDERBUFFER, renderbuffers[index]);
   }
-  GLenum status = gl_functions_->glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  GLenum status = gl_functions_->glCheckFramebufferStatus_(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError,
@@ -371,7 +371,7 @@ bool Executor::VisitCompileShader(CommandCompileShader* compile_shader) {
       shader_kind = GL_COMPUTE_SHADER;
       break;
   }
-  GLuint shader = gl_functions_->glCreateShader(shader_kind);
+  GLuint shader = gl_functions_->glCreateShader_(shader_kind);
   GL_CHECKERR(&compile_shader->GetStartToken(), "glCreateShader");
   const char* temp = shader_declaration->GetShaderText().c_str();
   GL_SAFECALL(&compile_shader->GetStartToken(), glShaderSource, shader, 1,
@@ -442,7 +442,7 @@ bool Executor::VisitCreateEmptyTexture2D(
 bool Executor::VisitCreateProgram(CommandCreateProgram* create_program) {
   assert(created_programs_.count(create_program->GetResultIdentifier()) == 0 &&
          "Identifier already in use for created program.");
-  GLuint program = gl_functions_->glCreateProgram();
+  GLuint program = gl_functions_->glCreateProgram_();
   GL_CHECKERR(&create_program->GetStartToken(), "glCreateProgram");
   if (program == 0) {
     message_consumer_->Message(MessageConsumer::Severity::kError,
@@ -536,7 +536,7 @@ bool Executor::VisitDumpRenderbuffer(
     height = static_cast<size_t>(temp_height);
   }
 
-  GLenum status = gl_functions_->glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  GLenum status = gl_functions_->glCheckFramebufferStatus_(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError, &dump_renderbuffer->GetStartToken(),
@@ -647,7 +647,7 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
     }
   }
 
-  GLenum status = gl_functions_->glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  GLenum status = gl_functions_->glCheckFramebufferStatus_(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError, &run_graphics->GetStartToken(),
@@ -760,7 +760,7 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
     uniform_location = static_cast<GLint>(set_uniform->GetLocation());
   } else {
     uniform_location =
-        gl_functions_->glGetUniformLocation(program, set_uniform->GetName().c_str());
+        gl_functions_->glGetUniformLocation_(program, set_uniform->GetName().c_str());
     GL_CHECKERR(&set_uniform->GetStartToken(), "glGetUniformLocation");
     if (uniform_location == -1) {
       message_consumer_->Message(
@@ -1000,7 +1000,7 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
                 GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index),
                 GL_RENDERBUFFER, renderbuffers[index]);
   }
-  GLenum status = gl_functions_->glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  GLenum status = gl_functions_->glCheckFramebufferStatus_(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
     message_consumer_->Message(
         MessageConsumer::Severity::kError, &assert_equal->GetStartToken(),
@@ -1095,12 +1095,12 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
   for (auto index : {0, 1}) {
     GL_SAFECALL(&assert_equal->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
                 buffers[index]);
-    mapped_buffer[index] = static_cast<uint8_t*>(gl_functions_->glMapBufferRange(
+    mapped_buffer[index] = static_cast<uint8_t*>(gl_functions_->glMapBufferRange_(
         GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size[index]),
         GL_MAP_READ_BIT));
     if (mapped_buffer[index] == nullptr) {
-      // assert_equal(afd): If index == 1 should we unmap buffers[0] before
-      // returning? Or are we OK so long as we eventually destroy that buffer?
+      // TODO(afd): If index == 1 should we unmap buffers[0] before
+      //  returning? Or are we OK so long as we eventually destroy that buffer?
       GL_CHECKERR(&assert_equal->GetStartToken(), "glMapBufferRange");
       return false;
     }

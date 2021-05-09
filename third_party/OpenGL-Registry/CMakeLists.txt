@@ -21,9 +21,8 @@ if(NOT IS_DIRECTORY ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR})
             FATAL_ERROR
             "Could not find OpenGL registry at ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR}. "
             "Try fetching submodules or set SHADERTRAP_OPENGL_REGISTRY_REPO_DIR.")
-
-    add_library(gl_headers INTERFACE)
-
-    target_include_directories(gl_headers SYSTEM INTERFACE ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR}/api)
-
 endif()
+
+add_library(gl_headers INTERFACE)
+
+target_include_directories(gl_headers SYSTEM INTERFACE ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR}/api)

@@ -66,7 +66,7 @@ def main(args) -> None:
         if child.tag == 'commands':
             assert not commands
             commands = child
-        if child.tag == 'feature' and child.attrib['api'].startswith('gles'):
+        if child.tag == 'feature' and child.attrib['api'] == 'gles2':
             for api_child in child:
                 if api_child.tag == 'require':
                     for requirement in api_child:
@@ -74,6 +74,7 @@ def main(args) -> None:
                             required_command_names.add(requirement.attrib['name'])
 
     structure = 'struct GlFunctions {\n'
+    initialization = 'shadertrap::GlFunctions functions{};\n'
                             
     for command in commands:
         assert command.tag == 'command'
@@ -106,10 +107,13 @@ def main(args) -> None:
                         param_type += param_ptype.tail
                 param_types.append(tidy_type(param_type))
                 
-            structure += '  std::function<' + tidy_type(return_type) + '(' + ', '.join(param_types) + ')> ' + name.text + ';\n'
+            structure += '  std::function<' + tidy_type(return_type) + '(' + ', '.join(param_types) + ')> ' + name.text + '_;\n'
+            initialization += '  functions.' + name.text + '_ = ' + name.text + ';\n'
 
     structure += '};\n'
     print(structure)
+    print()
+    print(initialization)
 
 if __name__ == "__main__":
     main(sys.argv)

@@ -21,9 +21,8 @@ if(NOT IS_DIRECTORY ${SHADERTRAP_EGL_REGISTRY_REPO_DIR})
             FATAL_ERROR
             "Could not find EGL registry at ${SHADERTRAP_EGL_REGISTRY_REPO_DIR}. "
             "Try fetching submodules or set SHADERTRAP_EGL_REGISTRY_REPO_DIR.")
-
-    add_library(egl_headers INTERFACE)
-
-    target_include_directories(egl_headers SYSTEM INTERFACE ${SHADERTRAP_EGL_REGISTRY_REPO_DIR}/api)
-
 endif()
+
+add_library(egl_headers INTERFACE)
+
+target_include_directories(egl_headers SYSTEM INTERFACE ${SHADERTRAP_EGL_REGISTRY_REPO_DIR}/api)
