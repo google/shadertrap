@@ -574,9 +574,6 @@ bool Executor::VisitDumpRenderbuffer(
 }
 
 bool Executor::VisitRunCompute(CommandRunCompute* run_compute) {
-  GL_SAFECALL(&run_compute->GetStartToken(), glMemoryBarrier,
-              GL_ALL_BARRIER_BITS);
-
   GL_SAFECALL(&run_compute->GetStartToken(), glUseProgram,
               created_programs_.at(run_compute->GetProgramIdentifier()));
 
@@ -587,13 +584,15 @@ bool Executor::VisitRunCompute(CommandRunCompute* run_compute) {
 
   GL_SAFECALL_NO_ARGS(&run_compute->GetStartToken(), glFlush);
 
+  // Issue a memory barrier to ensure that future commands will see the effects
+  // of this compute operation.
+  GL_SAFECALL(&run_compute->GetStartToken(), glMemoryBarrier,
+              GL_ALL_BARRIER_BITS);
+
   return true;
 }
 
 bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
-  GL_SAFECALL(&run_graphics->GetStartToken(), glMemoryBarrier,
-              GL_ALL_BARRIER_BITS);
-
   GLuint vao;
   GL_SAFECALL(&run_graphics->GetStartToken(), glGenVertexArrays, 1, &vao);
   GL_SAFECALL(&run_graphics->GetStartToken(), glBindVertexArray, vao);
