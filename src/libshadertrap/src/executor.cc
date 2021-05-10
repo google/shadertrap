@@ -409,7 +409,7 @@ bool Executor::VisitCreateBuffer(CommandCreateBuffer* create_buffer) {
   GL_SAFECALL(&create_buffer->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
               buffer);
   GL_SAFECALL(&create_buffer->GetStartToken(), glBufferData, GL_ARRAY_BUFFER,
-              static_cast<GLuint>(create_buffer->GetSizeBytes()),
+              static_cast<GLsizeiptr>(create_buffer->GetSizeBytes()),
               create_buffer->GetData().data(), GL_STREAM_DRAW);
   created_buffers_.insert({create_buffer->GetResultIdentifier(), buffer});
   return true;
@@ -594,6 +594,10 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
   GL_SAFECALL(&run_graphics->GetStartToken(), glMemoryBarrier,
               GL_ALL_BARRIER_BITS);
 
+  GLuint vao;
+  GL_SAFECALL(&run_graphics->GetStartToken(), glGenVertexArrays, 1, &vao);
+  GL_SAFECALL(&run_graphics->GetStartToken(), glBindVertexArray, vao);
+
   const auto& vertex_data = run_graphics->GetVertexData();
   for (const auto& entry : vertex_data) {
     GL_SAFECALL(&run_graphics->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
@@ -679,6 +683,9 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
     GL_SAFECALL(&run_graphics->GetStartToken(), glDisableVertexAttribArray,
                 static_cast<GLuint>(entry.first));
   }
+
+  GL_SAFECALL(&run_graphics->GetStartToken(), glBindVertexArray, 0);
+  GL_SAFECALL(&run_graphics->GetStartToken(), glDeleteVertexArrays, 1, &vao);
 
   GL_SAFECALL(&run_graphics->GetStartToken(), glDeleteFramebuffers, 1,
               &framebuffer_object_id);
