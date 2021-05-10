@@ -18,43 +18,22 @@
 import argparse
 import sys
 
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ElT
 
 from pathlib import Path
+from typing import Any
 
 doc = """
 Generates a function that produces a populated struct of functions from the gles2 API
 """
 
 
-def main(args) -> None:
-
-    raw_help_formatter: Any = argparse.RawDescriptionHelpFormatter
-
-    parser = argparse.ArgumentParser(
-        description=doc,
-        formatter_class=raw_help_formatter,
-    )
-
-    parser.add_argument(
-        "xml",
-        help="Path to gl.xml",
-        type=Path,
-    )
-
-    parser.add_argument(
-        "output_file",
-        help="Path to the source file that should be generated",
-        type=Path,
-    )
-    
-    parsed_args = parser.parse_args(args[1:])
-
-    tree = ET.parse(parsed_args.xml)
+def gen_functions(xml_file: Path) -> str:
+    tree = ElT.parse(xml_file)
     registry = tree.getroot()
     required_command_names = set()
     commands = None
-    for child in registry:  # type: ET.Element
+    for child in registry:  # type: ElT.Element
         if child.tag == 'commands':
             assert not commands
             commands = child
@@ -77,7 +56,7 @@ def main(args) -> None:
             if child.tag == 'name':
                 name = child
                 break
-        assert name != None
+        assert name is not None
         if name.text in required_command_names:
             get_gl_functions += '  result.' + name.text + '_ = ' + name.text + ';\n'
 
@@ -85,7 +64,7 @@ def main(args) -> None:
     get_gl_functions += '  return result;\n'
     get_gl_functions += '}\n'
 
-    PROLOGUE = """// Copyright 2021 The ShaderTrap Project Authors
+    prologue = """// Copyright 2021 The ShaderTrap Project Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -101,23 +80,35 @@ def main(args) -> None:
 
 // Automatically-generated file - DO NOT EDIT
 
-#include <glad/glad.h>
-
 #include "shadertrap/get_gl_functions.h"
+
+#include <glad/glad.h>
 
 namespace shadertrap {
 
 """
 
-    EPILOGUE = """
-
+    epilogue = """
 }  // namespace shadertrap
 """
-    
-    with open(parsed_args.output_file, 'w') as outfile:
-        outfile.write(PROLOGUE)
-        outfile.write(get_gl_functions)
-        outfile.write(EPILOGUE)
+
+    return prologue + get_gl_functions + epilogue
+
+
+def main(args) -> None:
+    raw_help_formatter: Any = argparse.RawDescriptionHelpFormatter
+    parser = argparse.ArgumentParser(
+        description=doc,
+        formatter_class=raw_help_formatter,
+    )
+    parser.add_argument(
+        "xml",
+        help="Path to gl.xml",
+        type=Path,
+    )
+    parsed_args = parser.parse_args(args[1:])
+    print(gen_functions(parsed_args.xml), end='')
+
 
 if __name__ == "__main__":
     main(sys.argv)

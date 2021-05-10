@@ -19,9 +19,10 @@ import argparse
 import re
 import sys
 
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ElT
 
 from pathlib import Path
+from typing import Any
 
 doc = """
 Generates a struct of std::functions for all functions in the gles2 API
@@ -29,37 +30,15 @@ Generates a struct of std::functions for all functions in the gles2 API
 
 
 def tidy_type(type_text: str) -> str:
-    return re.sub(' \*', '*', type_text).strip()
+    return re.sub(r' \*', '*', type_text).strip()
 
 
-def main(args) -> None:
-
-    raw_help_formatter: Any = argparse.RawDescriptionHelpFormatter
-
-    parser = argparse.ArgumentParser(
-        description=doc,
-        formatter_class=raw_help_formatter,
-    )
-
-    parser.add_argument(
-        "xml",
-        help="Path to gl.xml",
-        type=Path,
-    )
-
-    parser.add_argument(
-        "output_file",
-        help="Path to the header file that should be generated",
-        type=Path,
-    )
-    
-    parsed_args = parser.parse_args(args[1:])
-
-    tree = ET.parse(parsed_args.xml)
+def gen_struct(xml_file: Path) -> str:
+    tree = ElT.parse(xml_file)
     registry = tree.getroot()
     required_command_names = set()
     commands = None
-    for child in registry:  # type: ET.Element
+    for child in registry:  # type: ElT.Element
         if child.tag == 'commands':
             assert not commands
             commands = child
@@ -72,7 +51,7 @@ def main(args) -> None:
 
     structure = 'struct GlFunctions {\n'
     structure += '  // clang-format off\n'
-                            
+
     for command in commands:
         assert command.tag == 'command'
         proto = command[0]
@@ -82,12 +61,12 @@ def main(args) -> None:
             if child.tag == 'name':
                 name = child
                 break
-        assert name != None
+        assert name is not None
         if name.text in required_command_names:
             return_type = ''
             if proto.text is not None:
-               return_type = proto.text
-            return_ptype = proto.find('ptype') 
+                return_type = proto.text
+            return_ptype = proto.find('ptype')
             if return_ptype is not None:
                 return_type += return_ptype.text
                 if return_ptype.tail is not None:
@@ -103,13 +82,14 @@ def main(args) -> None:
                     if param_ptype.tail is not None:
                         param_type += param_ptype.tail
                 param_types.append(tidy_type(param_type))
-                
-            structure += '  std::function<' + tidy_type(return_type) + '(' + ', '.join(param_types) + ')> ' + name.text + '_;\n'
+
+            structure += '  std::function<' + tidy_type(return_type) + '(' + ', '.join(
+                param_types) + ')> ' + name.text + '_;\n'
 
     structure += '  // clang-format on\n'
     structure += '};'
 
-    PROLOGUE = """// Copyright 2021 The ShaderTrap Project Authors
+    prologue = """// Copyright 2021 The ShaderTrap Project Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -136,17 +116,30 @@ namespace shadertrap {
 
 """
 
-    EPILOGUE = """
+    epilogue = """
 
 }  // namespace shadertrap
 
 #endif  // LIBSHADERTRAP_GL_FUNCTIONS_H
 """
-    
-    with open(parsed_args.output_file, 'w') as outfile:
-        outfile.write(PROLOGUE)
-        outfile.write(structure)
-        outfile.write(EPILOGUE)
+
+    return prologue + structure + epilogue
+
+
+def main(args) -> None:
+    raw_help_formatter: Any = argparse.RawDescriptionHelpFormatter
+    parser = argparse.ArgumentParser(
+        description=doc,
+        formatter_class=raw_help_formatter,
+    )
+    parser.add_argument(
+        "xml",
+        help="Path to gl.xml",
+        type=Path,
+    )
+    parsed_args = parser.parse_args(args[1:])
+    print(gen_struct(parsed_args.xml), end='')
+
 
 if __name__ == "__main__":
     main(sys.argv)

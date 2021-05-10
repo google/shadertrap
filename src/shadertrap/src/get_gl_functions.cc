@@ -14,9 +14,9 @@
 
 // Automatically-generated file - DO NOT EDIT
 
-#include <glad/glad.h>
-
 #include "shadertrap/get_gl_functions.h"
+
+#include <glad/glad.h>
 
 namespace shadertrap {
 
@@ -384,6 +384,5 @@ shadertrap::GlFunctions GetGlFunctions() {
   // clang-format on
   return result;
 }
-
 
 }  // namespace shadertrap
