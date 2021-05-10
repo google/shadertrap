@@ -33,10 +33,10 @@ add_custom_command(
 )
 
 add_executable(shadertrap
-        include_private/shadertrap/get_gl_functions.h
+        include_private/include/shadertrap/get_gl_functions.h
 
         src/main.cc
         ${CMAKE_CURRENT_BINARY_DIR}/src/get_gl_functions.cc
 )
-target_include_directories(shadertrap PRIVATE include_private)
+target_include_directories(shadertrap PRIVATE include_private/include)
 target_link_libraries(shadertrap PRIVATE egl_headers glad glslang libshadertrap ${SHADERTRAP_EGL_LIB_PATH})

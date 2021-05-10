@@ -19,6 +19,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <initializer_list>
 #include <sstream>
 #include <unordered_map>
@@ -70,10 +71,10 @@ const size_t kNumRgbaChannels = 4;
     }                                                     \
   } while (0)
 
-#define GL_SAFECALL(token, function, ...)     \
-  do {                                        \
-    gl_functions_->function##_(__VA_ARGS__);  \
-    GL_CHECKERR(token, #function);            \
+#define GL_SAFECALL(token, function, ...)    \
+  do {                                       \
+    gl_functions_->function##_(__VA_ARGS__); \
+    GL_CHECKERR(token, #function);           \
   } while (0)
 
 #define GL_SAFECALL_NO_ARGS(token, function) \
@@ -759,8 +760,8 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
   if (set_uniform->HasLocation()) {
     uniform_location = static_cast<GLint>(set_uniform->GetLocation());
   } else {
-    uniform_location =
-        gl_functions_->glGetUniformLocation_(program, set_uniform->GetName().c_str());
+    uniform_location = gl_functions_->glGetUniformLocation_(
+        program, set_uniform->GetName().c_str());
     GL_CHECKERR(&set_uniform->GetStartToken(), "glGetUniformLocation");
     if (uniform_location == -1) {
       message_consumer_->Message(
@@ -1095,9 +1096,10 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
   for (auto index : {0, 1}) {
     GL_SAFECALL(&assert_equal->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
                 buffers[index]);
-    mapped_buffer[index] = static_cast<uint8_t*>(gl_functions_->glMapBufferRange_(
-        GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size[index]),
-        GL_MAP_READ_BIT));
+    mapped_buffer[index] =
+        static_cast<uint8_t*>(gl_functions_->glMapBufferRange_(
+            GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size[index]),
+            GL_MAP_READ_BIT));
     if (mapped_buffer[index] == nullptr) {
       // TODO(afd): If index == 1 should we unmap buffers[0] before
       //  returning? Or are we OK so long as we eventually destroy that buffer?

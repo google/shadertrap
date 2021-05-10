@@ -15,6 +15,8 @@
 #ifndef LIBSHADERTRAP_EXECUTOR_H
 #define LIBSHADERTRAP_EXECUTOR_H
 
+#include <GLES3/gl32.h>
+
 #include <map>
 #include <string>
 
@@ -46,7 +48,8 @@ namespace shadertrap {
 
 class Executor : public CommandVisitor {
  public:
-  explicit Executor(GlFunctions* gl_functions, MessageConsumer* message_consumer);
+  explicit Executor(GlFunctions* gl_functions,
+                    MessageConsumer* message_consumer);
 
   bool VisitAssertEqual(CommandAssertEqual* assert_equal) override;
 

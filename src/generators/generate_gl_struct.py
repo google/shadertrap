@@ -128,7 +128,7 @@ def main(args) -> None:
 
 #include <functional>
 
-#include "GLES3/gl32.h"
+#include <GLES3/gl32.h>
 
 namespace shadertrap {
 
