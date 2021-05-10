@@ -43,8 +43,8 @@ def main(args) -> None:
     )
 
     parser.add_argument(
-        "output_dir",
-        help="Directory in which files should be generated",
+        "output_file",
+        help="Path to the source file that should be generated",
         type=Path,
     )
     
@@ -67,6 +67,7 @@ def main(args) -> None:
 
     get_gl_functions = 'shadertrap::GlFunctions GetGlFunctions() {\n'
     get_gl_functions += '  shadertrap::GlFunctions result{};\n'
+    get_gl_functions += '  // clang-format off\n'
     for command in commands:
         assert command.tag == 'command'
         proto = command[0]
@@ -80,6 +81,7 @@ def main(args) -> None:
         if name.text in required_command_names:
             get_gl_functions += '  result.' + name.text + '_ = ' + name.text + ';\n'
 
+    get_gl_functions += '  // clang-format on\n'
     get_gl_functions += '  return result;\n'
     get_gl_functions += '}\n'
 
@@ -112,7 +114,7 @@ namespace shadertrap {
 }  // namespace shadertrap
 """
     
-    with open(parsed_args.output_dir / 'get_gl_functions.cc', 'w') as outfile:
+    with open(parsed_args.output_file, 'w') as outfile:
         outfile.write(PROLOGUE)
         outfile.write(get_gl_functions)
         outfile.write(EPILOGUE)

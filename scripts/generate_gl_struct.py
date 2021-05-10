@@ -48,8 +48,8 @@ def main(args) -> None:
     )
 
     parser.add_argument(
-        "output_dir",
-        help="Directory in which header file should be generated",
+        "output_file",
+        help="Path to the header file that should be generated",
         type=Path,
     )
     
@@ -71,6 +71,7 @@ def main(args) -> None:
                             required_command_names.add(requirement.attrib['name'])
 
     structure = 'struct GlFunctions {\n'
+    structure += '  // clang-format off\n'
                             
     for command in commands:
         assert command.tag == 'command'
@@ -105,6 +106,7 @@ def main(args) -> None:
                 
             structure += '  std::function<' + tidy_type(return_type) + '(' + ', '.join(param_types) + ')> ' + name.text + '_;\n'
 
+    structure += '  // clang-format on\n'
     structure += '};'
 
     PROLOGUE = """// Copyright 2021 The ShaderTrap Project Authors
@@ -126,9 +128,9 @@ def main(args) -> None:
 #ifndef LIBSHADERTRAP_GL_FUNCTIONS_H
 #define LIBSHADERTRAP_GL_FUNCTIONS_H
 
-#include <functional>
-
 #include <GLES3/gl32.h>
+
+#include <functional>
 
 namespace shadertrap {
 
@@ -141,7 +143,7 @@ namespace shadertrap {
 #endif  // LIBSHADERTRAP_GL_FUNCTIONS_H
 """
     
-    with open(parsed_args.output_dir / 'gl_functions.h', 'w') as outfile:
+    with open(parsed_args.output_file, 'w') as outfile:
         outfile.write(PROLOGUE)
         outfile.write(structure)
         outfile.write(EPILOGUE)
