@@ -14,7 +14,11 @@
 
 // Automatically-generated file - DO NOT EDIT
 
-#include <glad/glad.h>
+// clang-format off
+// GLAD needs to be included here because it must be included before
+// GLES3/gl32.h, which will be transitively included by get_gl_functions.h.
+#include "glad/glad.h"
+// clang-format on
 
 #include "shadertrap/get_gl_functions.h"
 

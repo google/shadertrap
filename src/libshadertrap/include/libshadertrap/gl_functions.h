@@ -26,6 +26,9 @@ namespace shadertrap {
 
 struct GlFunctions {
   // clang-format off
+  // We use camel case for fields so that the GL functions look familiar. We
+  // use trailing underscores to avoid these names being redefined when
+  // GL-related header files are included.
   std::function<void(GLuint, GLuint)> glActiveShaderProgram_;
   std::function<void(GLenum)> glActiveTexture_;
   std::function<void(GLuint, GLuint)> glAttachShader_;

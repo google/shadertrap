@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.13)
-
 if(NOT TARGET shadertrap_egl_headers)
     if(NOT IS_DIRECTORY ${SHADERTRAP_EGL_REGISTRY_REPO_DIR})
         message(

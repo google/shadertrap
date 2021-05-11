@@ -51,6 +51,9 @@ def gen_struct(xml_file: Path) -> str:
 
     structure = 'struct GlFunctions {\n'
     structure += '  // clang-format off\n'
+    structure += '  // We use camel case for fields so that the GL functions look familiar. We\n'
+    structure += '  // use trailing underscores to avoid these names being redefined when\n'
+    structure += '  // GL-related header files are included.\n'
 
     for command in commands:
         assert command.tag == 'command'

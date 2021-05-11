@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <EGL/egl.h>
-#include <glad/glad.h>
 
 #include <fstream>
 #include <iostream>
@@ -23,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "glad/glad.h"
 #include "libshadertrap/checker.h"
 #include "libshadertrap/command_visitor.h"
 #include "libshadertrap/compound_visitor.h"
