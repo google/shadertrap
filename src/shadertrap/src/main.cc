@@ -39,6 +39,11 @@
 
 namespace {
 
+const EGLint kWidth = 256;
+const EGLint kHeight = 256;
+const EGLint kDepthSize = 16;
+const EGLint kRequiredEglMinorVersionForGl = 5;
+
 class ConsoleMessageConsumer : public shadertrap::MessageConsumer {
   void Message(Severity severity, const shadertrap::Token* token,
                const std::string& message) override {
@@ -103,7 +108,7 @@ int main(int argc, const char** argv) {
                                            EGL_ALPHA_SIZE,   4,
 
                                            EGL_CONFORMANT,   EGL_OPENGL_ES3_BIT,
-                                           EGL_DEPTH_SIZE,   16,
+                                           EGL_DEPTH_SIZE,   kDepthSize,
                                            EGL_NONE};
 
   std::vector<EGLint> context_attributes = {
@@ -116,9 +121,9 @@ int main(int argc, const char** argv) {
   //  are there more sensible default values than these?  If yes, should they be
   //  controllable from the command line?
   std::vector<EGLint> pbuffer_attributes = {EGL_WIDTH,
-                                            256,
+                                            kWidth,
                                             EGL_HEIGHT,
-                                            256,
+                                            kHeight,
                                             EGL_TEXTURE_FORMAT,
                                             EGL_NO_TEXTURE,
                                             EGL_TEXTURE_TARGET,
@@ -140,7 +145,8 @@ int main(int argc, const char** argv) {
 
   if (api_version.GetApi() == shadertrap::ApiVersion::Api::GL &&
       !(egl_major_version > 1 ||
-        (egl_major_version == 1 && egl_minor_version >= 5))) {
+        (egl_major_version == 1 &&
+         egl_minor_version >= kRequiredEglMinorVersionForGl))) {
     std::cerr << "EGL and OpenGL are not compatible pre EGL 1.5; found EGL "
               << egl_major_version << "." << egl_minor_version << std::endl;
     return 1;

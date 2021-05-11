@@ -115,10 +115,10 @@ bool Parser::ParseApiVersion() {
       minor = 4;
     } else if (major_minor->GetText() == "4.5") {
       major = 4;
-      minor = 5;
+      minor = 5;  // NOLINT(cppcoreguidelines-avoid-magic-numbers)
     } else if (major_minor->GetText() == "4.6") {
       major = 4;
-      minor = 6;
+      minor = 6;  // NOLINT(cppcoreguidelines-avoid-magic-numbers)
     } else {
       message_consumer_->Message(
           MessageConsumer::Severity::kError, api_token.get(),
