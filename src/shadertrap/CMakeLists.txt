@@ -28,4 +28,4 @@ add_executable(shadertrap
         src/get_gl_functions.cc
 )
 target_include_directories(shadertrap PRIVATE include_private/include)
-target_link_libraries(shadertrap PRIVATE shadertrap_glad glslang libshadertrap ${SHADERTRAP_EGL_LIB_PATH})
+target_link_libraries(shadertrap PRIVATE shadertrap_glad glslang libshadertrap ${SHADERTRAP_EGL_LIB_PATH} ${CMAKE_DL_LIBS})

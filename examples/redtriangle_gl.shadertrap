@@ -1,0 +1,60 @@
+# Copyright 2021 The ShaderTrap Project Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+GL 4.6
+
+DECLARE_SHADER frag KIND FRAGMENT
+#version 320 es
+precision highp float;
+layout(location = 0) out vec4 color;
+void main() {
+ color = vec4(1.0, 0.0, 0.0, 1.0);
+}
+END
+
+DECLARE_SHADER vert KIND VERTEX
+#version 320 es
+layout(location = 0) in vec2 pos;
+void main(void) {
+    gl_Position = vec4(pos, 0.0, 1.0);
+}
+END
+
+COMPILE_SHADER frag_compiled SHADER frag
+
+COMPILE_SHADER vert_compiled SHADER vert
+
+CREATE_PROGRAM program SHADERS vert_compiled frag_compiled
+
+CREATE_BUFFER vertex_buffer SIZE_BYTES 24 INIT_VALUES float
+                           0.0 -1.0
+                           -1.0 1.0
+                            1.0 1.0
+
+CREATE_BUFFER index_buffer SIZE_BYTES 24 INIT_VALUES uint
+                           0 1 2 3 4 5
+
+CREATE_RENDERBUFFER renderbuffer WIDTH 256 HEIGHT 256
+
+RUN_GRAPHICS
+  PROGRAM program
+  VERTEX_DATA
+    [ 0 -> BUFFER vertex_buffer OFFSET_BYTES 0 STRIDE_BYTES 8 DIMENSION 2 ]
+  INDEX_DATA index_buffer
+  VERTEX_COUNT 3
+  TOPOLOGY TRIANGLES
+  FRAMEBUFFER_ATTACHMENTS
+    [ 0 -> renderbuffer ]
+
+DUMP_RENDERBUFFER RENDERBUFFER renderbuffer FILE "example_redtriangle.png"
