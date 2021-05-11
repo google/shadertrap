@@ -143,9 +143,10 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  if (eglBindAPI(api_version.api == shadertrap::ApiVersion::Api::GL
-                     ? EGL_OPENGL_API
-                     : EGL_OPENGL_ES_API) == EGL_FALSE) {
+  if (eglBindAPI(static_cast<EGLenum>(api_version.api ==
+                                              shadertrap::ApiVersion::Api::GL
+                                          ? EGL_OPENGL_API
+                                          : EGL_OPENGL_ES_API)) == EGL_FALSE) {
     std::cerr << "eglBindAPI failed." << std::endl;
   }
 

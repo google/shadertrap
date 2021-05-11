@@ -74,7 +74,7 @@ END
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 10:16: Identifier 's' already used at 2:16",
@@ -92,7 +92,7 @@ END
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_TRUE(message_consumer.GetMessageString(0).find(
@@ -118,7 +118,7 @@ END
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_TRUE(message_consumer.GetMessageString(0).find(
                   "ERROR: 2:1: Validation of shader 's' using glslang failed "
@@ -137,7 +137,7 @@ COMPILE_SHADER result SHADER nonexistent
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -162,7 +162,7 @@ COMPILE_SHADER s SHADER s
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 10:16: Identifier 's' already used at 2:16",
@@ -182,7 +182,7 @@ CREATE_BUFFER vert SIZE_BYTES 8 INIT_VALUES float 1.0 2.0
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 7:15: Identifier 'vert' already used at 2:16",
@@ -210,7 +210,7 @@ CREATE_PROGRAM prog SHADERS vert_compiled mysampler frag_compiled
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -239,7 +239,7 @@ CREATE_PROGRAM frag_compiled SHADERS vert_compiled frag_compiled
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 14:16: Identifier 'frag_compiled' already used at 13:16",
@@ -260,7 +260,7 @@ CREATE_PROGRAM prog SHADERS vert_compiled
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -282,7 +282,7 @@ CREATE_PROGRAM prog SHADERS frag_compiled
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -310,7 +310,7 @@ CREATE_PROGRAM prog SHADERS vert_compiled frag_compiled frag_compiled
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -339,7 +339,7 @@ CREATE_PROGRAM prog SHADERS frag_compiled vert_compiled vert_compiled
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -362,7 +362,7 @@ CREATE_PROGRAM prog SHADERS comp_compiled comp_compiled
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -391,7 +391,7 @@ CREATE_PROGRAM prog SHADERS frag_compiled comp_compiled
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -422,7 +422,7 @@ CREATE_PROGRAM prog SHADERS comp_compiled vert_compiled
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -446,7 +446,7 @@ CREATE_RENDERBUFFER vert WIDTH 24 HEIGHT 24
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 7:21: Identifier 'vert' already used at 2:16",
@@ -462,7 +462,7 @@ CREATE_SAMPLER name
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 3:16: Identifier 'name' already used at 2:25",
@@ -478,7 +478,7 @@ CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 3:25: Identifier 'name' already used at 2:25",
@@ -495,7 +495,7 @@ ASSERT_EQUAL RENDERBUFFERS buf1 buf2
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -513,7 +513,7 @@ ASSERT_EQUAL RENDERBUFFERS buf1 buf2
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -533,7 +533,7 @@ ASSERT_EQUAL BUFFERS buf1 buf2
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -553,7 +553,7 @@ ASSERT_EQUAL BUFFERS buf1 buf2
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 4:27: 'buf2' must be a buffer",
@@ -569,7 +569,7 @@ ASSERT_EQUAL RENDERBUFFERS buf1 buf2
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 3:28: 'buf1' must be a renderbuffer",
@@ -586,7 +586,7 @@ ASSERT_EQUAL RENDERBUFFERS buf1 buf2
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 4:33: 'buf2' must be a renderbuffer",
@@ -604,7 +604,7 @@ ASSERT_EQUAL BUFFERS buf1 buf2
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 4:27: 'buf2' must be a buffer",
@@ -621,7 +621,7 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 0 0 2 2 EXPECTED 0 0 0 0
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 3:28: 'buf' is not a renderbuffer",
@@ -638,7 +638,7 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 9 8 EXPECTED 0 0 0 0
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -657,7 +657,7 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 8 9 EXPECTED 0 0 0 0
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -676,7 +676,7 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 0 8 EXPECTED 0 0 0 0
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 3:46: width of rectangle must be positive",
@@ -693,7 +693,7 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 8 0 EXPECTED 0 0 0 0
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 3:48: height of rectangle must be positive",
@@ -709,7 +709,7 @@ ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 3:44: 'buf1' must be a renderbuffer",
@@ -725,7 +725,7 @@ ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 3:49: 'buf2' must be a renderbuffer",
@@ -742,7 +742,7 @@ ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -761,7 +761,7 @@ ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -778,7 +778,7 @@ BIND_SAMPLER SAMPLER doesnotexist TEXTURE_UNIT 1
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 2:22: 'doesnotexist' must be a sampler",
@@ -794,7 +794,7 @@ BIND_SHADER_STORAGE_BUFFER BUFFER doesnotexist BINDING 1
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 2:35: 'doesnotexist' must be a buffer",
@@ -809,7 +809,7 @@ BIND_TEXTURE TEXTURE doesnotexist TEXTURE_UNIT 1
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 2:22: 'doesnotexist' must be a texture",
@@ -824,7 +824,7 @@ BIND_UNIFORM_BUFFER BUFFER doesnotexist BINDING 1
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 2:28: 'doesnotexist' must be a buffer",
@@ -840,7 +840,7 @@ DUMP_RENDERBUFFER RENDERBUFFER doesnotexist FILE "temp.png"
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 2:32: 'doesnotexist' must be a renderbuffer",
@@ -856,7 +856,7 @@ SET_UNIFORM PROGRAM prog LOCATION 1 TYPE float VALUES 0.1
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 2:21: 'prog' must be a program",
@@ -872,7 +872,7 @@ RUN_COMPUTE PROGRAM prog NUM_GROUPS 1 1 1
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 2:21: 'prog' must be a program",
@@ -897,7 +897,7 @@ RUN_COMPUTE PROGRAM prog NUM_GROUPS 1 1 1
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -953,7 +953,7 @@ RUN_GRAPHICS
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 34:11: 'nonexistent' must be a program",
@@ -1005,7 +1005,7 @@ RUN_GRAPHICS
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 33:19: vertex buffer 'nonexistent' must be a buffer",
@@ -1059,7 +1059,7 @@ RUN_GRAPHICS
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 36:14: index buffer 'nonexistent' must be a buffer",
@@ -1114,7 +1114,7 @@ RUN_GRAPHICS
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -1159,7 +1159,7 @@ RUN_GRAPHICS
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -1176,7 +1176,7 @@ SET_SAMPLER_PARAMETER PARAMETER TEXTURE_MAG_FILTER VALUE LINEAR SAMPLER nonexist
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 2:73: 'nonexistent' must be a sampler",
@@ -1191,7 +1191,7 @@ SET_TEXTURE_PARAMETER VALUE NEAREST PARAMETER TEXTURE_MIN_FILTER TEXTURE nonexis
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 2:74: 'nonexistent' must be a texture",
@@ -1209,7 +1209,7 @@ END
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
@@ -1229,7 +1229,7 @@ END
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
   ASSERT_TRUE(parser.Parse());
-  Checker checker(&message_consumer);
+  Checker checker(&message_consumer, parser.GetParsedProgram().get());
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(

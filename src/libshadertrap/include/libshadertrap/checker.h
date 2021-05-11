@@ -49,8 +49,7 @@ namespace shadertrap {
 
 class Checker : public CommandVisitor {
  public:
-  explicit Checker(MessageConsumer* message_consumer,
-                   ShaderTrapProgram* program);
+  Checker(MessageConsumer* message_consumer, ShaderTrapProgram* program);
 
   bool VisitAssertEqual(CommandAssertEqual* assert_equal) override;
 
