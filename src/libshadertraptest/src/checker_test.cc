@@ -53,7 +53,8 @@ class CheckerTestFixture : public ::testing::Test {
 };
 
 TEST_F(CheckerTestFixture, RedeclareShader) {
-  std::string program = R"(DECLARE_SHADER s KIND VERTEX
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER s KIND VERTEX
 #version 320 es
 layout(location = 0) in vec2 _GLF_vertexPosition;
 void main(void) {
@@ -76,13 +77,14 @@ END
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 9:16: Identifier 's' already used at 1:16",
+  ASSERT_EQ("ERROR: 10:16: Identifier 's' already used at 2:16",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, GlslangParseError) {
   // glslang should fail to parse the program.
-  std::string program = R"(DECLARE_SHADER s KIND VERTEX
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER s KIND VERTEX
 notversion
 END
   )";
@@ -94,17 +96,18 @@ END
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_TRUE(message_consumer.GetMessageString(0).find(
-                  "ERROR: 1:1: Validation of shader 's' using glslang failed "
+                  "ERROR: 2:1: Validation of shader 's' using glslang failed "
                   "with the following messages:") != std::string::npos);
   ASSERT_TRUE(message_consumer.GetMessageString(0).find(
-                  "ERROR: line 2: '' :  syntax error, unexpected IDENTIFIER") !=
+                  "ERROR: line 3: '' :  syntax error, unexpected IDENTIFIER") !=
               std::string::npos);
 }
 
 TEST_F(CheckerTestFixture, GlslangPrecisionError) {
   // glslang will complain that a float is declared with no default precision
   // qualifier.
-  std::string program = R"(DECLARE_SHADER s KIND FRAGMENT
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER s KIND FRAGMENT
 #version 320 es
 float f;
 void main() {
@@ -118,16 +121,17 @@ END
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_TRUE(message_consumer.GetMessageString(0).find(
-                  "ERROR: 1:1: Validation of shader 's' using glslang failed "
+                  "ERROR: 2:1: Validation of shader 's' using glslang failed "
                   "with the following messages:") != std::string::npos);
   ASSERT_TRUE(
       message_consumer.GetMessageString(0).find(
-          "ERROR: line 3: 'float' : type requires declaration of default "
+          "ERROR: line 4: 'float' : type requires declaration of default "
           "precision qualifier") != std::string::npos);
 }
 
 TEST_F(CheckerTestFixture, CompileShaderUnknownShader) {
-  std::string program = R"(COMPILE_SHADER result SHADER nonexistent
+  std::string program = R"(GLES 3.1
+COMPILE_SHADER result SHADER nonexistent
   )";
 
   CollectingMessageConsumer message_consumer;
@@ -137,13 +141,14 @@ TEST_F(CheckerTestFixture, CompileShaderUnknownShader) {
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 1:30: Identifier 'nonexistent' does not correspond to a declared "
+      "ERROR: 2:30: Identifier 'nonexistent' does not correspond to a declared "
       "shader",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CompileShaderNameAlreadyUsed) {
-  std::string program = R"(DECLARE_SHADER s KIND VERTEX
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER s KIND VERTEX
 #version 320 es
 layout(location = 0) in vec2 _GLF_vertexPosition;
 void main(void) {
@@ -160,12 +165,13 @@ COMPILE_SHADER s SHADER s
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 9:16: Identifier 's' already used at 1:16",
+  ASSERT_EQ("ERROR: 10:16: Identifier 's' already used at 2:16",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateBufferNameAlreadyUsed) {
-  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
@@ -179,12 +185,13 @@ CREATE_BUFFER vert SIZE_BYTES 8 INIT_VALUES float 1.0 2.0
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 6:15: Identifier 'vert' already used at 1:16",
+  ASSERT_EQ("ERROR: 7:15: Identifier 'vert' already used at 2:16",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateProgramUnknownShader) {
-  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
@@ -207,13 +214,14 @@ CREATE_PROGRAM prog SHADERS vert_compiled mysampler frag_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 14:43: Identifier 'mysampler' does not correspond to a compiled "
+      "ERROR: 15:43: Identifier 'mysampler' does not correspond to a compiled "
       "shader",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateProgramNameAlreadyUsed) {
-  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
@@ -234,12 +242,13 @@ CREATE_PROGRAM frag_compiled SHADERS vert_compiled frag_compiled
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 13:16: Identifier 'frag_compiled' already used at 12:16",
+  ASSERT_EQ("ERROR: 14:16: Identifier 'frag_compiled' already used at 13:16",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateProgramNoFragmentShader) {
-  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
@@ -255,12 +264,13 @@ CREATE_PROGRAM prog SHADERS vert_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 7:1: No fragment shader provided for 'CREATE_PROGRAM' command",
+      "ERROR: 8:1: No fragment shader provided for 'CREATE_PROGRAM' command",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateProgramNoVertexShader) {
-  std::string program = R"(DECLARE_SHADER frag KIND FRAGMENT
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 void main() { }
 END
@@ -276,12 +286,13 @@ CREATE_PROGRAM prog SHADERS frag_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 7:1: No vertex shader provided for 'CREATE_PROGRAM' command",
+      "ERROR: 8:1: No vertex shader provided for 'CREATE_PROGRAM' command",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateProgramMultipleFragmentShaders) {
-  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
@@ -303,13 +314,14 @@ CREATE_PROGRAM prog SHADERS vert_compiled frag_compiled frag_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 13:57: Multiple fragment shaders provided to 'CREATE_PROGRAM'; "
-      "already found 'frag_compiled' at 13:43",
+      "ERROR: 14:57: Multiple fragment shaders provided to 'CREATE_PROGRAM'; "
+      "already found 'frag_compiled' at 14:43",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateProgramMultipleVertexShaders) {
-  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
@@ -331,13 +343,14 @@ CREATE_PROGRAM prog SHADERS frag_compiled vert_compiled vert_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 13:57: Multiple vertex shaders provided to 'CREATE_PROGRAM'; "
-      "already found 'vert_compiled' at 13:43",
+      "ERROR: 14:57: Multiple vertex shaders provided to 'CREATE_PROGRAM'; "
+      "already found 'vert_compiled' at 14:43",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateProgramMultipleComputeShaders) {
-  std::string program = R"(DECLARE_SHADER comp KIND COMPUTE
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER comp KIND COMPUTE
 #version 320 es
 void main() { }
 END
@@ -353,13 +366,14 @@ CREATE_PROGRAM prog SHADERS comp_compiled comp_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 7:43: Multiple compute shaders provided to 'CREATE_PROGRAM'; "
-      "already found 'comp_compiled' at 7:29",
+      "ERROR: 8:43: Multiple compute shaders provided to 'CREATE_PROGRAM'; "
+      "already found 'comp_compiled' at 8:29",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateProgramComputeAndFragmentShaders) {
-  std::string program = R"(DECLARE_SHADER comp KIND COMPUTE
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER comp KIND COMPUTE
 #version 320 es
 void main() { }
 END
@@ -381,15 +395,16 @@ CREATE_PROGRAM prog SHADERS frag_compiled comp_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 13:43: A compute shader cannot be used in 'CREATE_PROGRAM' with "
+      "ERROR: 14:43: A compute shader cannot be used in 'CREATE_PROGRAM' with "
       "another "
       "kind of shader; "
-      "found fragment shader 'frag_compiled' at 13:29",
+      "found fragment shader 'frag_compiled' at 14:29",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateProgramComputeAndVertexShaders) {
-  std::string program = R"(DECLARE_SHADER comp KIND COMPUTE
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER comp KIND COMPUTE
 #version 320 es
 void main() { }
 END
@@ -411,15 +426,16 @@ CREATE_PROGRAM prog SHADERS comp_compiled vert_compiled
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1U, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 13:29: A compute shader cannot be used in 'CREATE_PROGRAM' with "
+      "ERROR: 14:29: A compute shader cannot be used in 'CREATE_PROGRAM' with "
       "another "
       "kind of shader; "
-      "found vertex shader 'vert_compiled' at 13:43",
+      "found vertex shader 'vert_compiled' at 14:43",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateRenderbufferNameAlreadyUsed) {
-  std::string program = R"(DECLARE_SHADER vert KIND VERTEX
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER vert KIND VERTEX
 #version 320 es
 void main() { }
 END
@@ -433,12 +449,13 @@ CREATE_RENDERBUFFER vert WIDTH 24 HEIGHT 24
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 6:21: Identifier 'vert' already used at 1:16",
+  ASSERT_EQ("ERROR: 7:21: Identifier 'vert' already used at 2:16",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateSamplerNameAlreadyUsed) {
-  std::string program = R"(CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
+  std::string program = R"(GLES 3.1
+CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
 CREATE_SAMPLER name
   )";
 
@@ -448,12 +465,13 @@ CREATE_SAMPLER name
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 2:16: Identifier 'name' already used at 1:25",
+  ASSERT_EQ("ERROR: 3:16: Identifier 'name' already used at 2:25",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, CreateEmptyTexture2DNameAlreadyUsed) {
-  std::string program = R"(CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
+  std::string program = R"(GLES 3.1
+CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
 CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
   )";
 
@@ -463,12 +481,13 @@ CREATE_EMPTY_TEXTURE_2D name WIDTH 12 HEIGHT 12
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 2:25: Identifier 'name' already used at 1:25",
+  ASSERT_EQ("ERROR: 3:25: Identifier 'name' already used at 2:25",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertEqualDifferentWidthRenderbuffers) {
-  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 1 HEIGHT 1
+  std::string program = R"(GLES 3.1
+CREATE_RENDERBUFFER buf1 WIDTH 1 HEIGHT 1
 CREATE_RENDERBUFFER buf2 WIDTH 2 HEIGHT 1
 ASSERT_EQUAL RENDERBUFFERS buf1 buf2
 )";
@@ -480,12 +499,13 @@ ASSERT_EQUAL RENDERBUFFERS buf1 buf2
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 3:33: width 2 of 'buf2' does not match width 1 of 'buf1' at 3:28",
+      "ERROR: 4:33: width 2 of 'buf2' does not match width 1 of 'buf1' at 4:28",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertEqualDifferentHeightRenderbuffers) {
-  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 1 HEIGHT 1
+  std::string program = R"(GLES 3.1
+CREATE_RENDERBUFFER buf1 WIDTH 1 HEIGHT 1
 CREATE_RENDERBUFFER buf2 WIDTH 1 HEIGHT 2
 ASSERT_EQUAL RENDERBUFFERS buf1 buf2
 )";
@@ -497,14 +517,15 @@ ASSERT_EQUAL RENDERBUFFERS buf1 buf2
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 3:33: height 2 of 'buf2' does not match height 1 of 'buf1' at "
-      "3:28",
+      "ERROR: 4:33: height 2 of 'buf2' does not match height 1 of 'buf1' at "
+      "4:28",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertEqualDifferentSizedBuffers) {
   std::string program =
-      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_VALUES uint 0
+      R"(GLES 3.1
+CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_VALUES uint 0
 CREATE_BUFFER buf2 SIZE_BYTES 8 INIT_VALUES uint 0 0
 ASSERT_EQUAL BUFFERS buf1 buf2
 )";
@@ -516,14 +537,15 @@ ASSERT_EQUAL BUFFERS buf1 buf2
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 3:27: size (in bytes) 8 of 'buf2' does not match size (in bytes) "
-      "4 of 'buf1' at 3:22",
+      "ERROR: 4:27: size (in bytes) 8 of 'buf2' does not match size (in bytes) "
+      "4 of 'buf1' at 4:22",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertEqualBufferVsRenderbuffer) {
   std::string program =
-      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_VALUES uint 0
+      R"(GLES 3.1
+CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_VALUES uint 0
 CREATE_RENDERBUFFER buf2 WIDTH 1 HEIGHT 1
 ASSERT_EQUAL BUFFERS buf1 buf2
 )";
@@ -534,12 +556,13 @@ ASSERT_EQUAL BUFFERS buf1 buf2
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 3:27: 'buf2' must be a buffer",
+  ASSERT_EQ("ERROR: 4:27: 'buf2' must be a buffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertEqualBadFistArgument) {
-  std::string program = R"(CREATE_RENDERBUFFER buf2 WIDTH 24 HEIGHT 24
+  std::string program = R"(GLES 3.1
+CREATE_RENDERBUFFER buf2 WIDTH 24 HEIGHT 24
 ASSERT_EQUAL RENDERBUFFERS buf1 buf2
 )";
 
@@ -549,12 +572,13 @@ ASSERT_EQUAL RENDERBUFFERS buf1 buf2
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 2:28: 'buf1' must be a renderbuffer",
+  ASSERT_EQ("ERROR: 3:28: 'buf1' must be a renderbuffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertEqualBadSecondArgumentRenderbuffer) {
-  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
+  std::string program = R"(GLES 3.1
+CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
 CREATE_SAMPLER buf2
 ASSERT_EQUAL RENDERBUFFERS buf1 buf2
 )";
@@ -565,13 +589,14 @@ ASSERT_EQUAL RENDERBUFFERS buf1 buf2
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 3:33: 'buf2' must be a renderbuffer",
+  ASSERT_EQ("ERROR: 4:33: 'buf2' must be a renderbuffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertEqualBadSecondArgumentBuffer) {
   std::string program =
-      R"(CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_VALUES uint 0
+      R"(GLES 3.1
+CREATE_BUFFER buf1 SIZE_BYTES 4 INIT_VALUES uint 0
 CREATE_SAMPLER buf2
 ASSERT_EQUAL BUFFERS buf1 buf2
 )";
@@ -582,13 +607,14 @@ ASSERT_EQUAL BUFFERS buf1 buf2
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 3:27: 'buf2' must be a buffer",
+  ASSERT_EQ("ERROR: 4:27: 'buf2' must be a buffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertPixelsNotRenderbuffer) {
   std::string program =
-      R"(CREATE_BUFFER buf SIZE_BYTES 4 INIT_VALUES int 0
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 4 INIT_VALUES int 0
 ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 0 0 2 2 EXPECTED 0 0 0 0
 )";
 
@@ -598,13 +624,14 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 0 0 2 2 EXPECTED 0 0 0 0
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 2:28: 'buf' is not a renderbuffer",
+  ASSERT_EQ("ERROR: 3:28: 'buf' is not a renderbuffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertPixelsOutOfBoundsX) {
   std::string program =
-      R"(CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
+      R"(GLES 3.1
+CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
 ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 9 8 EXPECTED 0 0 0 0
 )";
 
@@ -615,14 +642,15 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 9 8 EXPECTED 0 0 0 0
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 2:46: rectangle extends to x-coordinate 17, which exceeds width "
+      "ERROR: 3:46: rectangle extends to x-coordinate 17, which exceeds width "
       "16 of 'buf'",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertPixelsOutOfBoundsY) {
   std::string program =
-      R"(CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
+      R"(GLES 3.1
+CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
 ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 8 9 EXPECTED 0 0 0 0
 )";
 
@@ -633,14 +661,15 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 8 9 EXPECTED 0 0 0 0
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 2:48: rectangle extends to y-coordinate 17, which exceeds height "
+      "ERROR: 3:48: rectangle extends to y-coordinate 17, which exceeds height "
       "16 of 'buf'",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertPixelsZeroWidthRectangle) {
   std::string program =
-      R"(CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
+      R"(GLES 3.1
+CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
 ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 0 8 EXPECTED 0 0 0 0
 )";
 
@@ -650,13 +679,14 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 0 8 EXPECTED 0 0 0 0
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 2:46: width of rectangle must be positive",
+  ASSERT_EQ("ERROR: 3:46: width of rectangle must be positive",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertPixelsZeroHeightRectangle) {
   std::string program =
-      R"(CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
+      R"(GLES 3.1
+CREATE_RENDERBUFFER buf WIDTH 16 HEIGHT 16
 ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 8 0 EXPECTED 0 0 0 0
 )";
 
@@ -666,12 +696,13 @@ ASSERT_PIXELS RENDERBUFFER buf RECTANGLE 8 8 8 0 EXPECTED 0 0 0 0
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 2:48: height of rectangle must be positive",
+  ASSERT_EQ("ERROR: 3:48: height of rectangle must be positive",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertSimilarEmdHistogramBadFistArgument) {
-  std::string program = R"(CREATE_RENDERBUFFER buf2 WIDTH 24 HEIGHT 24
+  std::string program = R"(GLES 3.1
+CREATE_RENDERBUFFER buf2 WIDTH 24 HEIGHT 24
 ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
 )";
 
@@ -681,12 +712,13 @@ ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 2:44: 'buf1' must be a renderbuffer",
+  ASSERT_EQ("ERROR: 3:44: 'buf1' must be a renderbuffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertSimilarEmdHistogramBadSecondArgument) {
-  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
+  std::string program = R"(GLES 3.1
+CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
 ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
 )";
 
@@ -696,12 +728,13 @@ ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 2:49: 'buf2' must be a renderbuffer",
+  ASSERT_EQ("ERROR: 3:49: 'buf2' must be a renderbuffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertSimilarEmdHistogramDifferentWidths) {
-  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
+  std::string program = R"(GLES 3.1
+CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
 CREATE_RENDERBUFFER buf2 WIDTH 20 HEIGHT 24
 ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
 )";
@@ -713,13 +746,14 @@ ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 3:49: width 20 of 'buf2' does not match width 24 of 'buf1' at "
-      "3:44",
+      "ERROR: 4:49: width 20 of 'buf2' does not match width 24 of 'buf1' at "
+      "4:44",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, AssertSimilarEmdHistogramDifferentHeights) {
-  std::string program = R"(CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
+  std::string program = R"(GLES 3.1
+CREATE_RENDERBUFFER buf1 WIDTH 24 HEIGHT 24
 CREATE_RENDERBUFFER buf2 WIDTH 24 HEIGHT 28
 ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
 )";
@@ -731,13 +765,14 @@ ASSERT_SIMILAR_EMD_HISTOGRAM RENDERBUFFERS buf1 buf2 TOLERANCE 1.0
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 3:49: height 28 of 'buf2' does not match height 24 of 'buf1' at "
-      "3:44",
+      "ERROR: 4:49: height 28 of 'buf2' does not match height 24 of 'buf1' at "
+      "4:44",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, BindSamplerBadSampler) {
-  std::string program = R"(BIND_SAMPLER SAMPLER doesnotexist TEXTURE_UNIT 1
+  std::string program = R"(GLES 3.1
+BIND_SAMPLER SAMPLER doesnotexist TEXTURE_UNIT 1
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -746,13 +781,14 @@ TEST_F(CheckerTestFixture, BindSamplerBadSampler) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 1:22: 'doesnotexist' must be a sampler",
+  ASSERT_EQ("ERROR: 2:22: 'doesnotexist' must be a sampler",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, BindShaderStorageBufferBadStorageBuffer) {
   std::string program =
-      R"(BIND_SHADER_STORAGE_BUFFER BUFFER doesnotexist BINDING 1
+      R"(GLES 3.1
+BIND_SHADER_STORAGE_BUFFER BUFFER doesnotexist BINDING 1
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -761,12 +797,13 @@ TEST_F(CheckerTestFixture, BindShaderStorageBufferBadStorageBuffer) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 1:35: 'doesnotexist' must be a buffer",
+  ASSERT_EQ("ERROR: 2:35: 'doesnotexist' must be a buffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, BindTextureBadTexture) {
-  std::string program = R"(BIND_TEXTURE TEXTURE doesnotexist TEXTURE_UNIT 1
+  std::string program = R"(GLES 3.1
+BIND_TEXTURE TEXTURE doesnotexist TEXTURE_UNIT 1
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -775,12 +812,13 @@ TEST_F(CheckerTestFixture, BindTextureBadTexture) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 1:22: 'doesnotexist' must be a texture",
+  ASSERT_EQ("ERROR: 2:22: 'doesnotexist' must be a texture",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, BindUniformBufferBadUniformBuffer) {
-  std::string program = R"(BIND_UNIFORM_BUFFER BUFFER doesnotexist BINDING 1
+  std::string program = R"(GLES 3.1
+BIND_UNIFORM_BUFFER BUFFER doesnotexist BINDING 1
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -789,13 +827,14 @@ TEST_F(CheckerTestFixture, BindUniformBufferBadUniformBuffer) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 1:28: 'doesnotexist' must be a buffer",
+  ASSERT_EQ("ERROR: 2:28: 'doesnotexist' must be a buffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, DumpRenderbufferBadRenderbuffer) {
   std::string program =
-      R"(DUMP_RENDERBUFFER RENDERBUFFER doesnotexist FILE "temp.png"
+      R"(GLES 3.1
+DUMP_RENDERBUFFER RENDERBUFFER doesnotexist FILE "temp.png"
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -804,13 +843,14 @@ TEST_F(CheckerTestFixture, DumpRenderbufferBadRenderbuffer) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 1:32: 'doesnotexist' must be a renderbuffer",
+  ASSERT_EQ("ERROR: 2:32: 'doesnotexist' must be a renderbuffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, SetUniformBadProgram) {
   std::string program =
-      R"(SET_UNIFORM PROGRAM prog LOCATION 1 TYPE float VALUES 0.1
+      R"(GLES 3.1
+SET_UNIFORM PROGRAM prog LOCATION 1 TYPE float VALUES 0.1
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -819,13 +859,14 @@ TEST_F(CheckerTestFixture, SetUniformBadProgram) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 1:21: 'prog' must be a program",
+  ASSERT_EQ("ERROR: 2:21: 'prog' must be a program",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, RunComputeNonexistentProgram) {
   std::string program =
-      R"(RUN_COMPUTE PROGRAM prog NUM_GROUPS 1 1 1
+      R"(GLES 3.1
+RUN_COMPUTE PROGRAM prog NUM_GROUPS 1 1 1
 )";
 
   CollectingMessageConsumer message_consumer;
@@ -834,13 +875,14 @@ TEST_F(CheckerTestFixture, RunComputeNonexistentProgram) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 1:21: 'prog' must be a program",
+  ASSERT_EQ("ERROR: 2:21: 'prog' must be a program",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, RunComputeWithGraphicsProgram) {
   std::string program =
-      R"(DECLARE_SHADER frag KIND FRAGMENT
+      R"(GLES 3.1
+DECLARE_SHADER frag KIND FRAGMENT
 void main() { }
 END
 DECLARE_SHADER vert KIND VERTEX
@@ -859,13 +901,14 @@ RUN_COMPUTE PROGRAM prog NUM_GROUPS 1 1 1
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 10:21: 'prog' must be a compute program, not a graphics program",
+      "ERROR: 11:21: 'prog' must be a compute program, not a graphics program",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, RunGraphicsNonexistentProgram) {
   std::string program =
-      R"(DECLARE_SHADER frag KIND FRAGMENT
+      R"(GLES 3.1
+DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 precision highp float;
 layout(location = 0) out vec4 color;
@@ -913,13 +956,14 @@ RUN_GRAPHICS
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 33:11: 'nonexistent' must be a program",
+  ASSERT_EQ("ERROR: 34:11: 'nonexistent' must be a program",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, RunGraphicsNonexistentVertexBuffer) {
   std::string program =
-      R"(DECLARE_SHADER frag KIND FRAGMENT
+      R"(GLES 3.1
+DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 precision highp float;
 layout(location = 0) out vec4 color;
@@ -964,13 +1008,14 @@ RUN_GRAPHICS
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 32:19: vertex buffer 'nonexistent' must be a buffer",
+  ASSERT_EQ("ERROR: 33:19: vertex buffer 'nonexistent' must be a buffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, RunGraphicsNonexistentIndexBuffer) {
   std::string program =
-      R"(DECLARE_SHADER frag KIND FRAGMENT
+      R"(GLES 3.1
+DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 precision highp float;
 layout(location = 0) out vec4 color;
@@ -1017,13 +1062,14 @@ RUN_GRAPHICS
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 35:14: index buffer 'nonexistent' must be a buffer",
+  ASSERT_EQ("ERROR: 36:14: index buffer 'nonexistent' must be a buffer",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, RunGraphicsNonexistentFramebufferAttachment) {
   std::string program =
-      R"(DECLARE_SHADER frag KIND FRAGMENT
+      R"(GLES 3.1
+DECLARE_SHADER frag KIND FRAGMENT
 #version 320 es
 precision highp float;
 layout(location = 0) out vec4 color;
@@ -1072,14 +1118,15 @@ RUN_GRAPHICS
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 40:12: framebuffer attachment 'nonexistent' must be a "
+      "ERROR: 41:12: framebuffer attachment 'nonexistent' must be a "
       "renderbuffer or texture",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, RunGraphicsWithComputeProgram) {
   std::string program =
-      R"(DECLARE_SHADER comp KIND COMPUTE
+      R"(GLES 3.1
+DECLARE_SHADER comp KIND COMPUTE
 #version 320 es
 void main() { }
 END
@@ -1116,14 +1163,15 @@ RUN_GRAPHICS
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 21:11: 'program' must be a graphics program, not a compute "
+      "ERROR: 22:11: 'program' must be a graphics program, not a compute "
       "program",
       message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, SetSamplerParameterNonexistentSampler) {
   std::string program =
-      R"(SET_SAMPLER_PARAMETER PARAMETER TEXTURE_MAG_FILTER VALUE LINEAR SAMPLER nonexistent
+      R"(GLES 3.1
+SET_SAMPLER_PARAMETER PARAMETER TEXTURE_MAG_FILTER VALUE LINEAR SAMPLER nonexistent
 )";
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
@@ -1131,13 +1179,14 @@ TEST_F(CheckerTestFixture, SetSamplerParameterNonexistentSampler) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 1:73: 'nonexistent' must be a sampler",
+  ASSERT_EQ("ERROR: 2:73: 'nonexistent' must be a sampler",
             message_consumer.GetMessageString(0));
 }
 
 TEST_F(CheckerTestFixture, SetTextureParameterNonexistentSampler) {
   std::string program =
-      R"(SET_TEXTURE_PARAMETER VALUE NEAREST PARAMETER TEXTURE_MIN_FILTER TEXTURE nonexistent
+      R"(GLES 3.1
+SET_TEXTURE_PARAMETER VALUE NEAREST PARAMETER TEXTURE_MIN_FILTER TEXTURE nonexistent
 )";
   CollectingMessageConsumer message_consumer;
   Parser parser(program, &message_consumer);
@@ -1145,7 +1194,7 @@ TEST_F(CheckerTestFixture, SetTextureParameterNonexistentSampler) {
   Checker checker(&message_consumer);
   ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 1:74: 'nonexistent' must be a texture",
+  ASSERT_EQ("ERROR: 2:74: 'nonexistent' must be a texture",
             message_consumer.GetMessageString(0));
 }
 

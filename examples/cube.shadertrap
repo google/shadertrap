@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+GLES 3.2
+
 CREATE_EMPTY_TEXTURE_2D my_tex WIDTH 256 HEIGHT 256
 
 SET_TEXTURE_PARAMETER TEXTURE my_tex PARAMETER TEXTURE_MAG_FILTER VALUE NEAREST

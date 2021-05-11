@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "libshadertrap/api_version.h"
 #include "libshadertrap/command.h"
 #include "libshadertrap/message_consumer.h"
 #include "libshadertrap/shadertrap_program.h"
@@ -55,6 +56,8 @@ class Parser {
   std::unique_ptr<ShaderTrapProgram> GetParsedProgram();
 
  private:
+  bool ParseApiVersion();
+
   bool ParseCommand();
 
   bool ParseParameters(
@@ -120,6 +123,8 @@ class Parser {
   std::pair<bool, ValuesSegment> ParseValuesSegment();
 
   std::unique_ptr<Tokenizer> tokenizer_;
+
+  std::unique_ptr<ApiVersion> api_version_;
 
   MessageConsumer* message_consumer_;
 

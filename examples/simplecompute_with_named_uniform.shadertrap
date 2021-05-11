@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+GLES 3.2
+
 CREATE_BUFFER ssbo SIZE_BYTES 4 INIT_VALUES uint 1
 
 CREATE_BUFFER expected SIZE_BYTES 4 INIT_VALUES uint 42

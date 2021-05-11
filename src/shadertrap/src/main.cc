@@ -85,13 +85,15 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
+  std::unique_ptr<shadertrap::ShaderTrapProgram> shadertrap_program =
+      parser.GetParsedProgram();
+
   EGLDisplay display;
   EGLConfig config;
   EGLContext context;
   EGLSurface surface;
 
-  const EGLint config_attribute_list[] = {// EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-                                          EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+  const EGLint config_attribute_list[] = {EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
                                           EGL_RED_SIZE,     4,
                                           EGL_GREEN_SIZE,   4,
                                           EGL_BLUE_SIZE,    4,
@@ -165,8 +167,6 @@ int main(int argc, const char** argv) {
 
   shadertrap::GlFunctions functions = shadertrap::GetGlFunctions();
 
-  std::unique_ptr<shadertrap::ShaderTrapProgram> shadertrap_program =
-      parser.GetParsedProgram();
   std::vector<std::unique_ptr<shadertrap::CommandVisitor>> temp;
   temp.push_back(
       shadertrap::MakeUnique<shadertrap::Checker>(&message_consumer));
