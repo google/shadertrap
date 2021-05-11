@@ -1,8 +1,26 @@
 # The ShaderTrap language
 
-ShaderTrap is a scripting language that aims to make it easy to write tests for OpenGL ES shader compilers, in the form of graphics pipelines that perform off screen rendering using vertex and fragment shaders, and compute pipelines. The language exposes a variety of OpenGL ES features but does not aim to expose them in their full generality. In particular the range of formats that can be used in textures and renderbuffers is limited. The aim is to provide enough control that a wide range of shader compiler tests can be written, without providing so much control that the language becomes as complex as the underlying API itself.
+ShaderTrap is a scripting language that aims to make it easy to write tests for OpenGL and OpenGL ES shader compilers, in the form of graphics pipelines that perform off screen rendering using vertex and fragment shaders, and compute pipelines. The language exposes a variety of features common to OpenGL and OpenGL ES but does not aim to expose them in their full generality. In particular the range of formats that can be used in textures and renderbuffers is limited. The aim is to provide enough control that a wide range of shader compiler tests can be written, without providing so much control that the language becomes as complex as the underlying API itself.
 
-The current prototype is hard-coded to use OpenGL ES 3.2, but future versions may support some older OpenGL ES versions, and possibly some OpenGL versions.
+## Specifying an API version
+
+A ShaderTrap script starts with a statement of the form:
+
+```
+API MAJOR.MINOR
+```
+
+where:
+
+- `API` is either `GL`, specifying that the OpenGL API should be targeted, or `GLES`, specifying that the OpenGL ES API should be targeted
+- `MAJOR` and `MINOR` specify the version of the desired API
+
+Examples:
+
+- `GL 4.0` specifies that OpenGL 4.0 should be targeted
+- `GLES 3.1` specifies that OpenGL ES 3.1 should be targeted
+
+ShaderTrap aims to support OpenGL 4.0 through 4.6, and OpenGL ES 2.0, 3.0, 3.1 and 3.2. If you would value support for older API versions please open an issue.
 
 ## Commands
 
