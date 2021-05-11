@@ -548,9 +548,9 @@ bool Checker::VisitDeclareShader(CommandDeclareShader* declare_shader) {
       break;
     case CommandDeclareShader::Kind::COMPUTE:
       ApiVersion api_version = program_->GetApiVersion();
-      if ((api_version.api == ApiVersion::Api::GL &&
+      if ((api_version.GetApi() == ApiVersion::Api::GL &&
            api_version < ApiVersion(ApiVersion::Api::GL, 4, 3)) ||
-          (api_version.api == ApiVersion::Api::GLES &&
+          (api_version.GetApi() == ApiVersion::Api::GLES &&
            api_version < ApiVersion(ApiVersion::Api::GLES, 3, 1))) {
         message_consumer_->Message(MessageConsumer::Severity::kError,
                                    &declare_shader->GetStartToken(),

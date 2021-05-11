@@ -107,9 +107,10 @@ int main(int argc, const char** argv) {
                                            EGL_NONE};
 
   std::vector<EGLint> context_attributes = {
-      EGL_CONTEXT_MAJOR_VERSION, static_cast<EGLint>(api_version.major),
-      EGL_CONTEXT_MINOR_VERSION, static_cast<EGLint>(api_version.minor),
-      EGL_NONE};
+      EGL_CONTEXT_MAJOR_VERSION,
+      static_cast<EGLint>(api_version.GetMajorVersion()),
+      EGL_CONTEXT_MINOR_VERSION,
+      static_cast<EGLint>(api_version.GetMinorVersion()), EGL_NONE};
 
   // TODO(afd): For offscreen rendering, do width and height matter?  If no,
   //  are there more sensible default values than these?  If yes, should they be
@@ -128,22 +129,24 @@ int main(int argc, const char** argv) {
 
   display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
-  EGLint major;
-  EGLint minor;
+  EGLint egl_major_version;
+  EGLint egl_minor_version;
 
-  if (eglInitialize(display, &major, &minor) == EGL_FALSE) {
+  if (eglInitialize(display, &egl_major_version, &egl_minor_version) ==
+      EGL_FALSE) {
     std::cerr << "eglInitialize failed." << std::endl;
     return 1;
   }
 
-  if (api_version.api == shadertrap::ApiVersion::Api::GL &&
-      !(major > 1 || (major == 1 && minor >= 5))) {
+  if (api_version.GetApi() == shadertrap::ApiVersion::Api::GL &&
+      !(egl_major_version > 1 ||
+        (egl_major_version == 1 && egl_minor_version >= 5))) {
     std::cerr << "EGL and OpenGL are not compatible pre EGL 1.5; found EGL "
-              << major << "." << minor << std::endl;
+              << egl_major_version << "." << egl_minor_version << std::endl;
     return 1;
   }
 
-  if (eglBindAPI(static_cast<EGLenum>(api_version.api ==
+  if (eglBindAPI(static_cast<EGLenum>(api_version.GetApi() ==
                                               shadertrap::ApiVersion::Api::GL
                                           ? EGL_OPENGL_API
                                           : EGL_OPENGL_ES_API)) == EGL_FALSE) {
@@ -178,7 +181,7 @@ int main(int argc, const char** argv) {
 
   eglMakeCurrent(display, surface, surface, context);
 
-  if (api_version.api == shadertrap::ApiVersion::Api::GL) {
+  if (api_version.GetApi() == shadertrap::ApiVersion::Api::GL) {
     if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(eglGetProcAddress)) ==
         0) {
       std::cerr << "gladLoadGLLoader failed." << std::endl;

@@ -17,23 +17,32 @@
 
 namespace shadertrap {
 
-struct ApiVersion {
-  enum class Api { GL, GLES } api;
-  uint32_t major;
-  uint32_t minor;
+class ApiVersion {
+ public:
+  enum class Api { GL, GLES };
 
-  ApiVersion(Api apiParam, uint32_t majorParam, uint32_t minorParam)
-      : api(apiParam), major(majorParam), minor(minorParam) {}
+  ApiVersion(Api api, uint32_t major_version, uint32_t minor_version)
+      : api_(api),
+        major_version_(major_version),
+        minor_version_(minor_version) {}
+
+  Api GetApi() const { return api_; }
+
+  uint32_t GetMajorVersion() const { return major_version_; }
+
+  uint32_t GetMinorVersion() const { return minor_version_; }
 
   bool operator==(const ApiVersion& other) const {
-    return api == other.api && major == other.major && minor == other.minor;
+    return api_ == other.api_ && major_version_ == other.major_version_ &&
+           minor_version_ == other.minor_version_;
   }
 
   bool operator!=(const ApiVersion& other) const { return !(*this == other); }
 
   bool operator>=(const ApiVersion& other) const {
-    return api == other.api && (major > other.major ||
-                                (major == other.major && minor >= other.minor));
+    return api_ == other.api_ && (major_version_ > other.major_version_ ||
+                                  (major_version_ == other.major_version_ &&
+                                   minor_version_ >= other.minor_version_));
   }
 
   bool operator>(const ApiVersion& other) const {
@@ -43,6 +52,11 @@ struct ApiVersion {
   bool operator<=(const ApiVersion& other) const { return other >= *this; }
 
   bool operator<(const ApiVersion& other) const { return other > *this; }
+
+ private:
+  Api api_;
+  uint32_t major_version_;
+  uint32_t minor_version_;
 };
 
 }  // namespace shadertrap
