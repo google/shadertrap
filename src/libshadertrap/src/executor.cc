@@ -131,6 +131,7 @@ bool Executor::VisitAssertPixels(CommandAssertPixels* assert_pixels) {
   GL_SAFECALL(&assert_pixels->GetStartToken(), glReadPixels, 0, 0,
               static_cast<GLint>(width), static_cast<GLint>(height), GL_RGBA,
               GL_UNSIGNED_BYTE, data.data());
+  bool result = true;
   for (size_t y = assert_pixels->GetRectangleY();
        y < assert_pixels->GetRectangleY() + assert_pixels->GetRectangleHeight();
        y++) {
@@ -165,10 +166,11 @@ bool Executor::VisitAssertPixels(CommandAssertPixels* assert_pixels) {
         message_consumer_->Message(MessageConsumer::Severity::kError,
                                    &assert_pixels->GetStartToken(),
                                    stringstream.str());
+        result = false;
       }
     }
   }
-  return true;
+  return result;
 }
 
 bool Executor::VisitAssertSimilarEmdHistogram(
