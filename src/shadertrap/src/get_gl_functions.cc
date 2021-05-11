@@ -22,6 +22,10 @@
 
 #include "shadertrap/get_gl_functions.h"
 
+#include <functional>
+
+#include "libshadertrap/gl_functions.h"
+
 namespace shadertrap {
 
 GlFunctions GetGlFunctions() {

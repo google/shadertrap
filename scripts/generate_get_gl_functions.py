@@ -88,6 +88,10 @@ def gen_functions(xml_file: Path) -> str:
 
 #include "shadertrap/get_gl_functions.h"
 
+#include <functional>
+
+#include "libshadertrap/gl_functions.h"
+
 namespace shadertrap {
 
 """
