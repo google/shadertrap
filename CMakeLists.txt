@@ -36,16 +36,30 @@ set(
     "Path to a https://github.com/google/googletest repo.")
 
 set(
-        SHADERTRAP_GLSLANG_REPO_DIR
-        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/glslang/glslang
-        CACHE
-        PATH
-        "Path to a https://github.com/KhronosGroup/glslang repo.")
+    SHADERTRAP_GLSLANG_REPO_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/glslang/glslang
+    CACHE
+    PATH
+    "Path to a https://github.com/KhronosGroup/glslang repo.")
+
+set(
+    SHADERTRAP_EGL_REGISTRY_REPO_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/EGL-Registry/EGL-Registry
+    CACHE
+    PATH
+    "Path to a https://github.com/KhronosGroup/EGL-Registry repo.")
+
+set(
+    SHADERTRAP_OPENGL_REGISTRY_REPO_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/OpenGL-Registry/OpenGL-Registry
+    CACHE
+    PATH
+    "Path to a https://github.com/KhronosGroup/OpenGL-Registry repo.")
 
 option(
-        SHADERTRAP_USE_LLVM_LIBCPP
-        "Use LLVM's libc++ when using Clang, plus various other LLVM options, but only if shadertrap is the root project."
-        OFF)
+    SHADERTRAP_USE_LLVM_LIBCPP
+    "Use LLVM's libc++ when using Clang, plus various other LLVM options, but only if shadertrap is the root project."
+    OFF)
 
 option(
     SHADERTRAP_WARNINGS_AS_ERRORS
@@ -129,6 +143,8 @@ endif()
 ## Third party targets.
 
 add_subdirectory(third_party/EGL-Registry EXCLUDE_FROM_ALL)
+
+add_subdirectory(third_party/OpenGL-Registry EXCLUDE_FROM_ALL)
 
 # TODO(paulthomson): Probably remove this and use a different loading strategy/library.
 add_subdirectory(third_party/glad EXCLUDE_FROM_ALL)

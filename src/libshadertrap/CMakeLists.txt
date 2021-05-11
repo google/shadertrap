@@ -40,6 +40,7 @@ add_library(libshadertrap STATIC
         include/libshadertrap/command_visitor.h
         include/libshadertrap/compound_visitor.h
         include/libshadertrap/executor.h
+        include/libshadertrap/gl_functions.h
         include/libshadertrap/glslang.h
         include/libshadertrap/make_unique.h
         include/libshadertrap/message_consumer.h
@@ -88,5 +89,5 @@ add_library(libshadertrap STATIC
         )
 
 target_include_directories(libshadertrap PUBLIC include PRIVATE include_private/include)
-target_link_libraries(libshadertrap PRIVATE glad glslang lodepng)
+target_link_libraries(libshadertrap PUBLIC shadertrap_egl_headers shadertrap_gl_headers PRIVATE glslang lodepng)
 target_compile_features(libshadertrap PUBLIC cxx_std_11)

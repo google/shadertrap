@@ -22,6 +22,10 @@ if(SHADERTRAP_WARNING_SUPPRESSIONS)
 endif()
 
 add_executable(shadertrap
+        include_private/include/shadertrap/get_gl_functions.h
+
         src/main.cc
+        src/get_gl_functions.cc
 )
-target_link_libraries(shadertrap PRIVATE egl_headers glad glslang libshadertrap ${SHADERTRAP_EGL_LIB_PATH})
+target_include_directories(shadertrap PRIVATE include_private/include)
+target_link_libraries(shadertrap PRIVATE shadertrap_glad glslang libshadertrap ${SHADERTRAP_EGL_LIB_PATH})

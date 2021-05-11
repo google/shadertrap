@@ -14,10 +14,10 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-project(glad C)
+project(shadertrap_glad C)
 
-add_library(glad STATIC
+add_library(shadertrap_glad STATIC
    src/glad.c
 )
 
-target_include_directories(glad SYSTEM PUBLIC include)
+target_include_directories(shadertrap_glad SYSTEM PUBLIC include)

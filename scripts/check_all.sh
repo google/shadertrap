@@ -20,5 +20,6 @@ set -x
 
 check_headers.py
 check_format.sh
+check_generated.py
 check_cpplint.sh
 check_clean_build.sh

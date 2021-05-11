@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <EGL/egl.h>
-#include <glad/glad.h>
 
 #include <fstream>
 #include <iostream>
@@ -23,16 +22,19 @@
 #include <utility>
 #include <vector>
 
+#include "glad/glad.h"
 #include "libshadertrap/checker.h"
 #include "libshadertrap/command_visitor.h"
 #include "libshadertrap/compound_visitor.h"
 #include "libshadertrap/executor.h"
+#include "libshadertrap/gl_functions.h"
 #include "libshadertrap/glslang.h"
 #include "libshadertrap/make_unique.h"
 #include "libshadertrap/message_consumer.h"
 #include "libshadertrap/parser.h"
 #include "libshadertrap/shadertrap_program.h"
 #include "libshadertrap/token.h"
+#include "shadertrap/get_gl_functions.h"
 
 namespace {
 
@@ -161,13 +163,15 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
+  shadertrap::GlFunctions functions = shadertrap::GetGlFunctions();
+
   std::unique_ptr<shadertrap::ShaderTrapProgram> shadertrap_program =
       parser.GetParsedProgram();
   std::vector<std::unique_ptr<shadertrap::CommandVisitor>> temp;
   temp.push_back(
       shadertrap::MakeUnique<shadertrap::Checker>(&message_consumer));
-  temp.push_back(
-      shadertrap::MakeUnique<shadertrap::Executor>(&message_consumer));
+  temp.push_back(shadertrap::MakeUnique<shadertrap::Executor>(
+      &functions, &message_consumer));
   shadertrap::CompoundVisitor checker_and_executor(std::move(temp));
   ShInitialize();
   bool success = checker_and_executor.VisitCommands(shadertrap_program.get());
