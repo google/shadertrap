@@ -23,4 +23,6 @@ shift
 
 cd "${SHADERTRAP_REPO_ROOT}"
 
-shadertrap_cc_files.sh | xargs -t clang-tidy -p="${COMPILE_COMMANDS}"
+# The auto-generated file "get_gl_functions.cc" is excluded: clang-tidy
+# was found to take an excessive amount of time processing this file.
+shadertrap_cc_files.sh | grep -v "get_gl_functions\.cc" | xargs -t clang-tidy -p="${COMPILE_COMMANDS}"
