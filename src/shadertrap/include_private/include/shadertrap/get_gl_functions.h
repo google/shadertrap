@@ -19,7 +19,7 @@
 
 namespace shadertrap {
 
-shadertrap::GlFunctions GetGlFunctions();
+GlFunctions GetGlFunctions();
 
 }  // namespace shadertrap
 

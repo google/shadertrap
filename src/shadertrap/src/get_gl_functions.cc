@@ -14,14 +14,14 @@
 
 // Automatically-generated file - DO NOT EDIT
 
-#include "shadertrap/get_gl_functions.h"
-
 #include <glad/glad.h>
+
+#include "shadertrap/get_gl_functions.h"
 
 namespace shadertrap {
 
-shadertrap::GlFunctions GetGlFunctions() {
-  shadertrap::GlFunctions result{};
+GlFunctions GetGlFunctions() {
+  GlFunctions result{};
   // clang-format off
   result.glActiveShaderProgram_ = glActiveShaderProgram;
   result.glActiveTexture_ = glActiveTexture;

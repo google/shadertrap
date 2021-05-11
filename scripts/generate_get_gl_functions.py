@@ -44,8 +44,8 @@ def gen_functions(xml_file: Path) -> str:
                         if requirement.tag == 'command':
                             required_command_names.add(requirement.attrib['name'])
 
-    get_gl_functions = 'shadertrap::GlFunctions GetGlFunctions() {\n'
-    get_gl_functions += '  shadertrap::GlFunctions result{};\n'
+    get_gl_functions = 'GlFunctions GetGlFunctions() {\n'
+    get_gl_functions += '  GlFunctions result{};\n'
     get_gl_functions += '  // clang-format off\n'
     for command in commands:
         assert command.tag == 'command'
@@ -80,9 +80,9 @@ def gen_functions(xml_file: Path) -> str:
 
 // Automatically-generated file - DO NOT EDIT
 
-#include "shadertrap/get_gl_functions.h"
-
 #include <glad/glad.h>
+
+#include "shadertrap/get_gl_functions.h"
 
 namespace shadertrap {
 

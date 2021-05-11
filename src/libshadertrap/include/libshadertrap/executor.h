@@ -15,6 +15,7 @@
 #ifndef LIBSHADERTRAP_EXECUTOR_H
 #define LIBSHADERTRAP_EXECUTOR_H
 
+#define GL_GLES_PROTOTYPES 0
 #include <GLES3/gl32.h>
 
 #include <map>

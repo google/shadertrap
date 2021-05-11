@@ -14,15 +14,15 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-project(egl_headers C)
-
-if(NOT IS_DIRECTORY ${SHADERTRAP_EGL_REGISTRY_REPO_DIR})
-    message(
-            FATAL_ERROR
-            "Could not find EGL registry at ${SHADERTRAP_EGL_REGISTRY_REPO_DIR}. "
-            "Try fetching submodules or set SHADERTRAP_EGL_REGISTRY_REPO_DIR.")
+if(NOT TARGET shadertrap_egl_headers)
+    if(NOT IS_DIRECTORY ${SHADERTRAP_EGL_REGISTRY_REPO_DIR})
+        message(
+                FATAL_ERROR
+                "Could not find EGL registry at ${SHADERTRAP_EGL_REGISTRY_REPO_DIR}. "
+                "Try fetching submodules or set SHADERTRAP_EGL_REGISTRY_REPO_DIR.")
+    endif()
 endif()
 
-add_library(egl_headers INTERFACE)
+add_library(shadertrap_egl_headers INTERFACE)
 
-target_include_directories(egl_headers SYSTEM INTERFACE ${SHADERTRAP_EGL_REGISTRY_REPO_DIR}/api)
+target_include_directories(shadertrap_egl_headers SYSTEM INTERFACE ${SHADERTRAP_EGL_REGISTRY_REPO_DIR}/api)

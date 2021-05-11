@@ -14,15 +14,15 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-project(gl_headers C)
-
-if(NOT IS_DIRECTORY ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR})
-    message(
-            FATAL_ERROR
-            "Could not find OpenGL registry at ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR}. "
-            "Try fetching submodules or set SHADERTRAP_OPENGL_REGISTRY_REPO_DIR.")
+if(NOT TARGET shadertrap_gl_headers)
+    if(NOT IS_DIRECTORY ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR})
+        message(
+                FATAL_ERROR
+                "Could not find OpenGL registry at ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR}. "
+                "Try fetching submodules or set SHADERTRAP_OPENGL_REGISTRY_REPO_DIR.")
+    endif()
 endif()
 
-add_library(gl_headers INTERFACE)
+add_library(shadertrap_gl_headers INTERFACE)
 
-target_include_directories(gl_headers SYSTEM INTERFACE ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR}/api)
+target_include_directories(shadertrap_gl_headers SYSTEM INTERFACE ${SHADERTRAP_OPENGL_REGISTRY_REPO_DIR}/api)
