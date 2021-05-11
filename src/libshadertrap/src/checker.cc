@@ -138,8 +138,8 @@ const TBuiltInResource kDefaultTBuiltInResource = {
 
 }  // namespace
 
-Checker::Checker(MessageConsumer* message_consumer)
-    : message_consumer_(message_consumer) {}
+Checker::Checker(MessageConsumer* message_consumer, ShaderTrapProgram* program)
+    : message_consumer_(message_consumer), program_(program) {}
 
 bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
   const auto& operand1_token =
@@ -547,6 +547,17 @@ bool Checker::VisitDeclareShader(CommandDeclareShader* declare_shader) {
       shader_stage = EShLanguage::EShLangFragment;
       break;
     case CommandDeclareShader::Kind::COMPUTE:
+      ApiVersion api_version = program_->GetApiVersion();
+      if ((api_version.api == ApiVersion::Api::GL &&
+           api_version < ApiVersion(ApiVersion::Api::GL, 4, 3)) ||
+          (api_version.api == ApiVersion::Api::GLES &&
+           api_version < ApiVersion(ApiVersion::Api::GLES, 3, 1))) {
+        message_consumer_->Message(MessageConsumer::Severity::kError,
+                                   &declare_shader->GetStartToken(),
+                                   "Compute shaders are not supported before "
+                                   "OpenGL 4.3 or OpenGL ES 3.1");
+        return false;
+      }
       shader_stage = EShLanguage::EShLangCompute;
       break;
   }

@@ -113,6 +113,8 @@ To make a sampler uniform in a shader use the texture unit `unit` to which this 
 
 ### BIND_SHADER_STORAGE_BUFFER
 
+Requires API level to be at least OpenGL 4.3 or OpenGL ES 3.1.
+
 ```
 BIND_STORAGE_BUFFER BUFFER buffer BINDING binding
 ```
@@ -236,6 +238,8 @@ Creates a sampler identified via `result`. Parameters of the the sampler can the
 
 ### DECLARE_SHADER
 
+The `COMPUTE` shader kind requires API level to be at least OpenGL 4.3 or OpenGL ES 3.1.
+
 ```
 DECLARE_SHADER result KIND kind
 // GLSL code
@@ -262,6 +266,8 @@ Dumps a renderbuffer to a file, in PNG format.
 - `file` is the file to which the PNG will be written
 
 ### RUN_COMPUTE
+
+Requires API level to be at least OpenGL 4.3 or OpenGL ES 3.1.
 
 ```
 RUN_COMPUTE PROGRAM compute_program NUM_GROUPS x y z

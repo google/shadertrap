@@ -194,8 +194,8 @@ int main(int argc, const char** argv) {
   shadertrap::GlFunctions functions = shadertrap::GetGlFunctions();
 
   std::vector<std::unique_ptr<shadertrap::CommandVisitor>> temp;
-  temp.push_back(
-      shadertrap::MakeUnique<shadertrap::Checker>(&message_consumer));
+  temp.push_back(shadertrap::MakeUnique<shadertrap::Checker>(
+      &message_consumer, shadertrap_program.get()));
   temp.push_back(shadertrap::MakeUnique<shadertrap::Executor>(
       &functions, &message_consumer));
   shadertrap::CompoundVisitor checker_and_executor(std::move(temp));

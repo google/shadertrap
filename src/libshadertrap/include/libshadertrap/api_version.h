@@ -42,9 +42,7 @@ struct ApiVersion {
 
   bool operator<=(const ApiVersion& other) const { return other >= *this; }
 
-  bool operator<(const ApiVersion& other) const {
-    return *this > other && *this != other;
-  }
+  bool operator<(const ApiVersion& other) const { return other > *this; }
 };
 
 }  // namespace shadertrap

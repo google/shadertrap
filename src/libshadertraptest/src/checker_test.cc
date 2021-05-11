@@ -1198,5 +1198,45 @@ SET_TEXTURE_PARAMETER VALUE NEAREST PARAMETER TEXTURE_MIN_FILTER TEXTURE nonexis
             message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, NoComputeShaderBeforeGl43) {
+  std::string program =
+      R"(GL 4.2
+DECLARE_SHADER comp KIND COMPUTE
+#version 320 es
+void main() { }
+END
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 2:1: Compute shaders are not supported before OpenGL 4.3 or "
+      "OpenGL ES 3.1",
+      message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, NoComputeShaderBeforeGles31) {
+  std::string program =
+      R"(GLES 3.0
+DECLARE_SHADER comp KIND COMPUTE
+#version 320 es
+void main() { }
+END
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  Checker checker(&message_consumer);
+  ASSERT_FALSE(checker.VisitCommands(parser.GetParsedProgram().get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 2:1: Compute shaders are not supported before OpenGL 4.3 or "
+      "OpenGL ES 3.1",
+      message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap
