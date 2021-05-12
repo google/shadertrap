@@ -76,6 +76,25 @@ option(
     "Enable suppression of specific warnings for shadertrap targets."
     ${SHADERTRAP_PROJECT_IS_ROOT})
 
+option(
+    SHADERTRAP_SKIP_GOOGLETEST
+    "Skip building Google tests"
+    ${SHADERTRAP_SKIP_GOOGLETEST})
+
+option(
+    SHADERTRAP_SKIP_EXECUTABLE
+    "Skip building executable along with the library"
+    ${SHADERTRAP_SKIP_EXECUTABLE})
+
+option(
+    SHADERTRAP_SKIP_LODEPNG
+    "Skip building lodepng"
+    ${SHADERTRAP_SKIP_EXECUTABLE})
+
+option(
+    SHADERTRAP_DEQP
+    "Enabled for dEQP integration"
+    ${SHADERTRAP_DEQP})
 
 # TODO(paulthomson): Remove this eventually.
 find_library(SHADERTRAP_EGL_LIB_PATH NAMES EGL libEGL)
@@ -149,9 +168,13 @@ add_subdirectory(third_party/OpenGL-Registry EXCLUDE_FROM_ALL)
 # TODO(paulthomson): Probably remove this and use a different loading strategy/library.
 add_subdirectory(third_party/glad EXCLUDE_FROM_ALL)
 
+if(NOT ${SHADERTRAP_SKIP_LODEPNG})
 add_subdirectory(third_party/lodepng EXCLUDE_FROM_ALL)
+endif()
 
+if(NOT ${SHADERTRAP_SKIP_GOOGLETEST})
 add_subdirectory(third_party/googletest)
+endif()
 
 add_subdirectory(third_party/glslang)
 
@@ -221,10 +244,20 @@ if(SHADERTRAP_WARNING_SUPPRESSIONS)
     endif()
 endif()
 
+if(${SHADERTRAP_DEQP})
+    add_definitions(-DSHADERTRAP_DEQP)
+endif()
+
+if(NOT ${SHADERTRAP_SKIP_LODEPNG})
+    add_definitions(-DSHADERTRAP_LODEPNG)
+endif()
+
 add_subdirectory(src/libshadertrap)
 
 if(BUILD_TESTING)
     add_subdirectory(src/libshadertraptest)
 endif()
 
+if(NOT ${SHADERTRAP_SKIP_EXECUTABLE})
 add_subdirectory(src/shadertrap)
+endif()

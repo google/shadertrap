@@ -112,7 +112,11 @@ def gen_struct(xml_file: Path) -> str:
 #define LIBSHADERTRAP_GL_FUNCTIONS_H
 
 #define GL_GLES_PROTOTYPES 0
+#ifdef SHADERTRAP_DEQP
+#include "glw.h"
+#else
 #include <GLES3/gl32.h>
+#endif
 
 #include <functional>
 
