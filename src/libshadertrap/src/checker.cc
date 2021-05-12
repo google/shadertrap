@@ -21,6 +21,7 @@
 #include <type_traits>  // IWYU pragma: keep
 #include <utility>
 
+#include "libshadertrap/api_version.h"
 #include "libshadertrap/make_unique.h"
 #include "libshadertrap/vertex_attribute_info.h"
 

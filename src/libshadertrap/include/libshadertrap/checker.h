@@ -43,6 +43,7 @@
 #include "libshadertrap/command_visitor.h"
 #include "libshadertrap/glslang.h"
 #include "libshadertrap/message_consumer.h"
+#include "libshadertrap/shadertrap_program.h"
 #include "libshadertrap/token.h"
 
 namespace shadertrap {
