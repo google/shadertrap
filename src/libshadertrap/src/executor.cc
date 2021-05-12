@@ -83,8 +83,11 @@ const size_t kNumRgbaChannels = 4;
     GL_CHECKERR(token, #function);           \
   } while (0)
 
-Executor::Executor(GlFunctions* gl_functions, MessageConsumer* message_consumer)
-    : gl_functions_(gl_functions), message_consumer_(message_consumer) {}
+Executor::Executor(GlFunctions* gl_functions, MessageConsumer* message_consumer,
+                   ApiVersion api_version)
+    : gl_functions_(gl_functions),
+      message_consumer_(message_consumer),
+      api_version_(api_version) {}
 
 bool Executor::VisitAssertEqual(CommandAssertEqual* assert_equal) {
   if (assert_equal->GetArgumentsAreRenderbuffers()) {
@@ -127,8 +130,15 @@ bool Executor::VisitAssertPixels(CommandAssertPixels* assert_pixels) {
   }
 
   std::vector<std::uint8_t> data(width * height * kNumRgbaChannels);
-  GL_SAFECALL(&assert_pixels->GetStartToken(), glReadBuffer,
-              GL_COLOR_ATTACHMENT0);
+  if (api_version_.GetApi() == ApiVersion::Api::GL ||
+      api_version_ >= ApiVersion(ApiVersion::Api::GLES, 3, 0)) {
+    // OpenGL ES did not support glReadBuffer before 3.0, and reads will always
+    // occur from color attachment 0 in OpenGL ES 2.0. Where the facility to
+    // specify a read buffer is available, we explicitly specify that we would
+    // like color attachment 0.
+    GL_SAFECALL(&assert_pixels->GetStartToken(), glReadBuffer,
+                GL_COLOR_ATTACHMENT0);
+  }
   GL_SAFECALL(&assert_pixels->GetStartToken(), glReadPixels, 0, 0,
               static_cast<GLint>(width), static_cast<GLint>(height), GL_RGBA,
               GL_UNSIGNED_BYTE, data.data());
@@ -659,8 +669,13 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
     return false;
   }
 
-  GL_SAFECALL(&run_graphics->GetStartToken(), glDrawBuffers,
-              static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
+  if (api_version_ != ApiVersion(ApiVersion::Api::GLES, 2, 0)) {
+    // glDrawBuffers is not available in OpenGL ES 2.0, but for this API version
+    // only color attachment 0 may be used, and the checker enforces this. Thus
+    // this call can be skipped.
+    GL_SAFECALL(&run_graphics->GetStartToken(), glDrawBuffers,
+                static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
+  }
 
   GL_SAFECALL(&run_graphics->GetStartToken(), glClearColor, 0.0F, 0.0F, 0.0F,
               1.0F);
@@ -991,36 +1006,34 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
     return false;
   }
 
-  GLuint framebuffer_object_id;
-  GL_SAFECALL(&assert_equal->GetStartToken(), glGenFramebuffers, 1,
-              &framebuffer_object_id);
-  GL_SAFECALL(&assert_equal->GetStartToken(), glBindFramebuffer, GL_FRAMEBUFFER,
-              framebuffer_object_id);
-  for (auto index : {0, 1}) {
-    GL_SAFECALL(&assert_equal->GetStartToken(), glFramebufferRenderbuffer,
-                GL_FRAMEBUFFER,
-                GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index),
-                GL_RENDERBUFFER, renderbuffers[index]);
-  }
-  GLenum status = gl_functions_->glCheckFramebufferStatus_(GL_FRAMEBUFFER);
-  if (status != GL_FRAMEBUFFER_COMPLETE) {
-    message_consumer_->Message(
-        MessageConsumer::Severity::kError, &assert_equal->GetStartToken(),
-        "Incomplete framebuffer found for 'ASSERT_EQUAL' command; "
-        "glCheckFramebufferStatus returned status " +
-            std::to_string(status));
-    return false;
-  }
-
   std::vector<std::uint8_t> data[2];
   for (auto index : {0, 1}) {
+    GLuint framebuffer_object_id;
+    GL_SAFECALL(&assert_equal->GetStartToken(), glGenFramebuffers, 1,
+                &framebuffer_object_id);
+    GL_SAFECALL(&assert_equal->GetStartToken(), glBindFramebuffer,
+                GL_FRAMEBUFFER, framebuffer_object_id);
+    GL_SAFECALL(&assert_equal->GetStartToken(), glFramebufferRenderbuffer,
+                GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER,
+                renderbuffers[index]);
+    GLenum status = gl_functions_->glCheckFramebufferStatus_(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, &assert_equal->GetStartToken(),
+          "Incomplete framebuffer found for 'ASSERT_EQUAL' command; "
+          "glCheckFramebufferStatus returned status " +
+              std::to_string(status));
+      return false;
+    }
     data[index].resize(width[index] * height[index] * kNumRgbaChannels);
     GL_SAFECALL(&assert_equal->GetStartToken(), glReadBuffer,
-                GL_COLOR_ATTACHMENT0 + static_cast<GLenum>(index));
+                GL_COLOR_ATTACHMENT0);
     GL_SAFECALL(&assert_equal->GetStartToken(), glReadPixels, 0, 0,
                 static_cast<GLsizei>(width[index]),
                 static_cast<GLsizei>(height[index]), GL_RGBA, GL_UNSIGNED_BYTE,
                 data[index].data());
+    GL_SAFECALL(&assert_equal->GetStartToken(), glDeleteFramebuffers, 1,
+                &framebuffer_object_id);
   }
 
   bool result = true;

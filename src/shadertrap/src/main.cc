@@ -205,9 +205,9 @@ int main(int argc, const char** argv) {
 
   std::vector<std::unique_ptr<shadertrap::CommandVisitor>> temp;
   temp.push_back(shadertrap::MakeUnique<shadertrap::Checker>(
-      &message_consumer, shadertrap_program.get()));
+      &message_consumer, shadertrap_program->GetApiVersion()));
   temp.push_back(shadertrap::MakeUnique<shadertrap::Executor>(
-      &functions, &message_consumer));
+      &functions, &message_consumer, shadertrap_program->GetApiVersion()));
   shadertrap::CompoundVisitor checker_and_executor(std::move(temp));
   ShInitialize();
   bool success = checker_and_executor.VisitCommands(shadertrap_program.get());

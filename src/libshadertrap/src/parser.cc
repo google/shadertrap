@@ -894,44 +894,80 @@ bool Parser::ParseCommandRunGraphics() {
             }},
            {Token::Type::kKeywordFramebufferAttachments,
             [this, &framebuffer_attachments]() -> bool {
-              auto token = tokenizer_->NextToken();
-              if (token->GetText() != "[") {
-                message_consumer_->Message(MessageConsumer::Severity::kError,
-                                           token.get(),
-                                           "Expected '[' to commence start of "
-                                           "framebuffer attachments, got '" +
-                                               token->GetText() + "'");
+              auto square_brace_token = tokenizer_->NextToken();
+              if (square_brace_token->GetText() != "[") {
+                message_consumer_->Message(
+                    MessageConsumer::Severity::kError, square_brace_token.get(),
+                    "Expected '[' to commence start of "
+                    "framebuffer attachments, got '" +
+                        square_brace_token->GetText() + "'");
                 return false;
               }
+              std::unordered_map<size_t, std::unique_ptr<Token>>
+                  observed_locations;
+              std::unordered_map<std::string, std::unique_ptr<Token>>
+                  observed_identifiers;
               while (tokenizer_->PeekNextToken()->GetText() != "]") {
+                auto location_token = tokenizer_->PeekNextToken();
                 auto maybe_location = ParseUint32("location");
                 if (!maybe_location.first) {
                   return false;
                 }
-                token = tokenizer_->NextToken();
-                if (token->GetText() != "->") {
+                if (observed_locations.count(maybe_location.second) > 0) {
                   message_consumer_->Message(
-                      MessageConsumer::Severity::kError, token.get(),
-                      "Expected '->', got '" + token->GetText() + "'");
+                      MessageConsumer::Severity::kError, location_token.get(),
+                      "Duplicate key: " +
+                          std::to_string(maybe_location.second) +
+                          " is already used as a key at " +
+                          observed_locations.at(maybe_location.second)
+                              ->GetLocationString());
                   return false;
                 }
-                token = tokenizer_->NextToken();
-                if (!token->IsIdentifier()) {
+                observed_locations.emplace(maybe_location.second,
+                                           std::move(location_token));
+                auto arrow_token = tokenizer_->NextToken();
+                if (arrow_token->GetText() != "->") {
                   message_consumer_->Message(
-                      MessageConsumer::Severity::kError, token.get(),
+                      MessageConsumer::Severity::kError, arrow_token.get(),
+                      "Expected '->', got '" + arrow_token->GetText() + "'");
+                  return false;
+                }
+                // We want two copies of this token, so we peek to get the first
+                // one.
+                auto identifier_token_for_map = tokenizer_->PeekNextToken();
+                auto identifier_token = tokenizer_->NextToken();
+                if (!identifier_token->IsIdentifier()) {
+                  message_consumer_->Message(
+                      MessageConsumer::Severity::kError, identifier_token.get(),
                       "Expected identifier for framebuffer attachment, got '" +
-                          token->GetText() + "'");
+                          identifier_token->GetText() + "'");
                   return false;
                 }
-                framebuffer_attachments.insert(
-                    {maybe_location.second, std::move(token)});
-                token = tokenizer_->PeekNextToken();
-                if (token->GetText() == ",") {
-                  tokenizer_->NextToken();
-                } else if (token->GetText() != "]") {
+                if (observed_identifiers.count(identifier_token->GetText()) >
+                    0) {
                   message_consumer_->Message(
-                      MessageConsumer::Severity::kError, token.get(),
-                      "Expected ',' or ']', got '" + token->GetText() + "'");
+                      MessageConsumer::Severity::kError, identifier_token.get(),
+                      "Duplicate attachment: '" + identifier_token->GetText() +
+                          "' is already attached at " +
+                          observed_identifiers.at(identifier_token->GetText())
+                              ->GetLocationString());
+                  return false;
+                }
+                observed_identifiers.emplace(
+                    identifier_token->GetText(),
+                    std::move(identifier_token_for_map));
+
+                framebuffer_attachments.insert(
+                    {maybe_location.second, std::move(identifier_token)});
+                auto comma_or_square_brace_token = tokenizer_->PeekNextToken();
+                if (comma_or_square_brace_token->GetText() == ",") {
+                  tokenizer_->NextToken();
+                } else if (comma_or_square_brace_token->GetText() != "]") {
+                  message_consumer_->Message(
+                      MessageConsumer::Severity::kError,
+                      comma_or_square_brace_token.get(),
+                      "Expected ',' or ']', got '" +
+                          comma_or_square_brace_token->GetText() + "'");
                   return false;
                 }
               }
