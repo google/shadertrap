@@ -24,7 +24,8 @@ namespace shadertrap {
 namespace {
 
 TEST(ParserTest, NoShaders) {
-  std::string program = R"(CREATE_PROGRAM prog SHADERS
+  std::string program = R"(GLES 3.1
+CREATE_PROGRAM prog SHADERS
     )";
 
   CollectingMessageConsumer message_consumer;
@@ -37,7 +38,8 @@ TEST(ParserTest, NoShaders) {
 }
 
 TEST(ParserTest, ShaderStartsOnSameLineAsDeclaration) {
-  std::string program = R"(DECLARE_SHADER s KIND FRAGMENT version 320 es
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER s KIND FRAGMENT version 320 es
 void main() {
 }
 END
@@ -48,13 +50,14 @@ END
   ASSERT_FALSE(parser.Parse());
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 1:23: Shader text should begin on the line directly following "
+      "ERROR: 2:23: Shader text should begin on the line directly following "
       "the 'FRAGMENT' keyword",
       message_consumer.GetMessageString(0));
 }
 
 TEST(ParserTest, WarningIfVersionStringStartsOnSameLineAsDeclaration) {
-  std::string program = R"(DECLARE_SHADER s KIND FRAGMENT        #version 320 es
+  std::string program = R"(GLES 3.1
+DECLARE_SHADER s KIND FRAGMENT        #version 320 es
 void main() {
 }
 END
@@ -65,7 +68,7 @@ END
   ASSERT_TRUE(parser.Parse());
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "WARNING: 1:39: '#version ...' will be treated as a comment. If it is "
+      "WARNING: 2:39: '#version ...' will be treated as a comment. If it is "
       "supposed to be the first line of shader code, it should start on the "
       "following line",
       message_consumer.GetMessageString(0));
@@ -73,7 +76,8 @@ END
 
 TEST(ParserTest, SetUniformNameAndValue) {
   std::string program =
-      R"(DECLARE_SHADER shader KIND COMPUTE
+      R"(GLES 3.1
+DECLARE_SHADER shader KIND COMPUTE
 layout(location = 1) uniform float f;
 void main() {
   f;
@@ -89,14 +93,15 @@ SET_UNIFORM PROGRAM compute_program LOCATION 1 NAME f TYPE float VALUES 1.0
   ASSERT_FALSE(parser.Parse());
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 9:37: Parameters 'LOCATION' and 'NAME' are mutually exclusive; "
-      "both are present at 9:37 and 9:48",
+      "ERROR: 10:37: Parameters 'LOCATION' and 'NAME' are mutually exclusive; "
+      "both are present at 10:37 and 10:48",
       message_consumer.GetMessageString(0));
 }
 
 TEST(ParserTest, CreateBufferVariousTypes) {
   std::string program =
-      R"(CREATE_BUFFER buf SIZE_BYTES 52 INIT_VALUES
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 52 INIT_VALUES
    int 1 2 3
    float 1.0 2.0 3.0
    uint 10 11 12
@@ -175,7 +180,8 @@ TEST(ParserTest, CreateBufferVariousTypes) {
 
 TEST(ParserTest, CreateBufferBadByteMultiple) {
   std::string program =
-      R"(CREATE_BUFFER buf SIZE_BYTES 3 INIT_VALUES
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 3 INIT_VALUES
    int 3 6
    float 3.0 byte 1 2 3 4 5 6
 )";
@@ -185,14 +191,15 @@ TEST(ParserTest, CreateBufferBadByteMultiple) {
   ASSERT_FALSE(parser.Parse());
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 3:14: The number of byte literals supplied in a buffer "
+      "ERROR: 4:14: The number of byte literals supplied in a buffer "
       "initializer must be a multiple of 4; found a sequence of 6 literals",
       message_consumer.GetMessageString(0));
 }
 
 TEST(ParserTest, CreateBufferWrongSize) {
   std::string program =
-      R"(CREATE_BUFFER buf SIZE_BYTES 51 INIT_VALUES
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 51 INIT_VALUES
    int 1 2 3
    float 1.0 2.0 3.0
    uint 10 11 12
@@ -205,7 +212,7 @@ TEST(ParserTest, CreateBufferWrongSize) {
   ASSERT_FALSE(parser.Parse());
   ASSERT_EQ(1, message_consumer.GetNumMessages());
   ASSERT_EQ(
-      "ERROR: 1:30: Declared size in bytes 51 does not match the combined size "
+      "ERROR: 2:30: Declared size in bytes 51 does not match the combined size "
       "of the provided initial values, which is 52",
       message_consumer.GetMessageString(0));
 }

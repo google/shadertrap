@@ -43,13 +43,14 @@
 #include "libshadertrap/command_visitor.h"
 #include "libshadertrap/glslang.h"
 #include "libshadertrap/message_consumer.h"
+#include "libshadertrap/shadertrap_program.h"
 #include "libshadertrap/token.h"
 
 namespace shadertrap {
 
 class Checker : public CommandVisitor {
  public:
-  explicit Checker(MessageConsumer* message_consumer);
+  Checker(MessageConsumer* message_consumer, ShaderTrapProgram* program);
 
   bool VisitAssertEqual(CommandAssertEqual* assert_equal) override;
 
@@ -117,6 +118,7 @@ class Checker : public CommandVisitor {
                                         const Token& renderbuffer_token_2);
 
   MessageConsumer* message_consumer_;
+  ShaderTrapProgram* program_;
   std::unordered_map<std::string, const Token&> used_identifiers_;
   std::unordered_map<std::string, CommandDeclareShader*> declared_shaders_;
   std::unordered_map<std::string, CommandCompileShader*> compiled_shaders_;

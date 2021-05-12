@@ -57,11 +57,95 @@ Parser::Parser(const std::string& input, MessageConsumer* message_consumer)
 Parser::~Parser() = default;
 
 bool Parser::Parse() {
+  if (!ParseApiVersion()) {
+    return false;
+  }
   while (!tokenizer_->PeekNextToken()->IsEOS()) {
     if (!ParseCommand()) {
       return false;
     }
   }
+  return true;
+}
+
+bool Parser::ParseApiVersion() {
+  assert(api_version_ == nullptr && "API version should not yet be set");
+  auto api_token = tokenizer_->NextToken();
+  ApiVersion::Api api;
+  switch (api_token->GetType()) {
+    case Token::Type::kKeywordGl:
+      api = ApiVersion::Api::GL;
+      break;
+    case Token::Type::kKeywordGles:
+      api = ApiVersion::Api::GLES;
+      break;
+    default:
+      message_consumer_->Message(MessageConsumer::Severity::kError,
+                                 api_token.get(),
+                                 "Expected API version to begin with 'GL' for "
+                                 "OpenGL or 'GLES' for OpenGL ES; found '" +
+                                     api_token->GetText() + "'");
+      return false;
+  }
+  auto major_minor = tokenizer_->NextToken();
+  if (major_minor->GetType() != Token::Type::kFloatLiteral) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError, api_token.get(),
+        "Expected major and minor versions in the form 'MAJOR.MINOR'; found '" +
+            major_minor->GetText() + "'");
+    return false;
+  }
+  uint32_t major;
+  uint32_t minor;
+  if (api == ApiVersion::Api::GL) {
+    if (major_minor->GetText() == "4.0") {
+      major = 4;
+      minor = 0;
+    } else if (major_minor->GetText() == "4.1") {
+      major = 4;
+      minor = 1;
+    } else if (major_minor->GetText() == "4.2") {
+      major = 4;
+      minor = 2;
+    } else if (major_minor->GetText() == "4.3") {
+      major = 4;
+      minor = 3;
+    } else if (major_minor->GetText() == "4.4") {
+      major = 4;
+      minor = 4;
+    } else if (major_minor->GetText() == "4.5") {
+      major = 4;
+      minor = 5;  // NOLINT
+    } else if (major_minor->GetText() == "4.6") {
+      major = 4;
+      minor = 6;  // NOLINT
+    } else {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, api_token.get(),
+          "Unsupported OpenGL version: " + major_minor->GetText());
+      return false;
+    }
+  } else {
+    if (major_minor->GetText() == "2.0") {
+      major = 2;
+      minor = 0;
+    } else if (major_minor->GetText() == "3.0") {
+      major = 3;
+      minor = 0;
+    } else if (major_minor->GetText() == "3.1") {
+      major = 3;
+      minor = 1;
+    } else if (major_minor->GetText() == "3.2") {
+      major = 3;
+      minor = 2;
+    } else {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, api_token.get(),
+          "Unsupported OpenGL ES version: " + major_minor->GetText());
+      return false;
+    }
+  }
+  api_version_ = MakeUnique<ApiVersion>(api, major, minor);
   return true;
 }
 
@@ -1588,7 +1672,8 @@ std::pair<bool, ValuesSegment> Parser::ParseValuesSegment() {
 }
 
 std::unique_ptr<ShaderTrapProgram> Parser::GetParsedProgram() {
-  return MakeUnique<ShaderTrapProgram>(std::move(parsed_commands_));
+  return MakeUnique<ShaderTrapProgram>(*api_version_,
+                                       std::move(parsed_commands_));
 }
 
 }  // namespace shadertrap

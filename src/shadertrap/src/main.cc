@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "glad/glad.h"
+#include "libshadertrap/api_version.h"
 #include "libshadertrap/checker.h"
 #include "libshadertrap/command_visitor.h"
 #include "libshadertrap/compound_visitor.h"
@@ -37,6 +38,11 @@
 #include "shadertrap/get_gl_functions.h"
 
 namespace {
+
+const EGLint kWidth = 256;
+const EGLint kHeight = 256;
+const EGLint kDepthSize = 16;
+const EGLint kRequiredEglMinorVersionForGl = 5;
 
 class ConsoleMessageConsumer : public shadertrap::MessageConsumer {
   void Message(Severity severity, const shadertrap::Token* token,
@@ -85,52 +91,76 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
+  std::unique_ptr<shadertrap::ShaderTrapProgram> shadertrap_program =
+      parser.GetParsedProgram();
+
+  shadertrap::ApiVersion api_version = shadertrap_program->GetApiVersion();
+
   EGLDisplay display;
   EGLConfig config;
   EGLContext context;
   EGLSurface surface;
 
-  const EGLint config_attribute_list[] = {// EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-                                          EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
-                                          EGL_RED_SIZE,     4,
-                                          EGL_GREEN_SIZE,   4,
-                                          EGL_BLUE_SIZE,    4,
-                                          EGL_ALPHA_SIZE,   4,
+  std::vector<EGLint> config_attributes = {EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+                                           EGL_RED_SIZE,     4,
+                                           EGL_GREEN_SIZE,   4,
+                                           EGL_BLUE_SIZE,    4,
+                                           EGL_ALPHA_SIZE,   4,
 
-                                          EGL_CONFORMANT,   EGL_OPENGL_ES3_BIT,
-                                          EGL_DEPTH_SIZE,   16,
-                                          EGL_NONE};
+                                           EGL_CONFORMANT,   EGL_OPENGL_ES3_BIT,
+                                           EGL_DEPTH_SIZE,   kDepthSize,
+                                           EGL_NONE};
 
-  const EGLint context_attrib_list[] = {EGL_CONTEXT_CLIENT_VERSION, 3,
-                                        EGL_NONE};
+  std::vector<EGLint> context_attributes = {
+      EGL_CONTEXT_MAJOR_VERSION,
+      static_cast<EGLint>(api_version.GetMajorVersion()),
+      EGL_CONTEXT_MINOR_VERSION,
+      static_cast<EGLint>(api_version.GetMinorVersion()), EGL_NONE};
 
   // TODO(afd): For offscreen rendering, do width and height matter?  If no,
   //  are there more sensible default values than these?  If yes, should they be
   //  controllable from the command line?
-  const EGLint pbuffer_attrib_list[] = {EGL_WIDTH,
-                                        256,
-                                        EGL_HEIGHT,
-                                        256,
-                                        EGL_TEXTURE_FORMAT,
-                                        EGL_NO_TEXTURE,
-                                        EGL_TEXTURE_TARGET,
-                                        EGL_NO_TEXTURE,
-                                        EGL_LARGEST_PBUFFER,
-                                        EGL_TRUE,
-                                        EGL_NONE};
+  std::vector<EGLint> pbuffer_attributes = {EGL_WIDTH,
+                                            kWidth,
+                                            EGL_HEIGHT,
+                                            kHeight,
+                                            EGL_TEXTURE_FORMAT,
+                                            EGL_NO_TEXTURE,
+                                            EGL_TEXTURE_TARGET,
+                                            EGL_NO_TEXTURE,
+                                            EGL_LARGEST_PBUFFER,
+                                            EGL_TRUE,
+                                            EGL_NONE};
 
   display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
-  EGLint major;
-  EGLint minor;
+  EGLint egl_major_version;
+  EGLint egl_minor_version;
 
-  if (eglInitialize(display, &major, &minor) == EGL_FALSE) {
+  if (eglInitialize(display, &egl_major_version, &egl_minor_version) ==
+      EGL_FALSE) {
     std::cerr << "eglInitialize failed." << std::endl;
     return 1;
   }
 
+  if (api_version.GetApi() == shadertrap::ApiVersion::Api::GL &&
+      !(egl_major_version > 1 ||
+        (egl_major_version == 1 &&
+         egl_minor_version >= kRequiredEglMinorVersionForGl))) {
+    std::cerr << "EGL and OpenGL are not compatible pre EGL 1.5; found EGL "
+              << egl_major_version << "." << egl_minor_version << std::endl;
+    return 1;
+  }
+
+  if (eglBindAPI(static_cast<EGLenum>(api_version.GetApi() ==
+                                              shadertrap::ApiVersion::Api::GL
+                                          ? EGL_OPENGL_API
+                                          : EGL_OPENGL_ES_API)) == EGL_FALSE) {
+    std::cerr << "eglBindAPI failed." << std::endl;
+  }
+
   EGLint num_config;
-  if (eglChooseConfig(display, config_attribute_list, &config, 1,
+  if (eglChooseConfig(display, config_attributes.data(), &config, 1,
                       &num_config) == EGL_FALSE) {
     std::cerr << "eglChooseConfig failed." << std::endl;
     return 1;
@@ -142,14 +172,14 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  context =
-      eglCreateContext(display, config, EGL_NO_CONTEXT, context_attrib_list);
+  context = eglCreateContext(display, config, EGL_NO_CONTEXT,
+                             context_attributes.data());
   if (context == EGL_NO_CONTEXT) {
     std::cerr << "eglCreateContext failed." << std::endl;
     return 1;
   }
 
-  surface = eglCreatePbufferSurface(display, config, pbuffer_attrib_list);
+  surface = eglCreatePbufferSurface(display, config, pbuffer_attributes.data());
   if (surface == EGL_NO_SURFACE) {
     std::cerr << "eglCreatePbufferSurface failed." << std::endl;
     return 1;
@@ -157,19 +187,25 @@ int main(int argc, const char** argv) {
 
   eglMakeCurrent(display, surface, surface, context);
 
-  if (gladLoadGLES2Loader(reinterpret_cast<GLADloadproc>(eglGetProcAddress)) ==
-      0) {
-    std::cerr << "gladLoadGLES2Loader failed." << std::endl;
-    return 1;
+  if (api_version.GetApi() == shadertrap::ApiVersion::Api::GL) {
+    if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(eglGetProcAddress)) ==
+        0) {
+      std::cerr << "gladLoadGLLoader failed." << std::endl;
+      return 1;
+    }
+  } else {
+    if (gladLoadGLES2Loader(
+            reinterpret_cast<GLADloadproc>(eglGetProcAddress)) == 0) {
+      std::cerr << "gladLoadGLES2Loader failed." << std::endl;
+      return 1;
+    }
   }
 
   shadertrap::GlFunctions functions = shadertrap::GetGlFunctions();
 
-  std::unique_ptr<shadertrap::ShaderTrapProgram> shadertrap_program =
-      parser.GetParsedProgram();
   std::vector<std::unique_ptr<shadertrap::CommandVisitor>> temp;
-  temp.push_back(
-      shadertrap::MakeUnique<shadertrap::Checker>(&message_consumer));
+  temp.push_back(shadertrap::MakeUnique<shadertrap::Checker>(
+      &message_consumer, shadertrap_program.get()));
   temp.push_back(shadertrap::MakeUnique<shadertrap::Executor>(
       &functions, &message_consumer));
   shadertrap::CompoundVisitor checker_and_executor(std::move(temp));

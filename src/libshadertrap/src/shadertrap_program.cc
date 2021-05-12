@@ -19,7 +19,7 @@
 namespace shadertrap {
 
 ShaderTrapProgram::ShaderTrapProgram(
-    std::vector<std::unique_ptr<Command>> commands)
-    : commands_(std::move(commands)) {}
+    ApiVersion api_version, std::vector<std::unique_ptr<Command>> commands)
+    : api_version_(api_version), commands_(std::move(commands)) {}
 
 }  // namespace shadertrap
