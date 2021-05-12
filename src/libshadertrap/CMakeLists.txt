@@ -15,6 +15,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 add_library(libshadertrap STATIC
+        include/libshadertrap/api_version.h
         include/libshadertrap/checker.h
         include/libshadertrap/command.h
         include/libshadertrap/command_assert_equal.h

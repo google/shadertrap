@@ -19,19 +19,24 @@
 #include <memory>
 #include <vector>
 
+#include "libshadertrap/api_version.h"
 #include "libshadertrap/command.h"
 
 namespace shadertrap {
 
 class ShaderTrapProgram {
  public:
-  explicit ShaderTrapProgram(std::vector<std::unique_ptr<Command>> commands);
+  explicit ShaderTrapProgram(ApiVersion api_version,
+                             std::vector<std::unique_ptr<Command>> commands);
 
-  size_t GetNumCommands() { return commands_.size(); }
+  size_t GetNumCommands() const { return commands_.size(); }
 
-  Command* GetCommand(size_t index) { return commands_[index].get(); }
+  Command* GetCommand(size_t index) const { return commands_[index].get(); }
+
+  const ApiVersion& GetApiVersion() const { return api_version_; }
 
  private:
+  ApiVersion api_version_;
   std::vector<std::unique_ptr<Command>> commands_;
 };
 

@@ -24,6 +24,7 @@ Checks: >
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -hicpp-avoid-c-arrays,
   -fuchsia-default-arguments-calls,
+  -fuchsia-overloaded-operator,
   -fuchsia-statically-constructed-objects,
   -hicpp-signed-bitwise,
 

@@ -253,6 +253,8 @@ const std::unordered_map<std::string, Token::Type>
         {"FRAGMENT", Token::Type::kKeywordFragment},
         {"FRAMEBUFFER_ATTACHMENTS",
          Token::Type::kKeywordFramebufferAttachments},
+        {"GL", Token::Type::kKeywordGl},
+        {"GLES", Token::Type::kKeywordGles},
         {"HEIGHT", Token::Type::kKeywordHeight},
         {"INDEX_DATA", Token::Type::kKeywordIndexData},
         {"INIT_TYPE", Token::Type::kKeywordInitType},
