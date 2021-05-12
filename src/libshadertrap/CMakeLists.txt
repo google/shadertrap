@@ -90,5 +90,9 @@ add_library(libshadertrap STATIC
         )
 
 target_include_directories(libshadertrap PUBLIC include PRIVATE include_private/include)
-target_link_libraries(libshadertrap PUBLIC shadertrap_egl_headers shadertrap_gl_headers PRIVATE glslang lodepng)
+target_link_libraries(libshadertrap PUBLIC shadertrap_egl_headers shadertrap_gl_headers PRIVATE glslang)
+if(NOT ${SHADERTRAP_SKIP_LODEPNG})
+target_link_libraries(libshadertrap PRIVATE lodepng)
+endif()
+
 target_compile_features(libshadertrap PUBLIC cxx_std_11)
