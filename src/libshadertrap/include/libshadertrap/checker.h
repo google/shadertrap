@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "libshadertrap/api_version.h"
 #include "libshadertrap/command_assert_equal.h"
 #include "libshadertrap/command_assert_pixels.h"
 #include "libshadertrap/command_assert_similar_emd_histogram.h"
@@ -43,14 +44,13 @@
 #include "libshadertrap/command_visitor.h"
 #include "libshadertrap/glslang.h"
 #include "libshadertrap/message_consumer.h"
-#include "libshadertrap/shadertrap_program.h"
 #include "libshadertrap/token.h"
 
 namespace shadertrap {
 
 class Checker : public CommandVisitor {
  public:
-  Checker(MessageConsumer* message_consumer, ShaderTrapProgram* program);
+  Checker(MessageConsumer* message_consumer, ApiVersion api_version);
 
   bool VisitAssertEqual(CommandAssertEqual* assert_equal) override;
 
@@ -118,7 +118,7 @@ class Checker : public CommandVisitor {
                                         const Token& renderbuffer_token_2);
 
   MessageConsumer* message_consumer_;
-  ShaderTrapProgram* program_;
+  ApiVersion api_version_;
   std::unordered_map<std::string, const Token&> used_identifiers_;
   std::unordered_map<std::string, CommandDeclareShader*> declared_shaders_;
   std::unordered_map<std::string, CommandCompileShader*> compiled_shaders_;

@@ -21,6 +21,7 @@
 #include <map>
 #include <string>
 
+#include "libshadertrap/api_version.h"
 #include "libshadertrap/command_assert_equal.h"
 #include "libshadertrap/command_assert_pixels.h"
 #include "libshadertrap/command_assert_similar_emd_histogram.h"
@@ -49,8 +50,8 @@ namespace shadertrap {
 
 class Executor : public CommandVisitor {
  public:
-  explicit Executor(GlFunctions* gl_functions,
-                    MessageConsumer* message_consumer);
+  Executor(GlFunctions* gl_functions, MessageConsumer* message_consumer,
+           ApiVersion api_version);
 
   bool VisitAssertEqual(CommandAssertEqual* assert_equal) override;
 
@@ -107,6 +108,7 @@ class Executor : public CommandVisitor {
 
   GlFunctions* gl_functions_;
   MessageConsumer* message_consumer_;
+  ApiVersion api_version_;
   std::map<std::string, CommandDeclareShader*> declared_shaders_;
   std::map<std::string, GLuint> created_buffers_;
   std::map<std::string, GLuint> created_programs_;

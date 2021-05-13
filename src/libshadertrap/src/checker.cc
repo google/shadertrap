@@ -21,7 +21,6 @@
 #include <type_traits>  // IWYU pragma: keep
 #include <utility>
 
-#include "libshadertrap/api_version.h"
 #include "libshadertrap/make_unique.h"
 #include "libshadertrap/vertex_attribute_info.h"
 
@@ -139,8 +138,8 @@ const TBuiltInResource kDefaultTBuiltInResource = {
 
 }  // namespace
 
-Checker::Checker(MessageConsumer* message_consumer, ShaderTrapProgram* program)
-    : message_consumer_(message_consumer), program_(program) {}
+Checker::Checker(MessageConsumer* message_consumer, ApiVersion api_version)
+    : message_consumer_(message_consumer), api_version_(api_version) {}
 
 bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
   const auto& operand1_token =
@@ -548,11 +547,10 @@ bool Checker::VisitDeclareShader(CommandDeclareShader* declare_shader) {
       shader_stage = EShLanguage::EShLangFragment;
       break;
     case CommandDeclareShader::Kind::COMPUTE:
-      ApiVersion api_version = program_->GetApiVersion();
-      if ((api_version.GetApi() == ApiVersion::Api::GL &&
-           api_version < ApiVersion(ApiVersion::Api::GL, 4, 3)) ||
-          (api_version.GetApi() == ApiVersion::Api::GLES &&
-           api_version < ApiVersion(ApiVersion::Api::GLES, 3, 1))) {
+      if ((api_version_.GetApi() == ApiVersion::Api::GL &&
+           api_version_ < ApiVersion(ApiVersion::Api::GL, 4, 3)) ||
+          (api_version_.GetApi() == ApiVersion::Api::GLES &&
+           api_version_ < ApiVersion(ApiVersion::Api::GLES, 3, 1))) {
         message_consumer_->Message(MessageConsumer::Severity::kError,
                                    &declare_shader->GetStartToken(),
                                    "Compute shaders are not supported before "
@@ -665,6 +663,14 @@ bool Checker::VisitRunGraphics(CommandRunGraphics* command_run_graphics) {
     errors_found = true;
   }
   for (const auto& entry : command_run_graphics->GetFramebufferAttachments()) {
+    if (api_version_ == ApiVersion(ApiVersion::Api::GLES, 2, 0) &&
+        entry.first != 0) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError, entry.second.get(),
+          "Only 0 may be used as a framebuffer attachment key when working "
+          "with OpenGL ES 2.0");
+      errors_found = true;
+    }
     if (created_renderbuffers_.count(entry.second->GetText()) == 0 &&
         created_textures_.count(entry.second->GetText()) == 0) {
       message_consumer_->Message(
