@@ -77,30 +77,32 @@ option(
     ${SHADERTRAP_PROJECT_IS_ROOT})
 
 option(
-    SHADERTRAP_SKIP_GOOGLETEST
-    "Skip building Google tests"
-    ${SHADERTRAP_SKIP_GOOGLETEST})
+    SHADERTRAP_BUILD_TESTING
+    "Build tests."
+    ${SHADERTRAP_PROJECT_IS_ROOT})
+
+option(
+    SHADERTRAP_DEQP
+    "Enable for dEQP integration"
+    OFF)
 
 option(
     SHADERTRAP_SKIP_EXECUTABLE
     "Skip building executable along with the library"
-    ${SHADERTRAP_SKIP_EXECUTABLE})
+    ${SHADERTRAP_DEQP})
 
 option(
     SHADERTRAP_SKIP_LODEPNG
     "Skip building lodepng"
-    ${SHADERTRAP_SKIP_EXECUTABLE})
-
-option(
-    SHADERTRAP_DEQP
-    "Enabled for dEQP integration"
     ${SHADERTRAP_DEQP})
+
+
+message(STATUS )
 
 # TODO(paulthomson): Remove this eventually.
 find_library(SHADERTRAP_EGL_LIB_PATH NAMES EGL libEGL)
 
 if(SHADERTRAP_PROJECT_IS_ROOT)
-
     # Set some global compiler flags.
     set(CMAKE_CXX_STANDARD 11)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -168,11 +170,12 @@ add_subdirectory(third_party/OpenGL-Registry EXCLUDE_FROM_ALL)
 # TODO(paulthomson): Probably remove this and use a different loading strategy/library.
 add_subdirectory(third_party/glad EXCLUDE_FROM_ALL)
 
-if(NOT ${SHADERTRAP_SKIP_LODEPNG})
+if(NOT SHADERTRAP_SKIP_LODEPNG)
 add_subdirectory(third_party/lodepng EXCLUDE_FROM_ALL)
 endif()
 
-if(NOT ${SHADERTRAP_SKIP_GOOGLETEST})
+if(SHADERTRAP_BUILD_TESTING)
+message("Adding Google test")
 add_subdirectory(third_party/googletest)
 endif()
 
@@ -244,20 +247,20 @@ if(SHADERTRAP_WARNING_SUPPRESSIONS)
     endif()
 endif()
 
-if(${SHADERTRAP_DEQP})
-    add_definitions(-DSHADERTRAP_DEQP)
+if(SHADERTRAP_DEQP)
+    add_compile_definitions(SHADERTRAP_DEQP)
 endif()
 
-if(NOT ${SHADERTRAP_SKIP_LODEPNG})
-    add_definitions(-DSHADERTRAP_LODEPNG)
+if(NOT SHADERTRAP_SKIP_LODEPNG)
+    add_compile_definitions(SHADERTRAP_LODEPNG)
 endif()
 
 add_subdirectory(src/libshadertrap)
 
-if(BUILD_TESTING)
+if(SHADERTRAP_BUILD_TESTING)
     add_subdirectory(src/libshadertraptest)
 endif()
 
-if(NOT ${SHADERTRAP_SKIP_EXECUTABLE})
+if(NOT SHADERTRAP_SKIP_EXECUTABLE)
 add_subdirectory(src/shadertrap)
 endif()

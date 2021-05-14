@@ -17,11 +17,11 @@
 #ifndef LIBSHADERTRAP_GL_FUNCTIONS_H
 #define LIBSHADERTRAP_GL_FUNCTIONS_H
 
-#define GL_GLES_PROTOTYPES 0
 #ifdef SHADERTRAP_DEQP
-// NOLINT(build/include_subdir)
+// NOLINTNEXTLINE(build/include_subdir)
 #include "glw.h"
 #else
+#define GL_GLES_PROTOTYPES 0
 #include <GLES3/gl32.h>
 #endif
 
