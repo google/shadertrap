@@ -113,6 +113,7 @@ def gen_struct(xml_file: Path) -> str:
 
 #define GL_GLES_PROTOTYPES 0
 #ifdef SHADERTRAP_DEQP
+// NOLINT(build/include_subdir)
 #include "glw.h"
 #else
 #include <GLES3/gl32.h>
