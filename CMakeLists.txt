@@ -175,7 +175,6 @@ add_subdirectory(third_party/lodepng EXCLUDE_FROM_ALL)
 endif()
 
 if(SHADERTRAP_BUILD_TESTING)
-message("Adding Google test")
 add_subdirectory(third_party/googletest)
 endif()
 
