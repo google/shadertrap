@@ -597,6 +597,19 @@ bool Checker::VisitDumpRenderbuffer(
   return true;
 }
 
+bool Checker::VisitDumpBufferBinary(
+    CommandDumpBufferBinary* dump_buffer_binary) {
+  (void)dump_buffer_binary;
+  assert(false);
+  return false;
+}
+
+bool Checker::VisitDumpBufferText(CommandDumpBufferText* dump_buffer_text) {
+  (void)dump_buffer_text;
+  assert(false);
+  return false;
+}
+
 bool Checker::VisitRunCompute(CommandRunCompute* command_run_compute) {
   if (created_programs_.count(command_run_compute->GetProgramIdentifier()) ==
       0) {

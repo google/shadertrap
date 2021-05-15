@@ -92,6 +92,16 @@ bool CompoundVisitor::VisitDeclareShader(CommandDeclareShader* declare_shader) {
   return ApplyVisitors(declare_shader);
 }
 
+bool CompoundVisitor::VisitDumpBufferBinary(
+    CommandDumpBufferBinary* dump_buffer_binary) {
+  return ApplyVisitors(dump_buffer_binary);
+}
+
+bool CompoundVisitor::VisitDumpBufferText(
+    CommandDumpBufferText* dump_buffer_text) {
+  return ApplyVisitors(dump_buffer_text);
+}
+
 bool CompoundVisitor::VisitDumpRenderbuffer(
     CommandDumpRenderbuffer* dump_renderbuffer) {
   return ApplyVisitors(dump_renderbuffer);

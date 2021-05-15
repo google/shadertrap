@@ -33,6 +33,8 @@
 #include "libshadertrap/command_create_renderbuffer.h"
 #include "libshadertrap/command_create_sampler.h"
 #include "libshadertrap/command_declare_shader.h"
+#include "libshadertrap/command_dump_buffer_binary.h"
+#include "libshadertrap/command_dump_buffer_text.h"
 #include "libshadertrap/command_dump_renderbuffer.h"
 #include "libshadertrap/command_run_compute.h"
 #include "libshadertrap/command_run_graphics.h"
@@ -80,6 +82,11 @@ class CompoundVisitor : public CommandVisitor {
       CommandCreateRenderbuffer* create_renderbuffer) override;
 
   bool VisitDeclareShader(CommandDeclareShader* declare_shader) override;
+
+  bool VisitDumpBufferBinary(
+      CommandDumpBufferBinary* dump_buffer_binary) override;
+
+  bool VisitDumpBufferText(CommandDumpBufferText* dump_buffer_text) override;
 
   bool VisitDumpRenderbuffer(
       CommandDumpRenderbuffer* dump_renderbuffer) override;

@@ -586,6 +586,19 @@ bool Executor::VisitDumpRenderbuffer(
   return true;
 }
 
+bool Executor::VisitDumpBufferBinary(
+    CommandDumpBufferBinary* dump_buffer_binary) {
+  (void)dump_buffer_binary;
+  assert(false);
+  return false;
+}
+
+bool Executor::VisitDumpBufferText(CommandDumpBufferText* dump_buffer_text) {
+  (void)dump_buffer_text;
+  assert(false);
+  return false;
+}
+
 bool Executor::VisitRunCompute(CommandRunCompute* run_compute) {
   GL_SAFECALL(&run_compute->GetStartToken(), glUseProgram,
               created_programs_.at(run_compute->GetProgramIdentifier()));
