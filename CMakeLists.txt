@@ -97,8 +97,6 @@ option(
     ${SHADERTRAP_DEQP})
 
 
-message(STATUS )
-
 # TODO(paulthomson): Remove this eventually.
 find_library(SHADERTRAP_EGL_LIB_PATH NAMES EGL libEGL)
 
