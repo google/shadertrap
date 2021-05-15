@@ -95,6 +95,10 @@ class Parser {
 
   bool ParseCommandDeclareShader();
 
+  bool ParseCommandDumpBufferBinary();
+
+  bool ParseCommandDumpBufferText();
+
   bool ParseCommandDumpRenderbuffer();
 
   bool ParseCommandRunCompute();

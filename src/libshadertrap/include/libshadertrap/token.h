@@ -48,6 +48,8 @@ class Token {
     kKeywordCreateSampler,
     kKeywordDeclareShader,
     kKeywordDimension,
+    kKeywordDumpBufferBinary,
+    kKeywordDumpBufferText,
     kKeywordDumpRenderbuffer,
     kKeywordEnd,
     kKeywordExpected,

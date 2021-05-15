@@ -1349,5 +1349,92 @@ RUN_GRAPHICS
       message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, DumpBufferBinaryUnknownBuffer) {
+  std::string program =
+      R"(GLES 3.1
+DUMP_BUFFER_BINARY BUFFER doesnotexist FILE "temp.bin"
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 2:27: 'doesnotexist' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferBinaryNotBuffer) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_RENDERBUFFER renderbuf WIDTH 24 HEIGHT 24
+DUMP_BUFFER_BINARY BUFFER renderbuf FILE "temp.bin"
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:27: 'renderbuf' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferTextUnknownBuffer) {
+  std::string program =
+      R"(GLES 3.1
+DUMP_BUFFER_TEXT BUFFER doesnotexist FILE "temp.txt" FORMAT float 4
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 2:27: 'doesnotexist' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferTextNotBuffer) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_RENDERBUFFER renderbuf WIDTH 24 HEIGHT 24
+DUMP_BUFFER_TEXT BUFFER renderbuf FILE "temp.txt" FORMAT float 4
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:27: 'renderbuf' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferTextGood) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 12
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT uint 12
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT int 12
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT byte 48
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT int 4 float 2 float 2 uint 1 uint 3
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT byte 16 float 2 skip 8 uint 1 uint 3
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT "hello" byte "\nworld" "hello" 16 float 2 "again\n" skip 8 uint 1 uint 3
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_TRUE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(0, message_consumer.GetNumMessages());
+}
+
 }  // namespace
 }  // namespace shadertrap

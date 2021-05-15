@@ -180,6 +180,10 @@ bool Parser::ParseCommand() {
       return ParseCommandCreateRenderbuffer();
     case Token::Type::kKeywordDeclareShader:
       return ParseCommandDeclareShader();
+    case Token::Type::kKeywordDumpBufferBinary:
+      return ParseCommandDumpBufferBinary();
+    case Token::Type::kKeywordDumpBufferText:
+      return ParseCommandDumpBufferText();
     case Token::Type::kKeywordDumpRenderbuffer:
       return ParseCommandDumpRenderbuffer();
     case Token::Type::kKeywordRunCompute:
@@ -1072,6 +1076,16 @@ bool Parser::ParseCommandDeclareShader() {
       std::move(start_token), std::move(result_identifier), declare_shader_kind,
       stringstream.str(), shader_start_line));
   return true;
+}
+
+bool Parser::ParseCommandDumpBufferBinary() {
+  assert(false);
+  return false;
+}
+
+bool Parser::ParseCommandDumpBufferText() {
+  assert(false);
+  return false;
 }
 
 bool Parser::ParseCommandDumpRenderbuffer() {

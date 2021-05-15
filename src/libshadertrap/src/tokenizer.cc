@@ -245,6 +245,8 @@ const std::unordered_map<std::string, Token::Type>
         {"CREATE_SAMPLER", Token::Type::kKeywordCreateSampler},
         {"DECLARE_SHADER", Token::Type::kKeywordDeclareShader},
         {"DIMENSION", Token::Type::kKeywordDimension},
+        {"DUMP_BUFFER_BINARY", Token::Type::kKeywordDumpBufferBinary},
+        {"DUMP_BUFFER_TEXT", Token::Type::kKeywordDumpBufferText},
         {"DUMP_RENDERBUFFER", Token::Type::kKeywordDumpRenderbuffer},
         {"END", Token::Type::kKeywordEnd},
         {"EXPECTED", Token::Type::kKeywordExpected},

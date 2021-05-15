@@ -332,5 +332,125 @@ RUN_GRAPHICS
       message_consumer.GetMessageString(0));
 }
 
+TEST(ParserTest, DumpBufferTextNotEnoughElements) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 11
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: ...",
+      message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, DumpBufferTextTooManyElements) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 13
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: ...",
+      message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, DumpBufferTextByteNotMultipleOfFour) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT byte 1 float 8 byte 3
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: ...",
+      message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, DumpBufferTextSkipNotMultipleOfFour) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT skip 1 float 8 skip 3
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: ...",
+      message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, DumpBufferTextStringAfterType) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float "hello"
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: ...",
+      message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, DumpBufferTextTypeAfterType) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float float
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: ...",
+      message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, DumpBufferTextNumberWithoutType) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT 3
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: ...",
+      message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, DumpBufferTextNumberAfterNumber) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 4 4
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: ...",
+      message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap
