@@ -27,7 +27,7 @@ class CommandDumpRenderbuffer : public Command {
  public:
   CommandDumpRenderbuffer(std::unique_ptr<Token> start_token,
                           std::unique_ptr<Token> renderbuffer_identifier,
-                          std::string filename);
+                          std::unique_ptr<Token> filename);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -39,11 +39,13 @@ class CommandDumpRenderbuffer : public Command {
     return *renderbuffer_identifier_;
   }
 
-  const std::string& GetFilename() const { return filename_; }
+  const std::string& GetFilename() const { return filename_->GetText(); }
+
+  const Token& GetFilenameToken() const { return *filename_; }
 
  private:
   std::unique_ptr<Token> renderbuffer_identifier_;
-  std::string filename_;
+  std::unique_ptr<Token> filename_;
 };
 
 }  // namespace shadertrap

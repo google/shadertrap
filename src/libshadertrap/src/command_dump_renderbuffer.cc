@@ -22,7 +22,8 @@ namespace shadertrap {
 
 CommandDumpRenderbuffer::CommandDumpRenderbuffer(
     std::unique_ptr<Token> start_token,
-    std::unique_ptr<Token> renderbuffer_identifier, std::string filename)
+    std::unique_ptr<Token> renderbuffer_identifier,
+    std::unique_ptr<Token> filename)
     : Command(std::move(start_token)),
       renderbuffer_identifier_(std::move(renderbuffer_identifier)),
       filename_(std::move(filename)) {}

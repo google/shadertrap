@@ -42,3 +42,11 @@ RUN_COMPUTE
     NUM_GROUPS 1 1 1
 
 ASSERT_EQUAL BUFFERS expected ssbo
+
+DUMP_BUFFER_TEXT BUFFER ssbo FILE "ssbo_v1.txt" FORMAT byte 4
+
+DUMP_BUFFER_TEXT BUFFER ssbo FILE "ssbo_v2.txt" FORMAT "contents: " byte 4
+
+DUMP_BUFFER_TEXT BUFFER ssbo FILE "ssbo_v3.txt" FORMAT "as \"uint:\"\n" uint 1
+
+DUMP_BUFFER_BINARY BUFFER expected FILE "expected.bin"

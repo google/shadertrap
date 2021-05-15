@@ -342,7 +342,7 @@ DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float "hello"
   Parser parser(program, &message_consumer);
   ASSERT_FALSE(parser.Parse());
   ASSERT_EQ(1, message_consumer.GetNumMessages());
-  ASSERT_EQ("ERROR: 3:58: Expected integer count, got '\"hello\"'",
+  ASSERT_EQ("ERROR: 3:58: Expected integer count, got 'hello'",
             message_consumer.GetMessageString(0));
 }
 

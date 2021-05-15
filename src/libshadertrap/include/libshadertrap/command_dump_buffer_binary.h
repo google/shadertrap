@@ -27,7 +27,7 @@ class CommandDumpBufferBinary : public Command {
  public:
   CommandDumpBufferBinary(std::unique_ptr<Token> start_token,
                           std::unique_ptr<Token> buffer_identifier,
-                          std::string filename);
+                          std::unique_ptr<Token> filename);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -37,11 +37,13 @@ class CommandDumpBufferBinary : public Command {
 
   const Token& GetBufferIdentifierToken() const { return *buffer_identifier_; }
 
-  const std::string& GetFilename() const { return filename_; }
+  const std::string& GetFilename() const { return filename_->GetText(); }
+
+  const Token& GetFilenameToken() const { return *filename_; }
 
  private:
   std::unique_ptr<Token> buffer_identifier_;
-  std::string filename_;
+  std::unique_ptr<Token> filename_;
 };
 
 }  // namespace shadertrap

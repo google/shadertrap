@@ -20,6 +20,7 @@
 #include <initializer_list>
 #include <type_traits>  // IWYU pragma: keep
 #include <utility>
+#include <vector>
 
 #include "libshadertrap/make_unique.h"
 #include "libshadertrap/tokenizer.h"
@@ -626,6 +627,12 @@ bool Checker::VisitDumpBufferText(CommandDumpBufferText* dump_buffer_text) {
         break;
       case CommandDumpBufferText::FormatEntry::Kind::kByte:
       case CommandDumpBufferText::FormatEntry::Kind::kSkip:
+        if (format_entry.count == 0) {
+          message_consumer_->Message(
+              MessageConsumer::Severity::kError, format_entry.token.get(),
+              "The count for a formatting entry must be positive");
+          errors_found = true;
+        }
         if (format_entry.count % 4 != 0) {
           message_consumer_->Message(
               MessageConsumer::Severity::kError, format_entry.token.get(),
@@ -644,6 +651,12 @@ bool Checker::VisitDumpBufferText(CommandDumpBufferText* dump_buffer_text) {
       case CommandDumpBufferText::FormatEntry::Kind::kFloat:
       case CommandDumpBufferText::FormatEntry::Kind::kInt:
       case CommandDumpBufferText::FormatEntry::Kind::kUint:
+        if (format_entry.count == 0) {
+          message_consumer_->Message(
+              MessageConsumer::Severity::kError, format_entry.token.get(),
+              "The count for a formatting entry must be positive");
+          errors_found = true;
+        }
         total_count_bytes += format_entry.count * 4;
         break;
     }

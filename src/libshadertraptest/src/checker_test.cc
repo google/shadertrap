@@ -1520,5 +1520,56 @@ DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT SKIP_BYTES 1 float 11 SKIP_BY
       message_consumer.GetMessageString(1));
 }
 
+TEST_F(CheckerTestFixture, DumpBufferSkipBytesCountCannotBeZero) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT SKIP_BYTES 0 float 12
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:52: The count for a formatting entry must be positive",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferByteCountCannotBeZero) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT byte 0 float 12
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:52: The count for a formatting entry must be positive",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferFloatCountCannotBeZero) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 0 float 12
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:52: The count for a formatting entry must be positive",
+            message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap

@@ -15,6 +15,7 @@
 #ifndef LIBSHADERTRAP_COMMAND_DUMP_BUFFER_TEXT_H
 #define LIBSHADERTRAP_COMMAND_DUMP_BUFFER_TEXT_H
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
@@ -35,7 +36,7 @@ class CommandDumpBufferText : public Command {
 
   CommandDumpBufferText(std::unique_ptr<Token> start_token,
                         std::unique_ptr<Token> buffer_identifier,
-                        std::string filename,
+                        std::unique_ptr<Token> filename,
                         std::vector<FormatEntry> format_entries);
 
   bool Accept(CommandVisitor* visitor) override;
@@ -46,7 +47,9 @@ class CommandDumpBufferText : public Command {
 
   const Token& GetBufferIdentifierToken() const { return *buffer_identifier_; }
 
-  const std::string& GetFilename() const { return filename_; }
+  const std::string& GetFilename() const { return filename_->GetText(); }
+
+  const Token& GetFilenameToken() const { return *filename_; }
 
   const std::vector<FormatEntry>& GetFormatEntries() const {
     return format_entries_;
@@ -54,7 +57,7 @@ class CommandDumpBufferText : public Command {
 
  private:
   std::unique_ptr<Token> buffer_identifier_;
-  std::string filename_;
+  std::unique_ptr<Token> filename_;
   std::vector<FormatEntry> format_entries_;
 };
 

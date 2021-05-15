@@ -99,13 +99,39 @@ std::unique_ptr<Token> Tokenizer::NextToken(
     size_t backup_position = position_;
     size_t backup_column = column_;
     std::stringstream stringstream;
-    do {
-      stringstream << data_[position_];
+    AdvanceCharacter();
+    bool last_character_was_escape = false;
+    while (position_ < data_.length() && data_[position_] != '\n' &&
+           (last_character_was_escape || data_[position_] != '"')) {
+      if (last_character_was_escape) {
+        switch (data_[position_]) {
+          case 'n':
+            stringstream << '\n';
+            break;
+          case 't':
+            stringstream << '\t';
+            break;
+          case '\\':
+            stringstream << '\\';
+            break;
+          case '"':
+            stringstream << '"';
+            break;
+          default:
+            AdvanceCharacter();
+            assert(false && "Bad escape sequence");
+            return MakeUnique<Token>(Token::Type::kUnknown, start_line,
+                                     start_column);
+        }
+        last_character_was_escape = false;
+      } else if (data_[position_] == '\\') {
+        last_character_was_escape = true;
+      } else {
+        stringstream << data_[position_];
+      }
       AdvanceCharacter();
-    } while (data_[position_] != '\n' && data_[position_] != '"' &&
-             position_ < data_.length());
+    }
     if (data_[position_] == '"') {
-      stringstream << data_[position_];
       AdvanceCharacter();
       return MakeUnique<Token>(Token::Type::kString, stringstream.str(),
                                start_line, start_column);

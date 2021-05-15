@@ -22,7 +22,7 @@ namespace shadertrap {
 
 CommandDumpBufferText::CommandDumpBufferText(
     std::unique_ptr<Token> start_token,
-    std::unique_ptr<Token> buffer_identifier, std::string filename,
+    std::unique_ptr<Token> buffer_identifier, std::unique_ptr<Token> filename,
     std::vector<FormatEntry> format_entries)
     : Command(std::move(start_token)),
       buffer_identifier_(std::move(buffer_identifier)),
