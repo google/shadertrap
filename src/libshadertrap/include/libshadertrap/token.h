@@ -84,6 +84,7 @@ class Token {
     kKeywordShader,
     kKeywordShaders,
     kKeywordSizeBytes,
+    kKeywordSkipBytes,
     kKeywordStrideBytes,
     kKeywordTexture,
     kKeywordTextureMagFilter,

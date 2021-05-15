@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "libshadertrap/command.h"
 #include "libshadertrap/token.h"
@@ -25,9 +26,17 @@ namespace shadertrap {
 
 class CommandDumpBufferText : public Command {
  public:
+  struct FormatEntry {
+    enum class Kind { kByte, kFloat, kInt, kUint, kSkip, kString };
+    std::unique_ptr<Token> token;
+    Kind kind;
+    size_t count;  // Unused if kind is kString
+  };
+
   CommandDumpBufferText(std::unique_ptr<Token> start_token,
                         std::unique_ptr<Token> buffer_identifier,
-                        std::string filename);
+                        std::string filename,
+                        std::vector<FormatEntry> format_entries);
 
   bool Accept(CommandVisitor* visitor) override;
 
@@ -39,9 +48,14 @@ class CommandDumpBufferText : public Command {
 
   const std::string& GetFilename() const { return filename_; }
 
+  const std::vector<FormatEntry>& GetFormatEntries() const {
+    return format_entries_;
+  }
+
  private:
   std::unique_ptr<Token> buffer_identifier_;
   std::string filename_;
+  std::vector<FormatEntry> format_entries_;
 };
 
 }  // namespace shadertrap

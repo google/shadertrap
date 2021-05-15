@@ -51,10 +51,10 @@ add_library(libshadertrap STATIC
         include/libshadertrap/shadertrap_program.h
         include/libshadertrap/texture_parameter.h
         include/libshadertrap/token.h
+        include/libshadertrap/tokenizer.h
         include/libshadertrap/uniform_value.h
         include/libshadertrap/values_segment.h
         include/libshadertrap/vertex_attribute_info.h
-        include_private/include/libshadertrap/tokenizer.h
 
         src/checker.cc
         src/command.cc

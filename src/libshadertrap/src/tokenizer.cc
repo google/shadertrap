@@ -282,6 +282,7 @@ const std::unordered_map<std::string, Token::Type>
         {"SHADER", Token::Type::kKeywordShader},
         {"SHADERS", Token::Type::kKeywordShaders},
         {"SIZE_BYTES", Token::Type::kKeywordSizeBytes},
+        {"SKIP_BYTES", Token::Type::kKeywordSkipBytes},
         {"STRIDE_BYTES", Token::Type::kKeywordStrideBytes},
         {"TEXTURE", Token::Type::kKeywordTexture},
         {"TEXTURE_MAG_FILTER", Token::Type::kKeywordTextureMagFilter},
