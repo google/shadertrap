@@ -19,12 +19,12 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <functional>
 #include <initializer_list>
 #include <memory>
 #include <sstream>
-#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
