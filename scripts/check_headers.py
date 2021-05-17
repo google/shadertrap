@@ -89,6 +89,7 @@ def exclude_filename(f: str):
             "dependency-reduced-pom.xml",
             "gradle-wrapper.properties",
             "Pipfile.lock",
+            "cppcheck.patch",
         ])
 
 

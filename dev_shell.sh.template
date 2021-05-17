@@ -58,11 +58,13 @@ export PATH
 
 # Get cppcheck.
 
-CPPCHECK_OUT="cppcheck-2.3"
+CPPCHECK_OUT="cppcheck-2.4.1"
 
 if test ! -f "${CPPCHECK_OUT}.touch"; then
-  git clone --branch 2.3 --depth 1 https://github.com/danmar/cppcheck.git "${CPPCHECK_OUT}"
+  git clone --branch 2.4.1 --depth 1 https://github.com/danmar/cppcheck.git "${CPPCHECK_OUT}"
   pushd "${CPPCHECK_OUT}"
+    # TODO(https://github.com/google/shadertrap/issues/52) Get rid of this patch in due course
+    git apply ${SHADERTRAP_REPO_ROOT}/temp/cppcheck.patch
     mkdir build
     pushd build
       cmake -G Ninja .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=./install

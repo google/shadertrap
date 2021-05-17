@@ -1,0 +1,16 @@
+diff --git a/lib/symboldatabase.cpp b/lib/symboldatabase.cpp
+index d59789236..40a04c4b5 100644
+--- a/lib/symboldatabase.cpp
++++ b/lib/symboldatabase.cpp
+@@ -33,10 +33,10 @@
+ 
+ #include <algorithm>
+ #include <cassert>
+-#include <climits>
+ #include <cstring>
+ #include <iomanip>
+ #include <iostream>
++#include <limits>
+ #include <unordered_map>
+ //---------------------------------------------------------------------------
+ 
