@@ -20,8 +20,10 @@
 #include <initializer_list>
 #include <type_traits>  // IWYU pragma: keep
 #include <utility>
+#include <vector>
 
 #include "libshadertrap/make_unique.h"
+#include "libshadertrap/tokenizer.h"
 #include "libshadertrap/vertex_attribute_info.h"
 
 namespace shadertrap {
@@ -595,6 +597,86 @@ bool Checker::VisitDumpRenderbuffer(
     return false;
   }
   return true;
+}
+
+bool Checker::VisitDumpBufferBinary(
+    CommandDumpBufferBinary* dump_buffer_binary) {
+  if (created_buffers_.count(dump_buffer_binary->GetBufferIdentifier()) == 0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        &dump_buffer_binary->GetBufferIdentifierToken(),
+        "'" + dump_buffer_binary->GetBufferIdentifier() + "' must be a buffer");
+    return false;
+  }
+  return true;
+}
+
+bool Checker::VisitDumpBufferText(CommandDumpBufferText* dump_buffer_text) {
+  if (created_buffers_.count(dump_buffer_text->GetBufferIdentifier()) == 0) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        &dump_buffer_text->GetBufferIdentifierToken(),
+        "'" + dump_buffer_text->GetBufferIdentifier() + "' must be a buffer");
+    return false;
+  }
+  bool errors_found = false;
+  size_t total_count_bytes = 0;
+  for (const auto& format_entry : dump_buffer_text->GetFormatEntries()) {
+    switch (format_entry.kind) {
+      case CommandDumpBufferText::FormatEntry::Kind::kString:
+        break;
+      case CommandDumpBufferText::FormatEntry::Kind::kByte:
+      case CommandDumpBufferText::FormatEntry::Kind::kSkip:
+        if (format_entry.count == 0) {
+          message_consumer_->Message(
+              MessageConsumer::Severity::kError, format_entry.token.get(),
+              "The count for a formatting entry must be positive");
+          errors_found = true;
+        }
+        if (format_entry.count % 4 != 0) {
+          message_consumer_->Message(
+              MessageConsumer::Severity::kError, format_entry.token.get(),
+              "The count for a '" +
+                  Tokenizer::KeywordToString(
+                      format_entry.kind ==
+                              CommandDumpBufferText::FormatEntry::Kind::kByte
+                          ? Token::Type::kKeywordTypeByte
+                          : Token::Type::kKeywordSkipBytes) +
+                  "' formatting entry must be a multiple of 4; found " +
+                  std::to_string(format_entry.count));
+          errors_found = true;
+        }
+        total_count_bytes += format_entry.count;
+        break;
+      case CommandDumpBufferText::FormatEntry::Kind::kFloat:
+      case CommandDumpBufferText::FormatEntry::Kind::kInt:
+      case CommandDumpBufferText::FormatEntry::Kind::kUint:
+        if (format_entry.count == 0) {
+          message_consumer_->Message(
+              MessageConsumer::Severity::kError, format_entry.token.get(),
+              "The count for a formatting entry must be positive");
+          errors_found = true;
+        }
+        total_count_bytes += format_entry.count * 4;
+        break;
+    }
+  }
+  auto* buffer = created_buffers_.at(dump_buffer_text->GetBufferIdentifier());
+  const size_t expected_bytes = buffer->GetSizeBytes();
+  if (total_count_bytes != expected_bytes) {
+    message_consumer_->Message(
+        MessageConsumer::Severity::kError,
+        dump_buffer_text->GetFormatEntries()[0].token.get(),
+        "The number of bytes specified in the formatting of '" +
+            buffer->GetResultIdentifier() + "' is " +
+            std::to_string(total_count_bytes) + ", but '" +
+            buffer->GetResultIdentifier() + "' was declared with size " +
+            std::to_string(expected_bytes) + " byte" +
+            (expected_bytes > 1 ? "s" : "") + " at " +
+            buffer->GetStartToken().GetLocationString());
+    errors_found = true;
+  }
+  return !errors_found;
 }
 
 bool Checker::VisitRunCompute(CommandRunCompute* command_run_compute) {

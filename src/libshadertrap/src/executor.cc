@@ -19,8 +19,11 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <fstream>
 #include <functional>
 #include <initializer_list>
+#include <memory>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -35,6 +38,8 @@
 namespace shadertrap {
 
 namespace {
+
+const size_t kNumRgbaChannels = 4;
 
 std::string OpenglErrorString(GLenum err) {
   switch (err) {
@@ -55,7 +60,21 @@ std::string OpenglErrorString(GLenum err) {
   }
 }
 
-const size_t kNumRgbaChannels = 4;
+template <typename T>
+void DumpFormatEntry(const char* data,
+                     const CommandDumpBufferText::FormatEntry& format_entry,
+                     std::ofstream* text_file, size_t* index) {
+  std::vector<int32_t> values(format_entry.count);
+  const size_t size_bytes = format_entry.count * sizeof(T);
+  memcpy(values.data(), &data[*index], size_bytes);
+  for (auto it = values.begin(); it != values.end(); it++) {
+    *text_file << *it;
+    if (it != values.end() - 1) {
+      *text_file << " ";
+    }
+  }
+  *index += size_bytes;
+}
 
 }  // namespace
 
@@ -583,6 +602,78 @@ bool Executor::VisitDumpRenderbuffer(
   }
   GL_SAFECALL(&dump_renderbuffer->GetStartToken(), glDeleteFramebuffers, 1,
               &framebuffer_object_id);
+  return true;
+}
+
+bool Executor::VisitDumpBufferBinary(
+    CommandDumpBufferBinary* dump_buffer_binary) {
+  GLuint buffer =
+      created_buffers_.at(dump_buffer_binary->GetBufferIdentifier());
+  GLint64 buffer_size;
+  GL_SAFECALL(&dump_buffer_binary->GetStartToken(), glBindBuffer,
+              GL_ARRAY_BUFFER, buffer);
+  GL_SAFECALL(&dump_buffer_binary->GetStartToken(), glGetBufferParameteri64v,
+              GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size);
+  const auto* mapped_buffer =
+      static_cast<char*>(gl_functions_->glMapBufferRange_(
+          GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size),
+          GL_MAP_READ_BIT));
+  if (mapped_buffer == nullptr) {
+    GL_CHECKERR(&dump_buffer_binary->GetStartToken(), "glMapBufferRange");
+    return false;
+  }
+  std::ofstream binary_file(dump_buffer_binary->GetFilename(),
+                            std::ios::out | std::ios::binary);
+  binary_file.write(mapped_buffer, buffer_size);
+  GL_SAFECALL(&dump_buffer_binary->GetStartToken(), glUnmapBuffer,
+              GL_ARRAY_BUFFER);
+  return true;
+}
+
+bool Executor::VisitDumpBufferText(CommandDumpBufferText* dump_buffer_text) {
+  GLuint buffer = created_buffers_.at(dump_buffer_text->GetBufferIdentifier());
+  GLint64 buffer_size;
+  GL_SAFECALL(&dump_buffer_text->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
+              buffer);
+  GL_SAFECALL(&dump_buffer_text->GetStartToken(), glGetBufferParameteri64v,
+              GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size);
+  const auto* mapped_buffer =
+      static_cast<char*>(gl_functions_->glMapBufferRange_(
+          GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size),
+          GL_MAP_READ_BIT));
+  if (mapped_buffer == nullptr) {
+    GL_CHECKERR(&dump_buffer_text->GetStartToken(), "glMapBufferRange");
+    return false;
+  }
+  std::ofstream text_file(dump_buffer_text->GetFilename(), std::ios::out);
+  size_t index = 0;
+  for (const auto& format_entry : dump_buffer_text->GetFormatEntries()) {
+    switch (format_entry.kind) {
+      case CommandDumpBufferText::FormatEntry::Kind::kSkip:
+        index += format_entry.count;
+        break;
+      case CommandDumpBufferText::FormatEntry::Kind::kString:
+        text_file << format_entry.token->GetText();
+        break;
+      case CommandDumpBufferText::FormatEntry::Kind::kByte:
+        DumpFormatEntry<uint8_t>(mapped_buffer, format_entry, &text_file,
+                                 &index);
+        break;
+      case CommandDumpBufferText::FormatEntry::Kind::kInt:
+        DumpFormatEntry<int32_t>(mapped_buffer, format_entry, &text_file,
+                                 &index);
+        break;
+      case CommandDumpBufferText::FormatEntry::Kind::kUint:
+        DumpFormatEntry<uint32_t>(mapped_buffer, format_entry, &text_file,
+                                  &index);
+        break;
+      case CommandDumpBufferText::FormatEntry::Kind::kFloat:
+        DumpFormatEntry<float>(mapped_buffer, format_entry, &text_file, &index);
+        break;
+    }
+  }
+  GL_SAFECALL(&dump_buffer_text->GetStartToken(), glUnmapBuffer,
+              GL_ARRAY_BUFFER);
   return true;
 }
 

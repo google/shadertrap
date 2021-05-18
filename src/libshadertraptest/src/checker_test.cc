@@ -1349,5 +1349,227 @@ RUN_GRAPHICS
       message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, DumpBufferBinaryUnknownBuffer) {
+  std::string program =
+      R"(GLES 3.1
+DUMP_BUFFER_BINARY BUFFER doesnotexist FILE "temp.bin"
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 2:27: 'doesnotexist' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferBinaryNotBuffer) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_RENDERBUFFER renderbuf WIDTH 24 HEIGHT 24
+DUMP_BUFFER_BINARY BUFFER renderbuf FILE "temp.bin"
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:27: 'renderbuf' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferTextUnknownBuffer) {
+  std::string program =
+      R"(GLES 3.1
+DUMP_BUFFER_TEXT BUFFER doesnotexist FILE "temp.txt" FORMAT float 4
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 2:25: 'doesnotexist' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferTextNotBuffer) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_RENDERBUFFER renderbuf WIDTH 24 HEIGHT 24
+DUMP_BUFFER_TEXT BUFFER renderbuf FILE "temp.txt" FORMAT float 4
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:25: 'renderbuf' must be a buffer",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferTextGood) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 12
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT uint 12
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT int 12
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT byte 48
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT int 4 float 2 float 2 uint 1 uint 3
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT byte 16 float 2 SKIP_BYTES 8 uint 1 uint 3
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT "hello" byte 16 "\nworld" "hello" float 2 "again\n" SKIP_BYTES 8 uint 1 uint 3
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_TRUE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(0, message_consumer.GetNumMessages());
+}
+
+TEST_F(CheckerTestFixture, DumpBufferTextNotEnoughElements) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 11
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:52: The number of bytes specified in the formatting of 'buf' "
+      "is 44, but 'buf' was declared with size 48 bytes at 2:1",
+      message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferTextTooManyElements) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 13
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:52: The number of bytes specified in the formatting of 'buf' "
+      "is 52, but 'buf' was declared with size 48 bytes at 2:1",
+      message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferTextByteNotMultipleOfFour) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT byte 1 float 11 byte 3
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(2, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:52: The count for a 'byte' formatting entry must be a multiple "
+      "of 4; found 1",
+      message_consumer.GetMessageString(0));
+  ASSERT_EQ(
+      "ERROR: 3:68: The count for a 'byte' formatting entry must be a multiple "
+      "of 4; found 3",
+      message_consumer.GetMessageString(1));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferTextSkipNotMultipleOfFour) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT SKIP_BYTES 1 float 11 SKIP_BYTES 3
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(2, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 3:52: The count for a 'SKIP_BYTES' formatting entry must be a "
+      "multiple of 4; found 1",
+      message_consumer.GetMessageString(0));
+  ASSERT_EQ(
+      "ERROR: 3:74: The count for a 'SKIP_BYTES' formatting entry must be a "
+      "multiple of 4; found 3",
+      message_consumer.GetMessageString(1));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferSkipBytesCountCannotBeZero) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT SKIP_BYTES 0 float 12
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:52: The count for a formatting entry must be positive",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferByteCountCannotBeZero) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT byte 0 float 12
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:52: The count for a formatting entry must be positive",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, DumpBufferFloatCountCannotBeZero) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 0 float 12
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:52: The count for a formatting entry must be positive",
+            message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap

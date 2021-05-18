@@ -1,4 +1,4 @@
-// Copyright 2020 The ShaderTrap Project Authors
+// Copyright 2021 The ShaderTrap Project Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "libshadertrap/command_dump_renderbuffer.h"
+#include "libshadertrap/command_dump_buffer_text.h"
 
 #include <utility>
 
@@ -20,16 +20,17 @@
 
 namespace shadertrap {
 
-CommandDumpRenderbuffer::CommandDumpRenderbuffer(
+CommandDumpBufferText::CommandDumpBufferText(
     std::unique_ptr<Token> start_token,
-    std::unique_ptr<Token> renderbuffer_identifier,
-    std::unique_ptr<Token> filename)
+    std::unique_ptr<Token> buffer_identifier, std::unique_ptr<Token> filename,
+    std::vector<FormatEntry> format_entries)
     : Command(std::move(start_token)),
-      renderbuffer_identifier_(std::move(renderbuffer_identifier)),
-      filename_(std::move(filename)) {}
+      buffer_identifier_(std::move(buffer_identifier)),
+      filename_(std::move(filename)),
+      format_entries_(std::move(format_entries)) {}
 
-bool CommandDumpRenderbuffer::Accept(CommandVisitor* visitor) {
-  return visitor->VisitDumpRenderbuffer(this);
+bool CommandDumpBufferText::Accept(CommandVisitor* visitor) {
+  return visitor->VisitDumpBufferText(this);
 }
 
 }  // namespace shadertrap

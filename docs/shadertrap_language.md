@@ -254,6 +254,48 @@ Declares a shader, which can subsequently be compiled. The shader will be valida
 
 The reason for separating the declaration and compilation of shaders into two separate commands is that it allows writing a test that compiles the same shader multiple times without having to duplicate the text of the shader.
 
+### DUMP_BUFFER_BINARY
+
+```
+DUMP_BUFFER_BINARY BUFFER buffer FILE file
+```
+
+Dumps all bytes of a buffer to a binary file.
+
+- `buffer` is the buffer to be dumped, and must be produced by `CREATE_BUFFER`
+- `file` is the file to which the buffer data will be written
+
+### DUMP_BUFFER_TEXT
+
+```
+DUMP_BUFFER_TEXT BUFFER buffer FILE file FORMAT format_entry_1 ... format_entry_n
+```
+
+Dumps a buffer to a text file in a formatted manner.
+
+- `buffer` is the buffer to be dumped, and must be produced by `CREATE_BUFFER`
+- `file` is the file to which the formatted buffer data will be written
+- Each `format_entry_i` is either:
+    - A string literal
+    - `SKIP_BYTES count` for some positive integer `count` that must be a multiple of 4
+    - `type count` for some positive integer `count`, where `type` is one of `byte`, `int`, `uint` or `float`, and where `count` is a multiple of 4 if `type` is `byte`
+
+The data is formatted by processing the `format_entry_i` components as follows, with respect to `offset`, a byte offset into the buffer, initialised to 0:
+
+- If `format_entry_i` is a string literal, the string literal is output to the file. This is useful for including descriptive text in the output.
+
+- If `format_entry_i` is `SKIP_BYTES count` then offset is incremented by `count`. This allows padding or irrelevant data to be skipped.
+
+- If `format_entry_i` is `byte count` then `count` bytes from the buffer are output as non-negative integers, separated by spaces, starting from position `offset`, after which `offset` is incremented by `count`.
+
+- If `format_entry_i` is `int count` then `count` 32-bit signed integers are output, each constructed from the next 4 bytes in the buffer, separated by spaces, starting from position `offset`, after which `offset` is incremented by 4*`count`.
+
+- If `format_entry_i` is `uint count` then the effect is the same as for the `int` case, except that 32-bit unsigned integers are output.
+
+- If `format_entry_i` is `float count` then the effect is the same as for the `int` case, except that 32-bit floating-point values are output.
+
+The sum of `count` for all `byte` and `SKIP_BYTES` entries, plus the sum of 4*`count` for all `int`, `uint` and `float` entries, must equal the buffer size in bytes - i.e., every byte in the buffer must be accounted for.
+
 ### DUMP_RENDERBUFFER
 
 ```

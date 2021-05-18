@@ -332,5 +332,61 @@ RUN_GRAPHICS
       message_consumer.GetMessageString(0));
 }
 
+TEST(ParserTest, DumpBufferTextStringAfterType) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float "hello"
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:58: Expected integer count, got 'hello'",
+            message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, DumpBufferTextTypeAfterType) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float float
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:58: Expected integer count, got 'float'",
+            message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, DumpBufferTextNumberWithoutType) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT 3
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:52: Unknown command: '3'",
+            message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, DumpBufferTextNumberAfterNumber) {
+  std::string program =
+      R"(GLES 3.1
+CREATE_BUFFER buf SIZE_BYTES 48 INIT_VALUES uint 0 0 0 0 0 0 0 0 0 0 0 0
+DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 4 4
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 3:60: Unknown command: '4'",
+            message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap

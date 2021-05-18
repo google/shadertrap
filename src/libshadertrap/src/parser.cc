@@ -37,6 +37,8 @@
 #include "libshadertrap/command_create_renderbuffer.h"
 #include "libshadertrap/command_create_sampler.h"
 #include "libshadertrap/command_declare_shader.h"
+#include "libshadertrap/command_dump_buffer_binary.h"
+#include "libshadertrap/command_dump_buffer_text.h"
 #include "libshadertrap/command_dump_renderbuffer.h"
 #include "libshadertrap/command_run_compute.h"
 #include "libshadertrap/command_run_graphics.h"
@@ -180,6 +182,10 @@ bool Parser::ParseCommand() {
       return ParseCommandCreateRenderbuffer();
     case Token::Type::kKeywordDeclareShader:
       return ParseCommandDeclareShader();
+    case Token::Type::kKeywordDumpBufferBinary:
+      return ParseCommandDumpBufferBinary();
+    case Token::Type::kKeywordDumpBufferText:
+      return ParseCommandDumpBufferText();
     case Token::Type::kKeywordDumpRenderbuffer:
       return ParseCommandDumpRenderbuffer();
     case Token::Type::kKeywordRunCompute:
@@ -1074,10 +1080,127 @@ bool Parser::ParseCommandDeclareShader() {
   return true;
 }
 
+bool Parser::ParseCommandDumpBufferBinary() {
+  auto start_token = tokenizer_->NextToken();
+  std::unique_ptr<Token> buffer_identifier;
+  std::unique_ptr<Token> filename;
+  if (!ParseParameters(
+          {{Token::Type::kKeywordBuffer,
+            [this, &buffer_identifier]() -> bool {
+              auto token = tokenizer_->NextToken();
+              if (!token->IsIdentifier()) {
+                message_consumer_->Message(MessageConsumer::Severity::kError,
+                                           token.get(),
+                                           "Expected buffer identifier, got '" +
+                                               token->GetText() + "'");
+                return false;
+              }
+              buffer_identifier = std::move(token);
+              return true;
+            }},
+           {Token::Type::kKeywordFile, [this, &filename]() -> bool {
+              filename = tokenizer_->NextToken();
+              if (!filename->IsString()) {
+                message_consumer_->Message(
+                    MessageConsumer::Severity::kError, filename.get(),
+                    "Expected file to which to dump buffer, got '" +
+                        filename->GetText() + "'");
+                return false;
+              }
+              return true;
+            }}})) {
+    return false;
+  }
+  parsed_commands_.push_back(MakeUnique<CommandDumpBufferBinary>(
+      std::move(start_token), std::move(buffer_identifier),
+      std::move(filename)));
+  return true;
+}
+
+bool Parser::ParseCommandDumpBufferText() {
+  auto start_token = tokenizer_->NextToken();
+  std::unique_ptr<Token> buffer_identifier;
+  std::unique_ptr<Token> filename;
+  std::vector<CommandDumpBufferText::FormatEntry> format_entries;
+  if (!ParseParameters(
+          {{Token::Type::kKeywordBuffer,
+            [this, &buffer_identifier]() -> bool {
+              auto token = tokenizer_->NextToken();
+              if (!token->IsIdentifier()) {
+                message_consumer_->Message(MessageConsumer::Severity::kError,
+                                           token.get(),
+                                           "Expected buffer identifier, got '" +
+                                               token->GetText() + "'");
+                return false;
+              }
+              buffer_identifier = std::move(token);
+              return true;
+            }},
+           {Token::Type::kKeywordFile,
+            [this, &filename]() -> bool {
+              filename = tokenizer_->NextToken();
+              if (!filename->IsString()) {
+                message_consumer_->Message(
+                    MessageConsumer::Severity::kError, filename.get(),
+                    "Expected file to which to dump buffer, got '" +
+                        filename->GetText() + "'");
+                return false;
+              }
+              return true;
+            }},
+           {Token::Type::kKeywordFormat, [this, &format_entries]() -> bool {
+              while (true) {
+                CommandDumpBufferText::FormatEntry::Kind kind;
+                switch (tokenizer_->PeekNextToken()->GetType()) {
+                  case Token::Type::kKeywordSkipBytes:
+                    kind = CommandDumpBufferText::FormatEntry::Kind::kSkip;
+                    break;
+                  case Token::Type::kKeywordTypeByte:
+                    kind = CommandDumpBufferText::FormatEntry::Kind::kByte;
+                    break;
+                  case Token::Type::kKeywordTypeFloat:
+                    kind = CommandDumpBufferText::FormatEntry::Kind::kFloat;
+                    break;
+                  case Token::Type::kKeywordTypeInt:
+                    kind = CommandDumpBufferText::FormatEntry::Kind::kInt;
+                    break;
+                  case Token::Type::kKeywordTypeUint: {
+                    kind = CommandDumpBufferText::FormatEntry::Kind::kUint;
+                    break;
+                    case Token::Type::kString:
+                      kind = CommandDumpBufferText::FormatEntry::Kind::kString;
+                      break;
+                    default:
+                      return true;
+                  }
+                }
+                auto format_start_token = tokenizer_->NextToken();
+                size_t count;
+                if (kind == CommandDumpBufferText::FormatEntry::Kind::kString) {
+                  count = 0;
+                } else {
+                  auto maybe_count = ParseUint32("count");
+                  if (!maybe_count.first) {
+                    return false;
+                  }
+                  count = maybe_count.second;
+                }
+                format_entries.push_back(
+                    {std::move(format_start_token), kind, count});
+              }
+            }}})) {
+    return false;
+  }
+  parsed_commands_.push_back(MakeUnique<CommandDumpBufferText>(
+      std::move(start_token), std::move(buffer_identifier), std::move(filename),
+      std::move(format_entries)));
+  return true;
+}
+
 bool Parser::ParseCommandDumpRenderbuffer() {
   auto start_token = tokenizer_->NextToken();
   std::unique_ptr<Token> renderbuffer_identifier;
-  std::string filename;
+  std::unique_ptr<Token> filename;
   if (!ParseParameters(
           {{Token::Type::kKeywordRenderbuffer,
             [this, &renderbuffer_identifier]() -> bool {
@@ -1093,22 +1216,21 @@ bool Parser::ParseCommandDumpRenderbuffer() {
               return true;
             }},
            {Token::Type::kKeywordFile, [this, &filename]() -> bool {
-              auto token = tokenizer_->NextToken();
-              if (!token->IsString()) {
+              filename = tokenizer_->NextToken();
+              if (!filename->IsString()) {
                 message_consumer_->Message(
-                    MessageConsumer::Severity::kError, token.get(),
-                    "Exected file to which to dump renderbuffer, got '" +
-                        token->GetText() + "'");
+                    MessageConsumer::Severity::kError, filename.get(),
+                    "Expected file to which to dump renderbuffer, got '" +
+                        filename->GetText() + "'");
                 return false;
               }
-              filename =
-                  token->GetText().substr(1, token->GetText().length() - 2);
               return true;
             }}})) {
     return false;
   }
   parsed_commands_.push_back(MakeUnique<CommandDumpRenderbuffer>(
-      std::move(start_token), std::move(renderbuffer_identifier), filename));
+      std::move(start_token), std::move(renderbuffer_identifier),
+      std::move(filename)));
   return true;
 }
 
