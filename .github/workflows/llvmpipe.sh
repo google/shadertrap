@@ -37,10 +37,10 @@ NINJA_OS="linux"
 sudo DEBIAN_FRONTEND=noninteractive apt-get -qy install libegl1-mesa-dev
 
 # Needed to get Mesa build dependencies
-sudo DEBIAN_FRONTENT=noninteractive apt-get -qy build-dep mesa python-pip
+sudo DEBIAN_FRONTENT=noninteractive apt-get -qy build-dep mesa
 
 # Mesa requires Mako
-pip3 install Mako
+python -m pip install Mako
 
 df -h
 sudo swapoff -a
