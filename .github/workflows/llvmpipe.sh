@@ -29,10 +29,14 @@ then
     exit 1
 fi
 
+sudo echo "deb-src http://gb.archive.ubuntu.com/ubuntu/ focal main restricted" >> /etc/apt/sources.list
+sudo DEBIAN_FRONTEND=noninteractive apt-get -qy update
 
 NINJA_OS="linux"
 # Needed to get EGL
 sudo DEBIAN_FRONTEND=noninteractive apt-get -qy install libegl1-mesa-dev
+
+# Needed to get Mesa build dependencies
 sudo DEBIAN_FRONTENT=noninteractive apt-get -qy build-dep mesa
 
 df -h
