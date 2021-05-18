@@ -88,6 +88,16 @@ export SHADERTRAP_SKIP_BASH=1
 
 source ./dev_shell.sh.template
 
-check_build.sh
+mkdir -p "build-Debug/"
+pushd "build-Debug/"
+  cmake \
+    -G Ninja \
+    ../.. \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DSHADERTRAP_USE_LLVM_LIBCPP=1
 
-env LD_LIBRARY_PATH=${HOME}/mesa/mesa-21.1.0/dynamiclibs ${HOME}/temp/build-Debug/src/shadertrap ${HOME}/examples/cube.shadertrap --show_gl_info
+  cmake --build . --config Debug
+
+popd
+
+env LD_LIBRARY_PATH=${HOME}/mesa/mesa-21.1.0/dynamiclibs ./temp/build-Debug/src/shadertrap ./examples/cube.shadertrap --show_gl_info
