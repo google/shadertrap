@@ -14,6 +14,7 @@
 
 #include <EGL/egl.h>
 
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -43,6 +44,9 @@ const EGLint kWidth = 256;
 const EGLint kHeight = 256;
 const EGLint kDepthSize = 16;
 const EGLint kRequiredEglMinorVersionForGl = 5;
+
+const char* const kOptionPrefix = "--";
+const char* const kOptionShowGlInfo = "--show_gl_info";
 
 class ConsoleMessageConsumer : public shadertrap::MessageConsumer {
   void Message(Severity severity, const shadertrap::Token* token,
@@ -75,14 +79,52 @@ std::vector<char> ReadFile(const std::string& input_file) {
 
 }  // namespace
 
+#define SHOW_GL_STRING(name)                                            \
+  do {                                                                  \
+    auto* gl_string = glGetString(name);                                \
+    if (glGetError() != GL_NO_ERROR) {                                  \
+      std::cerr << "Error calling glGetString(" #name ")" << std::endl; \
+      return 1;                                                         \
+    }                                                                   \
+    std::cout << "GL_VENDOR: " << gl_string << std::endl;               \
+  } while (false)
+
 int main(int argc, const char** argv) {
   std::vector<std::string> args(argv, argv + argc);
-  if (args.size() != 2) {
-    std::cerr << "Usage: " << args[0] + " SCRIPT" << std::endl;
+  if (args.size() < 2) {
+    std::cerr << "Usage: " << args[0] + "[options] SCRIPT" << std::endl;
+    std::cerr << "Options:" << std::endl;
+    std::cerr << "  " << kOptionShowGlInfo << std::endl;
+    std::cerr << "    Show GL information before running the script"
+              << std::endl;
     return 1;
   }
 
-  auto char_data = ReadFile(args[1]);
+  bool show_gl_info = false;
+  std::string script_name;
+  std::string option_prefix(kOptionPrefix);
+  for (size_t i = 1; i < static_cast<size_t>(argc); i++) {
+    std::string argument(argv[i]);
+    if (argument == kOptionShowGlInfo) {
+      show_gl_info = true;
+    } else if (argument.length() >= option_prefix.length() &&
+               argument.substr(0, option_prefix.length()) == option_prefix) {
+      std::cerr << "Unknown option " << argument << std::endl;
+      return 1;
+    } else if (!script_name.empty()) {
+      std::cerr << "Multiple script names provided." << std::endl;
+      return 1;
+    } else {
+      script_name = argument;
+    }
+  }
+
+  if (script_name.empty()) {
+    std::cerr << "No script name was provided." << std::endl;
+    return 1;
+  }
+
+  auto char_data = ReadFile(script_name);
   auto data = std::string(char_data.begin(), char_data.end());
 
   ConsoleMessageConsumer message_consumer;
@@ -199,6 +241,13 @@ int main(int argc, const char** argv) {
       std::cerr << "gladLoadGLES2Loader failed." << std::endl;
       return 1;
     }
+  }
+
+  if (show_gl_info) {
+    SHOW_GL_STRING(GL_VENDOR);
+    SHOW_GL_STRING(GL_RENDERER);
+    SHOW_GL_STRING(GL_VERSION);
+    SHOW_GL_STRING(GL_SHADING_LANGUAGE_VERSION);
   }
 
   shadertrap::GlFunctions functions = shadertrap::GetGlFunctions();
