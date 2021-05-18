@@ -88,7 +88,7 @@ export SHADERTRAP_SKIP_BASH=1
 
 source ./dev_shell.sh.template
 
-cd ${SHADERTRAP_ROOT}
+cd ${SHADERTRAP_REPO_ROOT}
 cd temp
 
 mkdir -p "build-Debug/"
