@@ -29,7 +29,7 @@ then
     exit 1
 fi
 
-sudo echo "deb-src http://gb.archive.ubuntu.com/ubuntu/ focal main restricted" >> /etc/apt/sources.list
+echo "deb-src http://gb.archive.ubuntu.com/ubuntu/ focal main restricted" | sudo tee -a /etc/apt/sources.list
 sudo DEBIAN_FRONTEND=noninteractive apt-get -qy update
 
 NINJA_OS="linux"
