@@ -46,7 +46,7 @@ const EGLint kDepthSize = 16;
 const EGLint kRequiredEglMinorVersionForGl = 5;
 
 const char* const kOptionPrefix = "--";
-const char* const kOptionShowGlInfo = "--show_gl_info";
+const char* const kOptionShowGlInfo = "--show-gl-info";
 
 class ConsoleMessageConsumer : public shadertrap::MessageConsumer {
   void Message(Severity severity, const shadertrap::Token* token,
