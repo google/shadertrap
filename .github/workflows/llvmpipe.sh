@@ -91,7 +91,6 @@ source ./dev_shell.sh.template
 cd ${SHADERTRAP_REPO_ROOT}
 
 pushd temp
-  cd temp
   mkdir -p "build-Debug/"
   pushd "build-Debug/"
     cmake \
