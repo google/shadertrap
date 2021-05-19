@@ -102,4 +102,4 @@ pushd temp
   popd
 popd
 
-env LD_LIBRARY_PATH=${HOME}/mesa/mesa-21.1.0/dynamiclibs ./temp/build-Debug/src/shadertrap/shadertrap ./examples/cube.shadertrap --show_gl_info
+env LD_LIBRARY_PATH=${HOME}/mesa/mesa-21.1.0/dynamiclibs ./temp/build-Debug/src/shadertrap/shadertrap ./examples/cube.shadertrap --show-gl-info
