@@ -33,7 +33,9 @@
 #include "libshadertrap/token.h"
 #include "libshadertrap/uniform_value.h"
 #include "libshadertrap/vertex_attribute_info.h"
+#ifdef SHADERTRAP_LODEPNG
 #include "lodepng/lodepng.h"
+#endif
 
 namespace shadertrap {
 
@@ -591,6 +593,7 @@ bool Executor::VisitDumpRenderbuffer(
           data[(height - h - 1) * width * kNumRgbaChannels + col];
     }
   }
+#ifdef SHADERTRAP_LODEPNG
   unsigned png_error = lodepng::encode(
       dump_renderbuffer->GetFilename(), flipped_data,
       static_cast<unsigned int>(width), static_cast<unsigned int>(height));
@@ -602,6 +605,7 @@ bool Executor::VisitDumpRenderbuffer(
   }
   GL_SAFECALL(&dump_renderbuffer->GetStartToken(), glDeleteFramebuffers, 1,
               &framebuffer_object_id);
+#endif
   return true;
 }
 

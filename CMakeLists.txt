@@ -76,12 +76,31 @@ option(
     "Enable suppression of specific warnings for shadertrap targets."
     ${SHADERTRAP_PROJECT_IS_ROOT})
 
+option(
+    SHADERTRAP_BUILD_TESTING
+    "Build tests."
+    ${SHADERTRAP_PROJECT_IS_ROOT})
+
+option(
+    SHADERTRAP_DEQP
+    "Enable for dEQP integration"
+    OFF)
+
+option(
+    SHADERTRAP_SKIP_EXECUTABLE
+    "Skip building executable along with the library"
+    ${SHADERTRAP_DEQP})
+
+option(
+    SHADERTRAP_SKIP_LODEPNG
+    "Skip building lodepng"
+    ${SHADERTRAP_DEQP})
+
 
 # TODO(paulthomson): Remove this eventually.
 find_library(SHADERTRAP_EGL_LIB_PATH NAMES EGL libEGL)
 
 if(SHADERTRAP_PROJECT_IS_ROOT)
-
     # Set some global compiler flags.
     set(CMAKE_CXX_STANDARD 11)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -149,9 +168,13 @@ add_subdirectory(third_party/OpenGL-Registry EXCLUDE_FROM_ALL)
 # TODO(paulthomson): Probably remove this and use a different loading strategy/library.
 add_subdirectory(third_party/glad EXCLUDE_FROM_ALL)
 
-add_subdirectory(third_party/lodepng EXCLUDE_FROM_ALL)
+if(NOT SHADERTRAP_SKIP_LODEPNG)
+    add_subdirectory(third_party/lodepng EXCLUDE_FROM_ALL)
+endif()
 
-add_subdirectory(third_party/googletest)
+if(SHADERTRAP_BUILD_TESTING)
+    add_subdirectory(third_party/googletest)
+endif()
 
 add_subdirectory(third_party/glslang)
 
@@ -221,10 +244,20 @@ if(SHADERTRAP_WARNING_SUPPRESSIONS)
     endif()
 endif()
 
+if(SHADERTRAP_DEQP)
+    add_compile_definitions(SHADERTRAP_DEQP)
+endif()
+
+if(NOT SHADERTRAP_SKIP_LODEPNG)
+    add_compile_definitions(SHADERTRAP_LODEPNG)
+endif()
+
 add_subdirectory(src/libshadertrap)
 
-if(BUILD_TESTING)
+if(SHADERTRAP_BUILD_TESTING)
     add_subdirectory(src/libshadertraptest)
 endif()
 
-add_subdirectory(src/shadertrap)
+if(NOT SHADERTRAP_SKIP_EXECUTABLE)
+    add_subdirectory(src/shadertrap)
+endif()

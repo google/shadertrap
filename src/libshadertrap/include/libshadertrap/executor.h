@@ -15,8 +15,13 @@
 #ifndef LIBSHADERTRAP_EXECUTOR_H
 #define LIBSHADERTRAP_EXECUTOR_H
 
+#ifdef SHADERTRAP_DEQP
+// NOLINTNEXTLINE(build/include_subdir)
+#include "glw.h"
+#else
 #define GL_GLES_PROTOTYPES 0
 #include <GLES3/gl32.h>
+#endif
 
 #include <map>
 #include <string>
