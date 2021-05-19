@@ -169,11 +169,11 @@ add_subdirectory(third_party/OpenGL-Registry EXCLUDE_FROM_ALL)
 add_subdirectory(third_party/glad EXCLUDE_FROM_ALL)
 
 if(NOT SHADERTRAP_SKIP_LODEPNG)
-add_subdirectory(third_party/lodepng EXCLUDE_FROM_ALL)
+    add_subdirectory(third_party/lodepng EXCLUDE_FROM_ALL)
 endif()
 
 if(SHADERTRAP_BUILD_TESTING)
-add_subdirectory(third_party/googletest)
+    add_subdirectory(third_party/googletest)
 endif()
 
 add_subdirectory(third_party/glslang)
@@ -259,5 +259,5 @@ if(SHADERTRAP_BUILD_TESTING)
 endif()
 
 if(NOT SHADERTRAP_SKIP_EXECUTABLE)
-add_subdirectory(src/shadertrap)
+    add_subdirectory(src/shadertrap)
 endif()
