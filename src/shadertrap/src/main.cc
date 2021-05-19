@@ -48,6 +48,8 @@ const EGLint kDepthSize = 16;
 const EGLint kRequiredEglMinorVersionForGl = 5;
 
 const char* const kOptionPrefix = "--";
+const char* const kOptionRequiredVendorRendererSubstring =
+    "--require-vendor-renderer-substring";
 const char* const kOptionShowGlInfo = "--show-gl-info";
 
 class ConsoleMessageConsumer : public shadertrap::MessageConsumer {
@@ -81,34 +83,47 @@ std::vector<char> ReadFile(const std::string& input_file) {
 
 }  // namespace
 
-#define SHOW_GL_STRING(name)                                            \
-  do {                                                                  \
-    auto* gl_string = glGetString(name);                                \
-    if (glGetError() != GL_NO_ERROR) {                                  \
-      std::cerr << "Error calling glGetString(" #name ")" << std::endl; \
-      return 1;                                                         \
-    }                                                                   \
-    std::cout << "GL_VENDOR: " << gl_string << std::endl;               \
-  } while (false)
-
 int main(int argc, const char** argv) {
   std::vector<std::string> args(argv, argv + argc);
   if (args.size() < 2) {
     std::cerr << "Usage: " << args[0] + "[options] SCRIPT" << std::endl;
     std::cerr << "Options:" << std::endl;
+    std::cerr << "  " << kOptionRequiredVendorRendererSubstring << " string"
+              << std::endl;
+    std::cerr << "      Requires that at least one of the GL_VENDOR or "
+                 "GL_RENDERER strings contain"
+              << std::endl;
+    std::cerr << "      the given string. This will skip any other usable "
+                 "devices until a suitable"
+              << std::endl;
+    std::cerr << "      device is found." << std::endl;
     std::cerr << "  " << kOptionShowGlInfo << std::endl;
-    std::cerr << "    Show GL information before running the script"
+    std::cerr << "      Show GL information before running the script"
               << std::endl;
     return 1;
   }
 
   bool show_gl_info = false;
+  std::string vendor_or_renderer_substring;
   std::string script_name;
   std::string option_prefix(kOptionPrefix);
   for (size_t i = 1; i < static_cast<size_t>(argc); i++) {
     std::string argument(argv[i]);
     if (argument == kOptionShowGlInfo) {
       show_gl_info = true;
+    } else if (argument == kOptionRequiredVendorRendererSubstring) {
+      if (!vendor_or_renderer_substring.empty()) {
+        std::cerr << "Vendor/renderer substring specified multiple times."
+                  << std::endl;
+        return 1;
+      }
+      if (i == static_cast<size_t>(argc) - 1) {
+        std::cerr << "No string specified for vendor/renderer substring."
+                  << std::endl;
+        return 1;
+      }
+      i++;
+      vendor_or_renderer_substring = argv[i];
     } else if (argument.length() >= option_prefix.length() &&
                argument.substr(0, option_prefix.length()) == option_prefix) {
       std::cerr << "Unknown option " << argument << std::endl;
@@ -149,168 +164,226 @@ int main(int argc, const char** argv) {
 
   eglQueryDevicesEXT(kMaxDevices, egl_devices.data(), &num_devices);
 
-  std::cout << "Detected " << num_devices << " devices" << std::endl;
-
   if (num_devices == 0) {
     std::cerr << "No devices found." << std::endl;
     return 1;
   }
 
+  std::stringstream diagnostics;
+  diagnostics << "Number of devices found: " << num_devices << std::endl;
+
+  struct EglData {
+    ~EglData() {
+      if (surface != nullptr) {
+        eglDestroySurface(display, surface);
+      }
+      if (context != nullptr) {
+        eglDestroyContext(display, context);
+      }
+      if (display != nullptr) {
+        eglTerminate(display);
+      }
+    }
+
+    EGLDisplay display = nullptr;
+    EGLContext context = nullptr;
+    EGLSurface surface = nullptr;
+  };
+
   auto eglGetPlatformDisplayEXT =
       reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
           eglGetProcAddress("eglGetPlatformDisplayEXT"));
 
-  EGLint egl_major_version = 0;
-  EGLint egl_minor_version = 0;
-
-  EGLDisplay display = nullptr;
-  bool initialized = false;
   for (size_t i = 0; i < static_cast<size_t>(num_devices); i++) {
-    display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, egl_devices[i],
-                                       nullptr);
-    if (eglInitialize(display, &egl_major_version, &egl_minor_version) ==
-        EGL_FALSE) {
-      std::cerr << "Failed to initialize EGL display: ";
+    diagnostics << std::endl << "Trying device " << i << std::endl;
+    EglData egl_data;
+    egl_data.display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
+                                                egl_devices[i], nullptr);
+    EGLint egl_major_version;
+    EGLint egl_minor_version;
+    if (eglInitialize(egl_data.display, &egl_major_version,
+                      &egl_minor_version) == EGL_FALSE) {
+      diagnostics << "Failed to initialize EGL display " << i << ": ";
       switch (eglGetError()) {
         case EGL_BAD_DISPLAY:
-          std::cerr << "EGL_BAD_DISPLAY";
+          diagnostics << "EGL_BAD_DISPLAY";
           break;
         case EGL_NOT_INITIALIZED:
-          std::cerr << "EGL_NOT_INITIALIZED";
+          diagnostics << "EGL_NOT_INITIALIZED";
           break;
         default:
-          std::cerr << "unknown error";
+          diagnostics << "unknown error";
           break;
       }
-      std::cerr << std::endl;
-    } else {
-      std::cerr << "Successfully initialized EGL using display " << i
+      diagnostics << std::endl;
+      continue;
+    }
+    diagnostics << "Successfully initialized EGL using display " << i
                 << std::endl;
-      initialized = true;
-      break;
+    if (api_version.GetApi() == shadertrap::ApiVersion::Api::GL &&
+        !(egl_major_version > 1 ||
+          (egl_major_version == 1 &&
+           egl_minor_version >= kRequiredEglMinorVersionForGl))) {
+      diagnostics << "EGL and OpenGL are not compatible pre EGL 1.5; found EGL "
+                  << egl_major_version << "." << egl_minor_version << std::endl;
+      continue;
     }
-  }
-  if (!initialized) {
-    std::cerr << "Could not initialize EGL using any available display."
-              << std::endl;
-    return 1;
-  }
+    if (eglBindAPI(static_cast<EGLenum>(
+            api_version.GetApi() == shadertrap::ApiVersion::Api::GL
+                ? EGL_OPENGL_API
+                : EGL_OPENGL_ES_API)) == EGL_FALSE) {
+      diagnostics << "eglBindAPI failed." << std::endl;
+      continue;
+    }
+    std::vector<EGLint> config_attributes = {
+        EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+        EGL_RED_SIZE,     4,
+        EGL_GREEN_SIZE,   4,
+        EGL_BLUE_SIZE,    4,
+        EGL_ALPHA_SIZE,   4,
 
-  //  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+        EGL_CONFORMANT,   EGL_OPENGL_ES3_BIT,
+        EGL_DEPTH_SIZE,   kDepthSize,
+        EGL_NONE};
 
-  if (api_version.GetApi() == shadertrap::ApiVersion::Api::GL &&
-      !(egl_major_version > 1 ||
-        (egl_major_version == 1 &&
-         egl_minor_version >= kRequiredEglMinorVersionForGl))) {
-    std::cerr << "EGL and OpenGL are not compatible pre EGL 1.5; found EGL "
-              << egl_major_version << "." << egl_minor_version << std::endl;
-    return 1;
-  }
+    EGLint num_config;
+    EGLConfig config;
+    if (eglChooseConfig(egl_data.display, config_attributes.data(), &config, 1,
+                        &num_config) == EGL_FALSE) {
+      diagnostics << "eglChooseConfig failed." << std::endl;
+      continue;
+    }
+    if (num_config != 1) {
+      diagnostics << "ERROR: eglChooseConfig returned " << num_config
+                  << " configurations; exactly 1 configuration is required";
+      continue;
+    }
+    std::vector<EGLint> context_attributes = {
+        EGL_CONTEXT_MAJOR_VERSION,
+        static_cast<EGLint>(api_version.GetMajorVersion()),
+        EGL_CONTEXT_MINOR_VERSION,
+        static_cast<EGLint>(api_version.GetMinorVersion()), EGL_NONE};
 
-  if (eglBindAPI(static_cast<EGLenum>(api_version.GetApi() ==
-                                              shadertrap::ApiVersion::Api::GL
-                                          ? EGL_OPENGL_API
-                                          : EGL_OPENGL_ES_API)) == EGL_FALSE) {
-    std::cerr << "eglBindAPI failed." << std::endl;
-  }
+    egl_data.context = eglCreateContext(
+        egl_data.display, config, EGL_NO_CONTEXT, context_attributes.data());
+    if (egl_data.context == EGL_NO_CONTEXT) {
+      diagnostics << "eglCreateContext failed." << std::endl;
+      continue;
+    }
 
-  std::vector<EGLint> config_attributes = {EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
-                                           EGL_RED_SIZE,     4,
-                                           EGL_GREEN_SIZE,   4,
-                                           EGL_BLUE_SIZE,    4,
-                                           EGL_ALPHA_SIZE,   4,
+    // TODO(afd): For offscreen rendering, do width and height matter?  If no,
+    //  are there more sensible default values than these?  If yes, should they
+    //  be controllable from the command line?
+    std::vector<EGLint> pbuffer_attributes = {EGL_WIDTH,
+                                              kWidth,
+                                              EGL_HEIGHT,
+                                              kHeight,
+                                              EGL_TEXTURE_FORMAT,
+                                              EGL_NO_TEXTURE,
+                                              EGL_TEXTURE_TARGET,
+                                              EGL_NO_TEXTURE,
+                                              EGL_LARGEST_PBUFFER,
+                                              EGL_TRUE,
+                                              EGL_NONE};
 
-                                           EGL_CONFORMANT,   EGL_OPENGL_ES3_BIT,
-                                           EGL_DEPTH_SIZE,   kDepthSize,
-                                           EGL_NONE};
+    egl_data.surface = eglCreatePbufferSurface(egl_data.display, config,
+                                               pbuffer_attributes.data());
+    if (egl_data.surface == EGL_NO_SURFACE) {
+      diagnostics << "eglCreatePbufferSurface failed." << std::endl;
+      continue;
+    }
 
-  EGLint num_config;
-  EGLConfig config;
-  if (eglChooseConfig(display, config_attributes.data(), &config, 1,
-                      &num_config) == EGL_FALSE) {
-    std::cerr << "eglChooseConfig failed." << std::endl;
-    return 1;
-  }
+    if (eglMakeCurrent(egl_data.display, egl_data.surface, egl_data.surface,
+                       egl_data.context) == EGL_FALSE) {
+      diagnostics << "eglMakeCurrent failed." << std::endl;
+      continue;
+    }
 
-  if (num_config != 1) {
-    std::cerr << "ERROR: eglChooseConfig returned " << num_config
-              << " configurations; exactly 1 configuration is required";
-    return 1;
-  }
+    if (api_version.GetApi() == shadertrap::ApiVersion::Api::GL) {
+      if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(eglGetProcAddress)) ==
+          0) {
+        diagnostics << "gladLoadGLLoader failed." << std::endl;
+        continue;
+      }
+    } else {
+      if (gladLoadGLES2Loader(
+              reinterpret_cast<GLADloadproc>(eglGetProcAddress)) == 0) {
+        diagnostics << "gladLoadGLES2Loader failed." << std::endl;
+        continue;
+      }
+    }
 
-  std::vector<EGLint> context_attributes = {
-      EGL_CONTEXT_MAJOR_VERSION,
-      static_cast<EGLint>(api_version.GetMajorVersion()),
-      EGL_CONTEXT_MINOR_VERSION,
-      static_cast<EGLint>(api_version.GetMinorVersion()), EGL_NONE};
+    std::string gl_vendor(
+        reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
+    if (glGetError() != GL_NO_ERROR) {
+      diagnostics << "Error calling glGetString(GL_VENDOR)" << std::endl;
+      continue;
+    }
+    std::string gl_renderer(
+        reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
+    if (glGetError() != GL_NO_ERROR) {
+      diagnostics << "Error calling glGetString(GL_RENDERER)" << std::endl;
+      continue;
+    }
+    std::string gl_version(
+        reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+    if (glGetError() != GL_NO_ERROR) {
+      diagnostics << "Error calling glGetString(GL_VERSION)" << std::endl;
+      continue;
+    }
+    std::string gl_shading_language_version(reinterpret_cast<const char*>(
+        glGetString(GL_SHADING_LANGUAGE_VERSION)));
+    if (glGetError() != GL_NO_ERROR) {
+      diagnostics << "Error calling glGetString(GL_SHADING_LANGUAGE_VERSION)"
+                  << std::endl;
+      continue;
+    }
 
-  EGLContext context = eglCreateContext(display, config, EGL_NO_CONTEXT,
-                                        context_attributes.data());
-  if (context == EGL_NO_CONTEXT) {
-    std::cerr << "eglCreateContext failed." << std::endl;
-    return 1;
-  }
+    if (gl_vendor.find(vendor_or_renderer_substring) == std::string::npos &&
+        gl_renderer.find(vendor_or_renderer_substring) == std::string::npos) {
+      diagnostics << "Skipping this device as it does not match the required "
+                     "vendor/renderer substring "
+                  << vendor_or_renderer_substring
+                  << "; here is the GL info:" << std::endl;
+      diagnostics << "GL_VENDOR: " + gl_vendor << std::endl;
+      diagnostics << "GL_RENDERER: " + gl_renderer << std::endl;
+      diagnostics << "GL_VERSION: " + gl_version << std::endl;
+      diagnostics << "GL_SHADING_LANGUAGE_VERSION: " +
+                         gl_shading_language_version
+                  << std::endl;
+      continue;
+    }
 
-  // TODO(afd): For offscreen rendering, do width and height matter?  If no,
-  //  are there more sensible default values than these?  If yes, should they be
-  //  controllable from the command line?
-  std::vector<EGLint> pbuffer_attributes = {EGL_WIDTH,
-                                            kWidth,
-                                            EGL_HEIGHT,
-                                            kHeight,
-                                            EGL_TEXTURE_FORMAT,
-                                            EGL_NO_TEXTURE,
-                                            EGL_TEXTURE_TARGET,
-                                            EGL_NO_TEXTURE,
-                                            EGL_LARGEST_PBUFFER,
-                                            EGL_TRUE,
-                                            EGL_NONE};
+    if (show_gl_info) {
+      std::cout << "GL_VENDOR: " + gl_vendor << std::endl;
+      std::cout << "GL_RENDERER: " + gl_renderer << std::endl;
+      std::cout << "GL_VERSION: " + gl_version << std::endl;
+      std::cout << "GL_SHADING_LANGUAGE_VERSION: " + gl_shading_language_version
+                << std::endl;
+    }
 
-  EGLSurface surface =
-      eglCreatePbufferSurface(display, config, pbuffer_attributes.data());
-  if (surface == EGL_NO_SURFACE) {
-    std::cerr << "eglCreatePbufferSurface failed." << std::endl;
-    return 1;
-  }
+    shadertrap::GlFunctions functions = shadertrap::GetGlFunctions();
 
-  eglMakeCurrent(display, surface, surface, context);
+    std::vector<std::unique_ptr<shadertrap::CommandVisitor>> temp;
+    temp.push_back(shadertrap::MakeUnique<shadertrap::Checker>(
+        &message_consumer, shadertrap_program->GetApiVersion()));
+    temp.push_back(shadertrap::MakeUnique<shadertrap::Executor>(
+        &functions, &message_consumer, shadertrap_program->GetApiVersion()));
+    shadertrap::CompoundVisitor checker_and_executor(std::move(temp));
+    ShInitialize();
+    bool success = checker_and_executor.VisitCommands(shadertrap_program.get());
+    ShFinalize();
 
-  if (api_version.GetApi() == shadertrap::ApiVersion::Api::GL) {
-    if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(eglGetProcAddress)) ==
-        0) {
-      std::cerr << "gladLoadGLLoader failed." << std::endl;
+    if (!success) {
+      std::cerr << "Errors occurred during execution." << std::endl;
       return 1;
     }
-  } else {
-    if (gladLoadGLES2Loader(
-            reinterpret_cast<GLADloadproc>(eglGetProcAddress)) == 0) {
-      std::cerr << "gladLoadGLES2Loader failed." << std::endl;
-      return 1;
-    }
+    std::cerr << "SUCCESS!" << std::endl;
+    return 0;
   }
-
-  if (show_gl_info) {
-    SHOW_GL_STRING(GL_VENDOR);
-    SHOW_GL_STRING(GL_RENDERER);
-    SHOW_GL_STRING(GL_VERSION);
-    SHOW_GL_STRING(GL_SHADING_LANGUAGE_VERSION);
-  }
-
-  shadertrap::GlFunctions functions = shadertrap::GetGlFunctions();
-
-  std::vector<std::unique_ptr<shadertrap::CommandVisitor>> temp;
-  temp.push_back(shadertrap::MakeUnique<shadertrap::Checker>(
-      &message_consumer, shadertrap_program->GetApiVersion()));
-  temp.push_back(shadertrap::MakeUnique<shadertrap::Executor>(
-      &functions, &message_consumer, shadertrap_program->GetApiVersion()));
-  shadertrap::CompoundVisitor checker_and_executor(std::move(temp));
-  ShInitialize();
-  bool success = checker_and_executor.VisitCommands(shadertrap_program.get());
-  ShFinalize();
-  if (!success) {
-    std::cerr << "Errors occurred during execution." << std::endl;
-    return 1;
-  }
-  std::cerr << "SUCCESS!" << std::endl;
-  return 0;
+  std::cerr << "It was not possible to find a suitable platform on which to "
+               "run the script."
+            << std::endl;
+  std::cerr << diagnostics.str();
+  return 1;
 }

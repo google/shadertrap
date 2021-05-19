@@ -15,7 +15,7 @@
 GL 4.6
 
 DECLARE_SHADER frag KIND FRAGMENT
-#version 320 es
+#version 450
 precision highp float;
 layout(location = 0) out vec4 color;
 void main() {
@@ -24,7 +24,7 @@ void main() {
 END
 
 DECLARE_SHADER vert KIND VERTEX
-#version 320 es
+#version 450
 layout(location = 0) in vec2 pos;
 void main(void) {
     gl_Position = vec4(pos, 0.0, 1.0);

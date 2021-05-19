@@ -102,4 +102,7 @@ pushd temp
   popd
 popd
 
-env LD_LIBRARY_PATH=${HOME}/mesa/mesa-21.1.0/dynamiclibs ./temp/build-Debug/src/shadertrap/shadertrap ./examples/cube.shadertrap --show-gl-info
+for f in `find ./examples -name "*.shadertrap"`
+do
+    env LD_LIBRARY_PATH=${HOME}/mesa/mesa-21.1.0/dynamiclibs ./temp/build-Debug/src/shadertrap/shadertrap $f --require-vendor-renderer-substring llvmpipe
+done
