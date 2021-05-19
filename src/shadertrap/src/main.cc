@@ -144,24 +144,30 @@ int main(int argc, const char** argv) {
   std::vector<EGLDeviceEXT> egl_devices(kMaxDevices);
   EGLint num_devices;
 
-  PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT =
-      reinterpret_cast<PFNEGLQUERYDEVICESEXTPROC>(eglGetProcAddress("eglQueryDevicesEXT"));
+  auto eglQueryDevicesEXT = reinterpret_cast<PFNEGLQUERYDEVICESEXTPROC>(
+      eglGetProcAddress("eglQueryDevicesEXT"));
 
   eglQueryDevicesEXT(kMaxDevices, egl_devices.data(), &num_devices);
 
   std::cout << "Detected " << num_devices << " devices" << std::endl;
 
-  PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
-      reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(eglGetProcAddress("eglGetPlatformDisplayEXT"));
+  if (num_devices == 0) {
+    std::cerr << "No devices found." << std::endl;
+    return 1;
+  }
 
-  EGLint egl_major_version;
-  EGLint egl_minor_version;
+  auto eglGetPlatformDisplayEXT =
+      reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
+          eglGetProcAddress("eglGetPlatformDisplayEXT"));
 
-  EGLDisplay display;
+  EGLint egl_major_version = 0;
+  EGLint egl_minor_version = 0;
+
+  EGLDisplay display = nullptr;
   bool initialized = false;
   for (size_t i = 0; i < static_cast<size_t>(num_devices); i++) {
-    display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
-                                                  egl_devices[i], nullptr);
+    display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, egl_devices[i],
+                                       nullptr);
     if (eglInitialize(display, &egl_major_version, &egl_minor_version) ==
         EGL_FALSE) {
       std::cerr << "Failed to initialize EGL display: ";
@@ -178,18 +184,19 @@ int main(int argc, const char** argv) {
       }
       std::cerr << std::endl;
     } else {
-      std::cerr << "Successfully initialized EGL using display " << i << std::endl;
+      std::cerr << "Successfully initialized EGL using display " << i
+                << std::endl;
       initialized = true;
       break;
     }
   }
   if (!initialized) {
-    std::cerr << "Could not initialize EGL using any available display." << std::endl;
+    std::cerr << "Could not initialize EGL using any available display."
+              << std::endl;
     return 1;
   }
 
-
-//  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  //  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
   if (api_version.GetApi() == shadertrap::ApiVersion::Api::GL &&
       !(egl_major_version > 1 ||
@@ -238,7 +245,7 @@ int main(int argc, const char** argv) {
       static_cast<EGLint>(api_version.GetMinorVersion()), EGL_NONE};
 
   EGLContext context = eglCreateContext(display, config, EGL_NO_CONTEXT,
-                             context_attributes.data());
+                                        context_attributes.data());
   if (context == EGL_NO_CONTEXT) {
     std::cerr << "eglCreateContext failed." << std::endl;
     return 1;
@@ -259,7 +266,8 @@ int main(int argc, const char** argv) {
                                             EGL_TRUE,
                                             EGL_NONE};
 
-  EGLSurface surface = eglCreatePbufferSurface(display, config, pbuffer_attributes.data());
+  EGLSurface surface =
+      eglCreatePbufferSurface(display, config, pbuffer_attributes.data());
   if (surface == EGL_NO_SURFACE) {
     std::cerr << "eglCreatePbufferSurface failed." << std::endl;
     return 1;
