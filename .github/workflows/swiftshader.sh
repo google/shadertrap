@@ -36,11 +36,8 @@ NINJA_OS="linux"
 # Needed to get EGL
 sudo DEBIAN_FRONTEND=noninteractive apt-get -qy install libegl1-mesa-dev
 
-# Needed to get Mesa build dependencies
-sudo DEBIAN_FRONTENT=noninteractive apt-get -qy build-dep mesa
-
-# Mesa requires Mako
-python -m pip install Mako
+# Remove this to avoid clashes with the dependencies that ANGLE installs
+sudo DEBIAN_FRONTEND=noninteractive apt-get -qy remove php7.4-common
 
 df -h
 sudo swapoff -a
@@ -63,6 +60,7 @@ pushd "${HOME}/angle"
   sudo ./build/install-build-deps.sh
   gn gen out/Release
   autoninja -C out/Release
+  cp libEGL.so libEGL.so.1
 popd
 
 #export SHADERTRAP_SKIP_BASH=1
