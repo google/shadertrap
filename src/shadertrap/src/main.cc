@@ -16,6 +16,7 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
+#include <cassert>
 #include <cstddef>
 #include <fstream>
 #include <iostream>
@@ -71,6 +72,52 @@ class ConsoleMessageConsumer : public shadertrap::MessageConsumer {
     }
     std::cerr << ": " << message << std::endl;
   }
+};
+
+class EglData {
+ public:
+  explicit EglData(EGLDisplay display)
+      : display_(display), context_(nullptr), surface_(nullptr) {}
+
+  ~EglData() {
+    if (surface_ != nullptr) {
+      eglDestroySurface(display_, surface_);
+    }
+    if (context_ != nullptr) {
+      eglDestroyContext(display_, context_);
+    }
+    if (display_ != nullptr) {
+      eglTerminate(display_);
+    }
+  }
+
+  EglData(const EglData&) = delete;
+  EglData& operator=(const EglData&) = delete;
+
+  EglData(EglData&&) = delete;
+  EglData& operator=(EglData&&) = delete;
+
+  EGLDisplay GetDisplay() {
+    assert(display_ != nullptr && "Attempt to retrieve null display.");
+    return display_;
+  }
+
+  void SetContext(EGLContext context) { context_ = context; }
+  EGLContext GetContext() {
+    assert(context_ != nullptr && "Attempt to retrieve null context.");
+    return context_;
+  }
+
+  void SetSurface(EGLSurface surface) { surface_ = surface; }
+  EGLSurface GetSurface() {
+    assert(surface_ != nullptr && "Attempt to retrieve null surface.");
+    return surface_;
+  }
+
+ private:
+  EGLDisplay display_;
+  EGLContext context_;
+  EGLSurface surface_;
 };
 
 std::vector<char> ReadFile(const std::string& input_file) {
@@ -172,36 +219,17 @@ int main(int argc, const char** argv) {
   std::stringstream diagnostics;
   diagnostics << "Number of devices found: " << num_devices << std::endl;
 
-  struct EglData {
-    ~EglData() {
-      if (surface != nullptr) {
-        eglDestroySurface(display, surface);
-      }
-      if (context != nullptr) {
-        eglDestroyContext(display, context);
-      }
-      if (display != nullptr) {
-        eglTerminate(display);
-      }
-    }
-
-    EGLDisplay display = nullptr;
-    EGLContext context = nullptr;
-    EGLSurface surface = nullptr;
-  };
-
   auto eglGetPlatformDisplayEXT =
       reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
           eglGetProcAddress("eglGetPlatformDisplayEXT"));
 
   for (size_t i = 0; i < static_cast<size_t>(num_devices); i++) {
     diagnostics << std::endl << "Trying device " << i << std::endl;
-    EglData egl_data;
-    egl_data.display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
-                                                egl_devices[i], nullptr);
+    EglData egl_data(eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
+                                              egl_devices[i], nullptr));
     EGLint egl_major_version;
     EGLint egl_minor_version;
-    if (eglInitialize(egl_data.display, &egl_major_version,
+    if (eglInitialize(egl_data.GetDisplay(), &egl_major_version,
                       &egl_minor_version) == EGL_FALSE) {
       diagnostics << "Failed to initialize EGL display " << i << ": ";
       switch (eglGetError()) {
@@ -248,8 +276,8 @@ int main(int argc, const char** argv) {
 
     EGLint num_config;
     EGLConfig config;
-    if (eglChooseConfig(egl_data.display, config_attributes.data(), &config, 1,
-                        &num_config) == EGL_FALSE) {
+    if (eglChooseConfig(egl_data.GetDisplay(), config_attributes.data(),
+                        &config, 1, &num_config) == EGL_FALSE) {
       diagnostics << "eglChooseConfig failed." << std::endl;
       continue;
     }
@@ -264,9 +292,10 @@ int main(int argc, const char** argv) {
         EGL_CONTEXT_MINOR_VERSION,
         static_cast<EGLint>(api_version.GetMinorVersion()), EGL_NONE};
 
-    egl_data.context = eglCreateContext(
-        egl_data.display, config, EGL_NO_CONTEXT, context_attributes.data());
-    if (egl_data.context == EGL_NO_CONTEXT) {
+    egl_data.SetContext(eglCreateContext(egl_data.GetDisplay(), config,
+                                         EGL_NO_CONTEXT,
+                                         context_attributes.data()));
+    if (egl_data.GetContext() == EGL_NO_CONTEXT) {
       diagnostics << "eglCreateContext failed." << std::endl;
       continue;
     }
@@ -286,15 +315,16 @@ int main(int argc, const char** argv) {
                                               EGL_TRUE,
                                               EGL_NONE};
 
-    egl_data.surface = eglCreatePbufferSurface(egl_data.display, config,
-                                               pbuffer_attributes.data());
-    if (egl_data.surface == EGL_NO_SURFACE) {
+    egl_data.SetSurface(eglCreatePbufferSurface(egl_data.GetDisplay(), config,
+                                                pbuffer_attributes.data()));
+    if (egl_data.GetSurface() == EGL_NO_SURFACE) {
       diagnostics << "eglCreatePbufferSurface failed." << std::endl;
       continue;
     }
 
-    if (eglMakeCurrent(egl_data.display, egl_data.surface, egl_data.surface,
-                       egl_data.context) == EGL_FALSE) {
+    if (eglMakeCurrent(egl_data.GetDisplay(), egl_data.GetSurface(),
+                       egl_data.GetSurface(),
+                       egl_data.GetContext()) == EGL_FALSE) {
       diagnostics << "eglMakeCurrent failed." << std::endl;
       continue;
     }
