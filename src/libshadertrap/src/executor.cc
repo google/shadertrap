@@ -744,8 +744,8 @@ bool Executor::VisitRunGraphics(CommandRunGraphics* run_graphics) {
                     GL_FRAMEBUFFER, color_attachment, GL_RENDERBUFFER,
                     created_renderbuffers_.at(framebuffer_attachment));
       } else {
-        GL_SAFECALL(&run_graphics->GetStartToken(), glFramebufferTexture,
-                    GL_FRAMEBUFFER, color_attachment,
+        GL_SAFECALL(&run_graphics->GetStartToken(), glFramebufferTexture2D,
+                    GL_FRAMEBUFFER, color_attachment, GL_TEXTURE_2D,
                     created_textures_.at(framebuffer_attachment), 0);
       }
       draw_buffers.push_back(color_attachment);
