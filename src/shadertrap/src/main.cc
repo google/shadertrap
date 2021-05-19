@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
 
 #include <cstddef>
 #include <fstream>
@@ -138,59 +140,56 @@ int main(int argc, const char** argv) {
 
   shadertrap::ApiVersion api_version = shadertrap_program->GetApiVersion();
 
-  std::vector<EGLint> config_attributes = {EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
-                                           EGL_RED_SIZE,     4,
-                                           EGL_GREEN_SIZE,   4,
-                                           EGL_BLUE_SIZE,    4,
-                                           EGL_ALPHA_SIZE,   4,
+  const int kMaxDevices = 16;
+  std::vector<EGLDeviceEXT> egl_devices(kMaxDevices);
+  EGLint num_devices;
 
-                                           EGL_CONFORMANT,   EGL_OPENGL_ES3_BIT,
-                                           EGL_DEPTH_SIZE,   kDepthSize,
-                                           EGL_NONE};
+  PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT =
+      reinterpret_cast<PFNEGLQUERYDEVICESEXTPROC>(eglGetProcAddress("eglQueryDevicesEXT"));
 
-  std::vector<EGLint> context_attributes = {
-      EGL_CONTEXT_MAJOR_VERSION,
-      static_cast<EGLint>(api_version.GetMajorVersion()),
-      EGL_CONTEXT_MINOR_VERSION,
-      static_cast<EGLint>(api_version.GetMinorVersion()), EGL_NONE};
+  eglQueryDevicesEXT(kMaxDevices, egl_devices.data(), &num_devices);
 
-  // TODO(afd): For offscreen rendering, do width and height matter?  If no,
-  //  are there more sensible default values than these?  If yes, should they be
-  //  controllable from the command line?
-  std::vector<EGLint> pbuffer_attributes = {EGL_WIDTH,
-                                            kWidth,
-                                            EGL_HEIGHT,
-                                            kHeight,
-                                            EGL_TEXTURE_FORMAT,
-                                            EGL_NO_TEXTURE,
-                                            EGL_TEXTURE_TARGET,
-                                            EGL_NO_TEXTURE,
-                                            EGL_LARGEST_PBUFFER,
-                                            EGL_TRUE,
-                                            EGL_NONE};
+  std::cout << "Detected " << num_devices << " devices" << std::endl;
 
-  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
+      reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(eglGetProcAddress("eglGetPlatformDisplayEXT"));
 
   EGLint egl_major_version;
   EGLint egl_minor_version;
 
-  if (eglInitialize(display, &egl_major_version, &egl_minor_version) ==
-      EGL_FALSE) {
-    std::cerr << "Failed to initialize EGL display: ";
-    switch (eglGetError()) {
-      case EGL_BAD_DISPLAY:
-        std::cerr << "EGL_BAD_DISPLAY";
-        break;
-      case EGL_NOT_INITIALIZED:
-        std::cerr << "EGL_NOT_INITIALIZED";
-        break;
-      default:
-        std::cerr << "unknown error";
-        break;
+  EGLDisplay display;
+  bool initialized = false;
+  for (size_t i = 0; i < static_cast<size_t>(num_devices); i++) {
+    display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
+                                                  egl_devices[i], nullptr);
+    if (eglInitialize(display, &egl_major_version, &egl_minor_version) ==
+        EGL_FALSE) {
+      std::cerr << "Failed to initialize EGL display: ";
+      switch (eglGetError()) {
+        case EGL_BAD_DISPLAY:
+          std::cerr << "EGL_BAD_DISPLAY";
+          break;
+        case EGL_NOT_INITIALIZED:
+          std::cerr << "EGL_NOT_INITIALIZED";
+          break;
+        default:
+          std::cerr << "unknown error";
+          break;
+      }
+      std::cerr << std::endl;
+    } else {
+      std::cerr << "Successfully initialized EGL using display " << i << std::endl;
+      initialized = true;
+      break;
     }
-    std::cerr << std::endl;
+  }
+  if (!initialized) {
+    std::cerr << "Could not initialize EGL using any available display." << std::endl;
     return 1;
   }
+
+
+//  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
   if (api_version.GetApi() == shadertrap::ApiVersion::Api::GL &&
       !(egl_major_version > 1 ||
@@ -208,6 +207,16 @@ int main(int argc, const char** argv) {
     std::cerr << "eglBindAPI failed." << std::endl;
   }
 
+  std::vector<EGLint> config_attributes = {EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+                                           EGL_RED_SIZE,     4,
+                                           EGL_GREEN_SIZE,   4,
+                                           EGL_BLUE_SIZE,    4,
+                                           EGL_ALPHA_SIZE,   4,
+
+                                           EGL_CONFORMANT,   EGL_OPENGL_ES3_BIT,
+                                           EGL_DEPTH_SIZE,   kDepthSize,
+                                           EGL_NONE};
+
   EGLint num_config;
   EGLConfig config;
   if (eglChooseConfig(display, config_attributes.data(), &config, 1,
@@ -222,12 +231,33 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
+  std::vector<EGLint> context_attributes = {
+      EGL_CONTEXT_MAJOR_VERSION,
+      static_cast<EGLint>(api_version.GetMajorVersion()),
+      EGL_CONTEXT_MINOR_VERSION,
+      static_cast<EGLint>(api_version.GetMinorVersion()), EGL_NONE};
+
   EGLContext context = eglCreateContext(display, config, EGL_NO_CONTEXT,
                              context_attributes.data());
   if (context == EGL_NO_CONTEXT) {
     std::cerr << "eglCreateContext failed." << std::endl;
     return 1;
   }
+
+  // TODO(afd): For offscreen rendering, do width and height matter?  If no,
+  //  are there more sensible default values than these?  If yes, should they be
+  //  controllable from the command line?
+  std::vector<EGLint> pbuffer_attributes = {EGL_WIDTH,
+                                            kWidth,
+                                            EGL_HEIGHT,
+                                            kHeight,
+                                            EGL_TEXTURE_FORMAT,
+                                            EGL_NO_TEXTURE,
+                                            EGL_TEXTURE_TARGET,
+                                            EGL_NO_TEXTURE,
+                                            EGL_LARGEST_PBUFFER,
+                                            EGL_TRUE,
+                                            EGL_NONE};
 
   EGLSurface surface = eglCreatePbufferSurface(display, config, pbuffer_attributes.data());
   if (surface == EGL_NO_SURFACE) {
