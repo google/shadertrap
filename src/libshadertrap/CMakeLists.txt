@@ -32,6 +32,8 @@ add_library(libshadertrap STATIC
         include/libshadertrap/command_create_renderbuffer.h
         include/libshadertrap/command_create_sampler.h
         include/libshadertrap/command_declare_shader.h
+        include/libshadertrap/command_dump_buffer_binary.h
+        include/libshadertrap/command_dump_buffer_text.h
         include/libshadertrap/command_dump_renderbuffer.h
         include/libshadertrap/command_run_compute.h
         include/libshadertrap/command_run_graphics.h
@@ -49,10 +51,10 @@ add_library(libshadertrap STATIC
         include/libshadertrap/shadertrap_program.h
         include/libshadertrap/texture_parameter.h
         include/libshadertrap/token.h
+        include/libshadertrap/tokenizer.h
         include/libshadertrap/uniform_value.h
         include/libshadertrap/values_segment.h
         include/libshadertrap/vertex_attribute_info.h
-        include_private/include/libshadertrap/tokenizer.h
 
         src/checker.cc
         src/command.cc
@@ -70,6 +72,8 @@ add_library(libshadertrap STATIC
         src/command_create_renderbuffer.cc
         src/command_create_sampler.cc
         src/command_declare_shader.cc
+        src/command_dump_buffer_binary.cc
+        src/command_dump_buffer_text.cc
         src/command_dump_renderbuffer.cc
         src/command_run_compute.cc
         src/command_run_graphics.cc

@@ -26,6 +26,7 @@
 #include <map>
 #include <string>
 
+#include "libshadertrap/api_version.h"
 #include "libshadertrap/command_assert_equal.h"
 #include "libshadertrap/command_assert_pixels.h"
 #include "libshadertrap/command_assert_similar_emd_histogram.h"
@@ -40,6 +41,8 @@
 #include "libshadertrap/command_create_renderbuffer.h"
 #include "libshadertrap/command_create_sampler.h"
 #include "libshadertrap/command_declare_shader.h"
+#include "libshadertrap/command_dump_buffer_binary.h"
+#include "libshadertrap/command_dump_buffer_text.h"
 #include "libshadertrap/command_dump_renderbuffer.h"
 #include "libshadertrap/command_run_compute.h"
 #include "libshadertrap/command_run_graphics.h"
@@ -54,8 +57,8 @@ namespace shadertrap {
 
 class Executor : public CommandVisitor {
  public:
-  explicit Executor(GlFunctions* gl_functions,
-                    MessageConsumer* message_consumer);
+  Executor(GlFunctions* gl_functions, MessageConsumer* message_consumer,
+           ApiVersion api_version);
 
   bool VisitAssertEqual(CommandAssertEqual* assert_equal) override;
 
@@ -90,6 +93,11 @@ class Executor : public CommandVisitor {
 
   bool VisitDeclareShader(CommandDeclareShader* declare_shader) override;
 
+  bool VisitDumpBufferBinary(
+      CommandDumpBufferBinary* dump_buffer_binary) override;
+
+  bool VisitDumpBufferText(CommandDumpBufferText* dump_buffer_text) override;
+
   bool VisitDumpRenderbuffer(
       CommandDumpRenderbuffer* dump_renderbuffer) override;
 
@@ -112,6 +120,7 @@ class Executor : public CommandVisitor {
 
   GlFunctions* gl_functions_;
   MessageConsumer* message_consumer_;
+  ApiVersion api_version_;
   std::map<std::string, CommandDeclareShader*> declared_shaders_;
   std::map<std::string, GLuint> created_buffers_;
   std::map<std::string, GLuint> created_programs_;

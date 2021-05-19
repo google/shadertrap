@@ -1,4 +1,4 @@
-// Copyright 2020 The ShaderTrap Project Authors
+// Copyright 2021 The ShaderTrap Project Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIBSHADERTRAP_COMMAND_DUMP_RENDERBUFFER_H
-#define LIBSHADERTRAP_COMMAND_DUMP_RENDERBUFFER_H
+#ifndef LIBSHADERTRAP_COMMAND_DUMP_BUFFER_BINARY_H
+#define LIBSHADERTRAP_COMMAND_DUMP_BUFFER_BINARY_H
 
 #include <memory>
 #include <string>
@@ -23,31 +23,29 @@
 
 namespace shadertrap {
 
-class CommandDumpRenderbuffer : public Command {
+class CommandDumpBufferBinary : public Command {
  public:
-  CommandDumpRenderbuffer(std::unique_ptr<Token> start_token,
-                          std::unique_ptr<Token> renderbuffer_identifier,
+  CommandDumpBufferBinary(std::unique_ptr<Token> start_token,
+                          std::unique_ptr<Token> buffer_identifier,
                           std::unique_ptr<Token> filename);
 
   bool Accept(CommandVisitor* visitor) override;
 
-  const std::string& GetRenderbufferIdentifier() const {
-    return renderbuffer_identifier_->GetText();
+  const std::string& GetBufferIdentifier() const {
+    return buffer_identifier_->GetText();
   }
 
-  const Token& GetRenderbufferIdentifierToken() const {
-    return *renderbuffer_identifier_;
-  }
+  const Token& GetBufferIdentifierToken() const { return *buffer_identifier_; }
 
   const std::string& GetFilename() const { return filename_->GetText(); }
 
   const Token& GetFilenameToken() const { return *filename_; }
 
  private:
-  std::unique_ptr<Token> renderbuffer_identifier_;
+  std::unique_ptr<Token> buffer_identifier_;
   std::unique_ptr<Token> filename_;
 };
 
 }  // namespace shadertrap
 
-#endif  // LIBSHADERTRAP_COMMAND_DUMP_RENDERBUFFER_H
+#endif  // LIBSHADERTRAP_COMMAND_DUMP_BUFFER_BINARY_H

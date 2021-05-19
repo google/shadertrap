@@ -58,11 +58,13 @@ export PATH
 
 # Get cppcheck.
 
-CCPCHECK_OUT="cppcheck-2.3"
+CPPCHECK_OUT="cppcheck-2.4.1"
 
-if test ! -f "${CCPCHECK_OUT}.touch"; then
-  git clone --branch 2.3 --depth 1 https://github.com/danmar/cppcheck.git "${CCPCHECK_OUT}"
-  pushd "${CCPCHECK_OUT}"
+if test ! -f "${CPPCHECK_OUT}.touch"; then
+  git clone --branch 2.4.1 --depth 1 https://github.com/danmar/cppcheck.git "${CPPCHECK_OUT}"
+  pushd "${CPPCHECK_OUT}"
+    # TODO(https://github.com/google/shadertrap/issues/52) Get rid of this patch in due course
+    git apply ${SHADERTRAP_REPO_ROOT}/temp/cppcheck.patch
     mkdir build
     pushd build
       cmake -G Ninja .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=./install
@@ -70,16 +72,16 @@ if test ! -f "${CCPCHECK_OUT}.touch"; then
       cmake -P cmake_install.cmake --config Release
     popd
   popd
-  touch "${CCPCHECK_OUT}.touch"
+  touch "${CPPCHECK_OUT}.touch"
 fi
 
-PATH="$(pwd)/${CCPCHECK_OUT}/build/install/bin:${PATH}"
+PATH="$(pwd)/${CPPCHECK_OUT}/build/install/bin:${PATH}"
 export PATH
 
 
 # Get cpplint.
 
-CPPLINT_OUT="ccplint-1.5.1"
+CPPLINT_OUT="cpplint-1.5.1"
 
 if test ! -f "${CPPLINT_OUT}.touch"; then
   git clone --branch 1.5.1 --depth 1 https://github.com/cpplint/cpplint.git "${CPPLINT_OUT}"

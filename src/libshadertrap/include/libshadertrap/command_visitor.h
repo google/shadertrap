@@ -29,6 +29,8 @@
 #include "libshadertrap/command_create_renderbuffer.h"
 #include "libshadertrap/command_create_sampler.h"
 #include "libshadertrap/command_declare_shader.h"
+#include "libshadertrap/command_dump_buffer_binary.h"
+#include "libshadertrap/command_dump_buffer_text.h"
 #include "libshadertrap/command_dump_renderbuffer.h"
 #include "libshadertrap/command_run_compute.h"
 #include "libshadertrap/command_run_graphics.h"
@@ -87,6 +89,11 @@ class CommandVisitor {
       CommandCreateRenderbuffer* create_renderbuffer) = 0;
 
   virtual bool VisitDeclareShader(CommandDeclareShader* declare_shader) = 0;
+
+  virtual bool VisitDumpBufferBinary(
+      CommandDumpBufferBinary* dump_buffer_binary) = 0;
+
+  virtual bool VisitDumpBufferText(CommandDumpBufferText* dump_buffer_text) = 0;
 
   virtual bool VisitDumpRenderbuffer(
       CommandDumpRenderbuffer* dump_renderbuffer) = 0;
