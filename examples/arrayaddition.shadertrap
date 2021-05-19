@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-GL 4.6
+GL 4.5
 
 CREATE_BUFFER array1 SIZE_BYTES 40 INIT_VALUES uint 1 5 3 40 12 7 1 3 5 22
 CREATE_BUFFER array2 SIZE_BYTES 40 INIT_VALUES uint 1 2 6 2 6 102 25 0  9 10
@@ -24,7 +24,7 @@ BIND_SHADER_STORAGE_BUFFER BUFFER array2 BINDING 1
 BIND_SHADER_STORAGE_BUFFER BUFFER result BINDING 2
 
 DECLARE_SHADER shader KIND COMPUTE
-#version 460
+#version 450
 
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
