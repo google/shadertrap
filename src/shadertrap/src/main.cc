@@ -138,11 +138,6 @@ int main(int argc, const char** argv) {
 
   shadertrap::ApiVersion api_version = shadertrap_program->GetApiVersion();
 
-  EGLDisplay display;
-  EGLConfig config;
-  EGLContext context;
-  EGLSurface surface;
-
   std::vector<EGLint> config_attributes = {EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
                                            EGL_RED_SIZE,     4,
                                            EGL_GREEN_SIZE,   4,
@@ -174,14 +169,26 @@ int main(int argc, const char** argv) {
                                             EGL_TRUE,
                                             EGL_NONE};
 
-  display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
   EGLint egl_major_version;
   EGLint egl_minor_version;
 
   if (eglInitialize(display, &egl_major_version, &egl_minor_version) ==
       EGL_FALSE) {
-    std::cerr << "eglInitialize failed." << std::endl;
+    std::cerr << "Failed to initialize EGL display: ";
+    switch (eglGetError()) {
+      case EGL_BAD_DISPLAY:
+        std::cerr << "EGL_BAD_DISPLAY";
+        break;
+      case EGL_NOT_INITIALIZED:
+        std::cerr << "EGL_NOT_INITIALIZED";
+        break;
+      default:
+        std::cerr << "unknown error";
+        break;
+    }
+    std::cerr << std::endl;
     return 1;
   }
 
@@ -202,6 +209,7 @@ int main(int argc, const char** argv) {
   }
 
   EGLint num_config;
+  EGLConfig config;
   if (eglChooseConfig(display, config_attributes.data(), &config, 1,
                       &num_config) == EGL_FALSE) {
     std::cerr << "eglChooseConfig failed." << std::endl;
@@ -214,14 +222,14 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  context = eglCreateContext(display, config, EGL_NO_CONTEXT,
+  EGLContext context = eglCreateContext(display, config, EGL_NO_CONTEXT,
                              context_attributes.data());
   if (context == EGL_NO_CONTEXT) {
     std::cerr << "eglCreateContext failed." << std::endl;
     return 1;
   }
 
-  surface = eglCreatePbufferSurface(display, config, pbuffer_attributes.data());
+  EGLSurface surface = eglCreatePbufferSurface(display, config, pbuffer_attributes.data());
   if (surface == EGL_NO_SURFACE) {
     std::cerr << "eglCreatePbufferSurface failed." << std::endl;
     return 1;
