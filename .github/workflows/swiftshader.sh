@@ -50,10 +50,11 @@ sudo apt clean
 docker rmi $(docker image ls -aq)
 df -h
 
+cd "${HOME}"
 export PATH="${HOME}/depot_tools":${PATH}
-git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
 
-git clone https://chromium.googlesource.com/angle/angle
+git clone https://chromium.googlesource.com/angle/angle angle
 pushd "${HOME}/angle"
   python --version
   python scripts/bootstrap.py
