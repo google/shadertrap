@@ -58,8 +58,8 @@ pushd "${HOME}/angle"
   gclient sync
   git checkout master
   sudo ./build/install-build-deps.sh
-  gn gen out/Debug
-  autoninja -C out/Debug
+  gn gen out/Debug --args="is_debug=true angle_enable_vulkan=true angle_enable_swiftshader=true angle_enable_hlsl=false angle_enable_d3d9=false angle_enable_d3d11=false angle_enable_gl=false angle_enable_null=false angle_enable_metal=false"
+  autoninja -C out/Debug libEGL libGLESv2
   pushd out/Debug
     cp libEGL.so libEGL.so.1
   popd
