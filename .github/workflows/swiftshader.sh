@@ -58,30 +58,32 @@ pushd "${HOME}/angle"
   gclient sync
   git checkout master
   sudo ./build/install-build-deps.sh
-  gn gen out/Release
-  autoninja -C out/Release
-  cp libEGL.so libEGL.so.1
+  gn gen out/Debug
+  autoninja -C out/Debug
+  pushd out/Debug
+    cp libEGL.so libEGL.so.1
+  popd
 popd
 
-#export SHADERTRAP_SKIP_BASH=1
+cd ${SHADERTRAP_REPO_ROOT}
 
-#source ./dev_shell.sh.template
+export SHADERTRAP_SKIP_BASH=1
 
-#cd ${SHADERTRAP_REPO_ROOT}
+source ./dev_shell.sh.template
 
-#pushd temp
-#  mkdir -p "build-Debug/"
-#  pushd "build-Debug/"
-#    cmake \
-#      -G Ninja \
-#      ../.. \
-#      -DCMAKE_BUILD_TYPE=Debug \
-#      -DSHADERTRAP_USE_LLVM_LIBCPP=1
-#    cmake --build . --config Debug
-#  popd
-#popd
+pushd temp
+  mkdir -p "build-Debug/"
+  pushd "build-Debug/"
+    cmake \
+      -G Ninja \
+      ../.. \
+      -DCMAKE_BUILD_TYPE=Debug \
+      -DSHADERTRAP_USE_LLVM_LIBCPP=1
+    cmake --build . --config Debug
+  popd
+popd
 
-#for f in `find ./examples -name "*.shadertrap"`
-#do
-#    env LD_LIBRARY_PATH=${HOME}/mesa/mesa-21.1.0/dynamiclibs ./temp/build-Debug/src/shadertrap/shadertrap $f --require-vendor-renderer-substring llvmpipe
-#done
+for f in `find ./examples/GLES31 -name "*.shadertrap"`
+do
+    env VK_ICD_FILENAMES=${HOME}/angle/out/Debug/vk_swiftshader_icd.json ANGLE_DEFAULT_PLATFORM=vulkan LD_LIBRARY_PATH=${HOME}/angle/out/Debug/ ./temp/build-Debug/src/shadertrap/shadertrap $f --require-vendor-renderer-substring SwiftShader --show-gl-info
+done
