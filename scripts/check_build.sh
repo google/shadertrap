@@ -32,6 +32,9 @@ for CONFIG in Debug Release; do
       "-DSHADERTRAP_USE_LLVM_LIBCPP=1"
 
     cmake --build . --config "${CONFIG}"
+    
+    # Run the unit tests
+    ./src/libshadertraptest/libshadertraptest
 
     check_compile_commands.sh compile_commands.json
 

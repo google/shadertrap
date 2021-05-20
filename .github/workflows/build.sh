@@ -120,6 +120,8 @@ pushd build
   cmake -G Ninja .. -DCMAKE_BUILD_TYPE="${CONFIG}" "${CMAKE_OPTIONS[@]}"
   cmake --build . --config "${CONFIG}"
   cmake -DCMAKE_INSTALL_PREFIX=./install -DBUILD_TYPE="${CONFIG}" -P cmake_install.cmake
+  # Run the unit tests
+  ./src/libshadertraptest/libshadertraptest
 popd
 
 
