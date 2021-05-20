@@ -202,31 +202,38 @@ int main(int argc, const char** argv) {
 
   shadertrap::ApiVersion api_version = shadertrap_program->GetApiVersion();
 
-  const int kMaxDevices = 16;
-  std::vector<EGLDeviceEXT> egl_devices(kMaxDevices);
-  EGLint num_devices;
-
   auto eglQueryDevicesEXT = reinterpret_cast<PFNEGLQUERYDEVICESEXTPROC>(
       eglGetProcAddress("eglQueryDevicesEXT"));
-
-  eglQueryDevicesEXT(kMaxDevices, egl_devices.data(), &num_devices);
-
-  if (num_devices == 0) {
-    std::cerr << "No devices found." << std::endl;
-    return 1;
-  }
-
-  std::stringstream diagnostics;
-  diagnostics << "Number of devices found: " << num_devices << std::endl;
-
   auto eglGetPlatformDisplayEXT =
       reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
           eglGetProcAddress("eglGetPlatformDisplayEXT"));
 
+  bool extensions_available =
+      eglQueryDevicesEXT != nullptr && eglGetPlatformDisplayEXT != nullptr;
+
+  std::stringstream diagnostics;
+
+  const int kMaxDevices = 16;
+  std::vector<EGLDeviceEXT> egl_devices(kMaxDevices);
+  EGLint num_devices;
+  if (extensions_available) {
+    eglQueryDevicesEXT(kMaxDevices, egl_devices.data(), &num_devices);
+    if (num_devices == 0) {
+      std::cerr << "No devices found." << std::endl;
+      return 1;
+    }
+    diagnostics << "Number of devices found: " << num_devices << std::endl;
+  } else {
+    num_devices = 1;
+    diagnostics << "Device-querying extensions are not available." << std::endl;
+  }
+
   for (size_t i = 0; i < static_cast<size_t>(num_devices); i++) {
     diagnostics << std::endl << "Trying device " << i << std::endl;
-    EglData egl_data(eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
-                                              egl_devices[i], nullptr));
+    EglData egl_data(extensions_available
+                         ? eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
+                                                    egl_devices[i], nullptr)
+                         : eglGetDisplay(EGL_DEFAULT_DISPLAY));
     EGLint egl_major_version;
     EGLint egl_minor_version;
     if (eglInitialize(egl_data.GetDisplay(), &egl_major_version,

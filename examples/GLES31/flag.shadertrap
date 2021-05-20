@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-GLES 3.2
+GLES 3.1
 
 CREATE_EMPTY_TEXTURE_2D my_tex WIDTH 256 HEIGHT 256
 
 DECLARE_SHADER frag KIND FRAGMENT
-#version 320 es
+#version 310 es
 
 precision highp float;
 
@@ -58,7 +58,7 @@ void main() {
 END
 
 DECLARE_SHADER vert KIND VERTEX
-#version 320 es
+#version 310 es
 layout(location = 0) in vec2 _GLF_vertexPosition;
 void main(void) {
     gl_Position = vec4(_GLF_vertexPosition, 0.0, 1.0);
