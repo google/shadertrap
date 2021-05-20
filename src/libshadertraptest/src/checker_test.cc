@@ -78,7 +78,7 @@ END
   auto parsed_program = parser.GetParsedProgram();
   Checker checker(&message_consumer, parsed_program->GetApiVersion());
   ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
-  ASSERT_EQ(1U, message_consumer.GetNumMessages());
+  ASSERT_EQ(2U, message_consumer.GetNumMessages());
   ASSERT_EQ("ERROR: 10:16: Identifier 's' already used at 2:16",
             message_consumer.GetMessageString(0));
 }
