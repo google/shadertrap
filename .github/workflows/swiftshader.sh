@@ -47,21 +47,22 @@ sudo apt clean
 docker rmi $(docker image ls -aq)
 df -h
 
-cd "${HOME}"
-export PATH="${HOME}/depot_tools":${PATH}
-git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
+pushd "${HOME}"
+  export PATH="${HOME}/depot_tools":${PATH}
+  git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
 
-git clone https://chromium.googlesource.com/angle/angle angle
-pushd "${HOME}/angle"
-  python --version
-  python scripts/bootstrap.py
-  gclient sync
-  git checkout master
-  sudo ./build/install-build-deps.sh
-  gn gen out/Debug --args="is_debug=true angle_enable_vulkan=true angle_enable_swiftshader=true angle_enable_hlsl=false angle_enable_d3d9=false angle_enable_d3d11=false angle_enable_gl=false angle_enable_null=false angle_enable_metal=false"
-  autoninja -C out/Debug libEGL libGLESv2
-  pushd out/Debug
-    cp libEGL.so libEGL.so.1
+  git clone https://chromium.googlesource.com/angle/angle angle
+  pushd angle
+    python --version
+    python scripts/bootstrap.py
+    gclient sync
+    git checkout master
+    sudo ./build/install-build-deps.sh
+    gn gen out/Debug --args="is_debug=true angle_enable_vulkan=true angle_enable_swiftshader=true angle_enable_hlsl=false angle_enable_d3d9=false angle_enable_d3d11=false angle_enable_gl=false angle_enable_null=false angle_enable_metal=false"
+    autoninja -C out/Debug libEGL libGLESv2
+    pushd out/Debug
+      cp libEGL.so libEGL.so.1
+    popd
   popd
 popd
 
