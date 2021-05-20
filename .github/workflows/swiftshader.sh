@@ -65,11 +65,11 @@ pushd "${HOME}/angle"
   popd
 popd
 
-cd ${SHADERTRAP_REPO_ROOT}
-
 export SHADERTRAP_SKIP_BASH=1
 
 source ./dev_shell.sh.template
+
+cd ${SHADERTRAP_REPO_ROOT}
 
 pushd temp
   mkdir -p "build-Debug/"
