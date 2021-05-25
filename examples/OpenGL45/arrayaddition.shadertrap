@@ -28,13 +28,13 @@ DECLARE_SHADER shader KIND COMPUTE
 
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
-layout(binding = 0) buffer array1 {
+layout(std430, binding = 0) buffer array1 {
   uint[10] data1;
 };
-layout(binding=1) buffer array2 {
+layout(std430, binding=1) buffer array2 {
   uint[10] data2;
 };
-layout(binding=2) buffer result{
+layout(std430, binding=2) buffer result{
   uint[10] res;
 };
 
