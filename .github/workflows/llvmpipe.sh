@@ -59,27 +59,20 @@ pushd "${HOME}/bin"
   ls
 popd
 
+MESA_VERSION=mesa-21.1.0
+
 mkdir -p "${HOME}/mesa"
 pushd "${HOME}/mesa"
   # Get and build mesa
-  curl -fsSL -o mesa-src.tar.xf "https://archive.mesa3d.org/mesa-21.1.0.tar.xz"
+  curl -fsSL -o mesa-src.tar.xf "https://archive.mesa3d.org/${MESA_VERSION}.tar.xz"
   tar xf mesa-src.tar.xf
   ls
-  pushd mesa-21.1.0
+  pushd "${MESA_VERSION}"
     mkdir build
+    mkdir install
     pushd build
-      meson -D prefix=/usr -D egl=enabled -D gles1=enabled -D gles2=enabled -D dri-drivers=auto -D vulkan-drivers="" -D gallium-drivers=swrast -D glx=dri
+      meson -D prefix="${HOME}/mesa/${MESA_VERSION}/install" -D egl=enabled -D gles1=enabled -D gles2=enabled -D dri-drivers=auto -D vulkan-drivers="" -D gallium-drivers=swrast -D glx=dri
       ninja
-    popd
-    mkdir dynamiclibs
-    pushd dynamiclibs
-      for suffix in "" ".1" ".2"
-      do
-	  for f in `find ../build -name "*.so${suffix}"`
-	  do
-	      cp -s $f .
-	  done
-      done
     popd
   popd
 popd
@@ -104,5 +97,5 @@ popd
 
 for f in `find ./examples -name "*.shadertrap"`
 do
-    env LD_LIBRARY_PATH=${HOME}/mesa/mesa-21.1.0/dynamiclibs ./temp/build-Debug/src/shadertrap/shadertrap $f --require-vendor-renderer-substring llvmpipe
+    env LD_LIBRARY_PATH="${HOME}/mesa/${MESA_VERSION}/install" ./temp/build-Debug/src/shadertrap/shadertrap $f --require-vendor-renderer-substring llvmpipe
 done
