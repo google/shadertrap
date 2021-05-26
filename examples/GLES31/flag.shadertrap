@@ -23,12 +23,12 @@ precision highp float;
 
 layout(location = 0) uniform float aninput;
 
-layout(binding = 0) uniform buf1 {
+layout(std140, binding = 0) uniform buf1 {
   float one;
   float zero;
 };
 
-layout(binding = 1) uniform buf2 {
+layout(std140, binding = 1) uniform buf2 {
   uint uone;
   uint uzero;
   uint uthree;
