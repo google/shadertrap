@@ -44,6 +44,15 @@ sudo apt clean
 docker rmi $(docker image ls -aq)
 df -h
 
+export PATH="${HOME}/bin:$PATH"
+mkdir -p "${HOME}/bin"
+pushd "${HOME}/bin"
+  # Install ninja.
+  curl -fsSL -o ninja-build.zip "https://github.com/ninja-build/ninja/releases/download/v1.9.0/ninja-${NINJA_OS}.zip"
+  unzip ninja-build.zip
+  ls
+popd
+
 mkdir "${HOME}/angle"
 pushd "${HOME}/angle"
   # Get pre-built ANGLE
