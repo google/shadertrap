@@ -36,9 +36,6 @@ NINJA_OS="linux"
 # Needed to get EGL
 sudo DEBIAN_FRONTEND=noninteractive apt-get -qy install libegl1-mesa-dev
 
-# Remove this to avoid clashes with the dependencies that ANGLE installs
-sudo DEBIAN_FRONTEND=noninteractive apt-get -qy remove php7.4-common
-
 df -h
 sudo swapoff -a
 sudo rm -f /swapfile
@@ -47,23 +44,14 @@ sudo apt clean
 docker rmi $(docker image ls -aq)
 df -h
 
-pushd "${HOME}"
-  export PATH="${HOME}/depot_tools":${PATH}
-  git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
-
-  git clone https://chromium.googlesource.com/angle/angle angle
-  pushd angle
-    python --version
-    python scripts/bootstrap.py
-    gclient sync
-    git checkout master
-    sudo ./build/install-build-deps.sh
-    gn gen out/Debug --args="is_debug=true angle_enable_vulkan=true angle_enable_swiftshader=true angle_enable_hlsl=false angle_enable_d3d9=false angle_enable_d3d11=false angle_enable_gl=false angle_enable_null=false angle_enable_metal=false"
-    autoninja -C out/Debug libEGL libGLESv2
-    pushd out/Debug
-      cp libEGL.so libEGL.so.1
-    popd
-  popd
+mkdir "${HOME}/angle"
+pushd "${HOME}/angle"
+  # Get pre-built ANGLE
+  curl -fsSL -o angle.zip "https://github.com/google/gfbuild-angle/releases/download/github%2Fgoogle%2Fgfbuild-angle%2F96ab6566490495f472cd239997701b201c7a48ac/gfbuild-angle-96ab6566490495f472cd239997701b201c7a48ac-Linux_x64_Debug.zip"
+  unzip angle.zip
+  # ShaderTrap looks for libEGL.so.1, so make a copy of the EGL .so with that name.
+  cp ./lib/libEGL.so ./lib/libEGL.so.1
+  ls
 popd
 
 export SHADERTRAP_SKIP_BASH=1
@@ -86,5 +74,5 @@ popd
 
 for f in `find ./examples/GLES31 -name "*.shadertrap"`
 do
-    env VK_ICD_FILENAMES=${HOME}/angle/out/Debug/vk_swiftshader_icd.json ANGLE_DEFAULT_PLATFORM=vulkan LD_LIBRARY_PATH=${HOME}/angle/out/Debug/ ./temp/build-Debug/src/shadertrap/shadertrap $f --require-vendor-renderer-substring SwiftShader --show-gl-info
+    env VK_ICD_FILENAMES=${HOME}/angle/lib/vk_swiftshader_icd.json ANGLE_DEFAULT_PLATFORM=vulkan LD_LIBRARY_PATH=${HOME}/angle/lib/ ./temp/build-Debug/src/shadertrap/shadertrap $f --require-vendor-renderer-substring SwiftShader --show-gl-info
 done
