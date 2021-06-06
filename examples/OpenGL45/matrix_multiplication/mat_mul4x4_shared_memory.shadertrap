@@ -174,7 +174,7 @@ void main() {
 
         // Each thread reads one element of the submatrix
         data1_1_sub[x][y] = data1_sub[x][y];
-        data2_1_sub[x][y] = data2_1_sub[x][y];
+        data2_1_sub[x][y] = data2_sub[x][y];
         
         // Wait until each thread has read its corresponding element
         barrier();
