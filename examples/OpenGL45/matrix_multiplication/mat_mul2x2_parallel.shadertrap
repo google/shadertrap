@@ -1,0 +1,196 @@
+# Copyright 2021 The ShaderTrap Project Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+GL 4.5
+
+CREATE_BUFFER array1 SIZE_BYTES 1024 INIT_VALUES  
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+
+
+CREATE_BUFFER array2 SIZE_BYTES 1024 INIT_VALUES 
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+
+CREATE_BUFFER result SIZE_BYTES 1024 INIT_VALUES 
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+
+CREATE_BUFFER mat_mul_expected SIZE_BYTES 1024 INIT_VALUES 
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+    float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
+
+
+BIND_SHADER_STORAGE_BUFFER BUFFER array1 BINDING 0
+BIND_SHADER_STORAGE_BUFFER BUFFER array2 BINDING 1
+BIND_SHADER_STORAGE_BUFFER BUFFER result BINDING 2
+
+DECLARE_SHADER shader KIND COMPUTE
+#version 450
+
+#define KERNEL_SIZE 2
+#define MAT_SIZE  16
+
+
+layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
+
+layout(binding = 0) buffer array1 {
+  float[16][16] data1;
+};
+layout(binding=1) buffer array2 {
+  float[16][16] data2;
+};
+layout(binding=2) buffer result{
+  float[16][16] res;
+};
+
+
+
+float[KERNEL_SIZE][KERNEL_SIZE] submatrix_mul(float[KERNEL_SIZE][KERNEL_SIZE] a,float[KERNEL_SIZE][KERNEL_SIZE] b){
+    float[KERNEL_SIZE][KERNEL_SIZE] tmp_buf;
+
+    int i,j,k;
+    for(i=0;i<KERNEL_SIZE;i++){
+        for(j=0;j<KERNEL_SIZE;j++)
+        tmp_buf[i][j] = 0;
+    }
+
+    for(i=0;i<KERNEL_SIZE;i++){
+        for(j=0;j<KERNEL_SIZE;j++){
+            for(k=0;k<KERNEL_SIZE;k++){
+                tmp_buf[i][j] += (a[i][k] * b[k][j]);
+            }
+        }
+    }
+    return tmp_buf;
+}
+
+float[KERNEL_SIZE][KERNEL_SIZE] take_submatrix(float[MAT_SIZE][MAT_SIZE] mat,uint x_a, uint y_a){
+    
+    float[KERNEL_SIZE][KERNEL_SIZE] res_a;
+    int i,j;
+
+    for(i=0;i<KERNEL_SIZE; i++){
+        for(j=0;j< KERNEL_SIZE;j++){
+            res_a[i][j] = mat[x_a*KERNEL_SIZE+i][y_a * KERNEL_SIZE + j];
+
+        }
+    }
+    return res_a;
+}
+
+float[KERNEL_SIZE][KERNEL_SIZE] zero_matrix(float[KERNEL_SIZE][KERNEL_SIZE] mat){
+    int i,j;
+    for(i=0;i<KERNEL_SIZE;i++){
+        for(j=0;j<KERNEL_SIZE;j++){
+            mat[i][j] = 0;
+        }
+    }
+    return mat;
+}
+
+void main() {
+    
+    int i,j,k;
+    float[KERNEL_SIZE][KERNEL_SIZE] C,data1_sub,data2_sub,tmp_res;
+    uint x = gl_WorkGroupID[0],y = gl_WorkGroupID[1];
+
+    C = zero_matrix(C);
+
+    for(k=0;k<MAT_SIZE/KERNEL_SIZE;k++){
+        data1_sub = take_submatrix(data1,x,k);
+        data2_sub = take_submatrix(data2,k,y);
+        
+        tmp_res = submatrix_mul(data1_sub,data2_sub);
+        
+        for(i = 0;i<KERNEL_SIZE;i++){
+            for(j=0;j<KERNEL_SIZE;j++){
+                C[i][j] += tmp_res[i][j];
+            }
+        }
+    }
+
+    for(i=0;i<KERNEL_SIZE;i++){
+        for(j=0;j<KERNEL_SIZE;j++){
+            res[x*KERNEL_SIZE + i][y*KERNEL_SIZE + j] = C[i][j];
+        }
+    }
+}
+END
+
+COMPILE_SHADER shader_compiled SHADER shader
+CREATE_PROGRAM compute_prog SHADERS shader_compiled
+
+RUN_COMPUTE
+    PROGRAM compute_prog
+    NUM_GROUPS 8 8 1
+
+ASSERT_EQUAL BUFFERS result mat_mul_expected
+
