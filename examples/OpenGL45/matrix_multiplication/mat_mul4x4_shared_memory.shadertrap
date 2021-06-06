@@ -99,7 +99,7 @@ DECLARE_SHADER shader KIND COMPUTE
 #define MAT_SIZE  16
 
 
-layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
+layout(local_size_x=4, local_size_y=4, local_size_z=1) in;
 
 layout(binding = 0) buffer array1 {
   float[16][16] data1;
@@ -176,7 +176,7 @@ void main() {
         data1_1_sub[x][y] = data1_sub[x][y];
         data2_1_sub[x][y] = data2_sub[x][y];
         
-        // Wait until each thread has read its corresponding element
+        // Wait until each thread has read its corresponding element         
         barrier();
 
         tmp_res = submatrix_mul(data1_1_sub,data2_1_sub);
