@@ -157,6 +157,12 @@ float[KERNEL_SIZE][KERNEL_SIZE] zero_matrix(float[KERNEL_SIZE][KERNEL_SIZE] mat)
 void main() {
     int i,j,k,p,q;
       float[KERNEL_SIZE][KERNEL_SIZE] C,data1_sub,data2_sub,tmp_res;
+      
+      // Splits the matrix into (MAT_SIZE/KERNEL_SIZE) blocks of size KERNEL_SIZE
+      // and computes the sum sequentially
+      // as C_{ij} = sum_{k=1}^{MAT_SIZE/KERNEL_SIZE} A_{ik} * B_{kj}
+      // where A_{ik} and B_{kj} are KERNEL_SIZExKERNEL_SIZE matrices
+
       for(i=0;i<MAT_SIZE/KERNEL_SIZE;i++){
           for(j=0;j<MAT_SIZE/KERNEL_SIZE;j++){
               C = zero_matrix(C);
