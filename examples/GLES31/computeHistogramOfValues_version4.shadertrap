@@ -73,10 +73,8 @@ DECLARE_SHADER shader KIND COMPUTE
 
 layout(local_size_x = 4, local_size_y = 1, local_size_z = 1) in;
 
-layout(std430, binding = 0) buffer data_values { 
-  // Can access each component in uvec4 like: histo[n].x, histo[n].y, histo[n].z, histo[n].w 
-  // and this is called swizzling.
-  uvec4[64] histo;
+layout(std430, binding = 0) readonly buffer data_values { 
+  uint[256] input_data; 
 };
 layout(std430, binding = 1) buffer result { 
   uvec4[4] res;
@@ -84,32 +82,21 @@ layout(std430, binding = 1) buffer result {
 
 void main() {
   // Example of use 4 parallel invocations(threads) each one responsible for
-  // counting a range of values. 
-  
-  // Id range from 0:3.
-  uint id = gl_LocalInvocationID.x;
+  // counting a range of values.
 
-  for (int j = 0; j < 64; j++) {
-    for (int k = 0; k < 4; k++) {
-      if (id == 0 && (histo[j][k] == 0 || histo[j][k] == 1 ||
-                      histo[j][k] == 2 || histo[j][k] == 3)) {
-        res[id][histo[j][k] % 4]++;
-      }
+  // arrow_id range from 0:15, gl_LocalInvocationID range from 0:3.
+  uint invocation_id_offset = 4 * gl_LocalInvocationID.x;
 
-      else if (id == 1 && (histo[j][k] == 4 || histo[j][k] == 5 ||
-                           histo[j][k] == 6 || histo[j][k] == 7)) {
-        res[id][histo[j][k] % 4]++;
-      }
-
-      else if (id == 2 && (histo[j][k] == 8 || histo[j][k] == 9 ||
-                           histo[j][k] == 10 || histo[j][k] == 11)) {
-        res[id][histo[j][k] % 4]++;
-      }
-
-      else if (id == 3 && (histo[j][k] == 12 || histo[j][k] == 13 ||
-                           histo[j][k] == 14 || histo[j][k] == 15)) {
-        res[id][histo[j][k] % 4]++;
-      }
+  uvec4 values = uvec4(invocation_id_offset, invocation_id_offset + 1,
+                       invocation_id_offset + 2, invocation_id_offset + 3);
+  for (int j = 0; j < 256; j++) {
+    if (input_data[j] == invocation_id_offset ||
+        input_data[j] == invocation_id_offset + 1 ||
+        input_data[j] == invocation_id_offset + 2 ||
+        input_data[j] == invocation_id_offset + 3) {
+      bvec4 match = equal(uvec4(input_data[j]), values);
+      uvec4 increment = mix(uvec4(0, 0, 0, 0), uvec4(1, 1, 1, 1), match);
+      res[invocation_id_offset / 4] += increment;
     }
   }
 }

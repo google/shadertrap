@@ -73,42 +73,29 @@ DECLARE_SHADER shader KIND COMPUTE
 
 layout(local_size_x = 16, local_size_y = 1, local_size_z = 1) in;
 
-layout(std430, binding = 0) buffer data_values { 
-  uint[256] histo; 
+layout(std430, binding = 0) readonly buffer data_values { 
+  uint[256] input_data; 
 };
 layout(std430, binding = 1) buffer result { 
   uint[16] res; 
 };
 
-layout(std430, binding = 2) buffer representative { 
-  uint[16] represent; 
-};
-
 shared int shared_memory[16];
 
 void main() {
-  
-  int work_group_id = int(gl_WorkGroupID.x);
-  int invocation_id = int(gl_LocalInvocationID.x);
+  int work_group_offset = 16 * int(gl_WorkGroupID.x); 
 
-  // Size of each mini histogram.
-  int mini_histo_size = histo.length() / int(gl_NumWorkGroups[0]);
-  int n_section = 0;
-  
   // Initalize shared memory.
-  shared_memory[invocation_id] = 1;
+  int invocation_id = int(gl_LocalInvocationID.x);
+  shared_memory[invocation_id] = 0;
   barrier();
 
-  // I think I have an error in this section, I want to provide range of values here!!
-  for (int i = n_section; i < 16 + n_section; i++) {
-    atomicAdd(shared_memory[histo[i]],1);
-    barrier();
-  }
-  n_section += 16;
-
-  // Add evey group counting with current value of res according to invocation_id. 
-  atomicAdd(res[invocation_id],shared_memory[invocation_id]);
+  atomicAdd(shared_memory[input_data[work_group_offset + invocation_id]], 1);
   barrier();
+
+  // Add evey group counting with current value of res according to
+  // invocation_id.
+  atomicAdd(res[invocation_id], shared_memory[invocation_id]);
 }
 END
 
@@ -121,4 +108,4 @@ DUMP_BUFFER_TEXT BUFFER result FILE "out_v6.txt" FORMAT "contents: " uint 16
 
 ASSERT_EQUAL BUFFERS data_values original_data_values
 
-#ASSERT_EQUAL BUFFERS expected result
+ASSERT_EQUAL BUFFERS expected result

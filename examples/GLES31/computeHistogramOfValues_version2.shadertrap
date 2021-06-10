@@ -74,7 +74,7 @@ DECLARE_SHADER shader KIND COMPUTE
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 layout(std430, binding = 0) readonly buffer data_values { 
-  uint[256] histo; 
+  uint[256] input_data; 
 };
 layout(std430, binding = 1) buffer result { 
   uint[16] res; 
@@ -83,7 +83,7 @@ void main() {
   // Same as version 1, but it's another counting method.
   for (int i = 0; i < 16; i++) {
     for (int j = 0; j < 256; j++) {
-      if(histo[j] == i) {
+      if(input_data[j] == i) {
         res[i]++;
       }
     }
