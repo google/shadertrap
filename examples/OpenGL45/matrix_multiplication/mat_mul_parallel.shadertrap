@@ -95,23 +95,20 @@ DECLARE_SHADER shader KIND COMPUTE
 
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
-layout(binding = 0) buffer array1 {
+layout(std430,binding = 0) buffer array1 {
   uint[16][16] data1;
 };
-layout(binding=1) buffer array2 {
+layout(std430,binding=1) buffer array2 {
   uint[16][16] data2;
 };
-layout(binding=2) buffer result{
+layout(std430,binding=2) buffer result{
   uint[16][16] res;
 };
 
 void main() {
-
-  for(int i=0;i<gl_NumWorkGroups[0];i++){
-    // Each block adds one element to the resulting array
+  for(int i = 0; i < gl_NumWorkGroups[0]; i++){
     res[gl_WorkGroupID[0]][gl_WorkGroupID[1]] += (data1[gl_WorkGroupID[0]][i] * data2[i][gl_WorkGroupID[1]]);
   }
-  
 }
 END
 
@@ -120,7 +117,7 @@ CREATE_PROGRAM compute_prog SHADERS shader_compiled
 
 RUN_COMPUTE
     PROGRAM compute_prog
-    NUM_GROUPS 16 16 1
+    NUM_GROUPS MAT_SIZE MAT_SIZE 1
 
 ASSERT_EQUAL BUFFERS expected result
 

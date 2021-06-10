@@ -96,22 +96,24 @@ BIND_SHADER_STORAGE_BUFFER BUFFER result BINDING 2
 DECLARE_SHADER shader KIND COMPUTE
 #version 450
 
+#define  MAT_SIZE 16
+
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
-layout(binding = 0) buffer array1 {
+layout(std430,binding = 0) buffer array1 {
   float[16][16] data1;
 };
-layout(binding=1) buffer array2 {
+layout(std430,binding=1) buffer array2 {
   float[16][16] data2;
 };
-layout(binding=2) buffer result{
+layout(std430,binding=2) buffer result{
   float[16][16] res;
 };
 
 void main() {
-    for(int i=0;i<16;i++){
-        for(int j=0;j<16;j++){
-            for(int k=0;k<16;k++){
+    for(int i = 0; i < MAT_SIZE;i++){
+        for(int j = 0; j < MAT_SIZE; j++){
+            for(int k = 0; k < MAT_SIZE; k++){
                 res[i][j] += (data1[i][k] * data2[k][j]);
             }
         }
