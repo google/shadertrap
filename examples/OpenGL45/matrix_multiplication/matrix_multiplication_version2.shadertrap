@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+// Sequential matrix multiplication example with 4x4 submatrices.
+
 GL 4.5
 
 CREATE_BUFFER array1 SIZE_BYTES 1024 INIT_VALUES  
