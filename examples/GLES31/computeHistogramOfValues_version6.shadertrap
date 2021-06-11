@@ -83,18 +83,20 @@ layout(std430, binding = 1) buffer result {
 shared int shared_memory[16];
 
 void main() {
-  int work_group_offset = 16 * int(gl_WorkGroupID.x); 
+  int work_group_offset = 16 * int(gl_WorkGroupID.x);
 
-  // Initalize shared memory.
+  // Initialize shared memory.
   int invocation_id = int(gl_LocalInvocationID.x);
   shared_memory[invocation_id] = 0;
   barrier();
 
+  // The work_group_offset  works as the main chunk pointer and invocation_id
+  // that counts values in each chunk.
   atomicAdd(shared_memory[input_data[work_group_offset + invocation_id]], 1);
   barrier();
 
-  // Add evey group counting with current value of res according to
-  // invocation_id.
+  // Sum each value in shared memory with the current value of res (result)
+  // according to invocation_id.
   atomicAdd(res[invocation_id], shared_memory[invocation_id]);
 }
 END

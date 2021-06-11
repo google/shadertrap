@@ -81,7 +81,7 @@ layout(std430, binding = 1) buffer result {
 };
 
 void main() {
-  // Example of use 16 parallel invocations(threads) to counting values using
+  // Example of use 16 parallel invocations (threads) to count values using
   // atomic add operation.
 
   // Id range from 0:15.

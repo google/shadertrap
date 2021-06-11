@@ -81,7 +81,7 @@ layout(std430, binding = 1) buffer result {
 };
 
 void main() {
-  // Example of starting to support counting at same time(using iterations).
+  // Example of starting to support counting at the same time.
   for (int i = 0; i < 16; i += 4) {
     uvec4 values = uvec4(i, i + 1, i + 2, i + 3);
     for (int j = 0; j < 256; j++) {
@@ -102,4 +102,4 @@ DUMP_BUFFER_TEXT BUFFER result FILE "out_v3.txt" FORMAT "contents: " uint 16
 
 ASSERT_EQUAL BUFFERS data_values original_data_values
 
-#ASSERT_EQUAL BUFFERS expected result
+ASSERT_EQUAL BUFFERS expected result
