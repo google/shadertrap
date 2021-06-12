@@ -83,6 +83,11 @@ layout(std430, binding = 1) buffer result {
 shared int shared_memory[16];
 
 void main() {
+  // This example is making count for all input_data after divide it as chunks,
+  // work_group_offset works as chunk head, and invocation_id counting values in
+  // each chunk.
+
+  // gl_WorkGroupID.x range from 0:15.
   int work_group_offset = 16 * int(gl_WorkGroupID.x);
 
   // Initialize shared memory.
@@ -90,8 +95,8 @@ void main() {
   shared_memory[invocation_id] = 0;
   barrier();
 
-  // The work_group_offset  works as the main chunk pointer and invocation_id
-  // that counts values in each chunk.
+  // Invocation_id with work_group_offset works as a moving arrow depends on the
+  // current invocation_id value.
   atomicAdd(shared_memory[input_data[work_group_offset + invocation_id]], 1);
   barrier();
 

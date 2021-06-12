@@ -81,7 +81,7 @@ layout(std430, binding = 1) buffer result {
 };
 
 void main() {
-  // Example of use 4 parallel invocations (threads) each one responsible for
+  // This version uses 4 parallel invocations (threads) each one responsible for
   // counting a range of values.
 
   // gl_LocalInvocationID range from 0:3.
@@ -89,11 +89,11 @@ void main() {
 
   uvec4 values = uvec4(invocation_id_offset, invocation_id_offset + 1,
                        invocation_id_offset + 2, invocation_id_offset + 3);
-  
+
   for (int j = 0; j < 256; j++) {
-      bvec4 match = equal(uvec4(input_data[j]), values);
-      uvec4 increment = mix(uvec4(0, 0, 0, 0), uvec4(1, 1, 1, 1), match);
-      res[gl_LocalInvocationID.x] += increment;
+    bvec4 match = equal(uvec4(input_data[j]), values);
+    uvec4 increment = mix(uvec4(0, 0, 0, 0), uvec4(1, 1, 1, 1), match);
+    res[gl_LocalInvocationID.x] += increment;
   }
 }
 END

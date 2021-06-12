@@ -81,12 +81,12 @@ layout(std430, binding = 1) buffer result {
 };
 
 void main() {
-  // Example of use 16 parallel invocations (threads) to count values using
-  // atomic add operation.
+  // This version uses 16 parallel invocations (threads) to count values using
+  // the atomic add operation.
 
   // Id range from 0:15.
   uint id = gl_LocalInvocationID.x;
-  
+
   for (int i = 0; i < 256; i++) {
     if (id == input_data[i]) {
       atomicAdd(res[id], 1);
