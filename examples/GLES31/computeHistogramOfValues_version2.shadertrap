@@ -83,7 +83,7 @@ void main() {
   // Same as version 1 but it's another counting method.
   for (int i = 0; i < 16; i++) {
     for (int j = 0; j < 256; j++) {
-      if(input_data[j] == i) {
+      if (input_data[j] == i) {
         res[i]++;
       }
     }

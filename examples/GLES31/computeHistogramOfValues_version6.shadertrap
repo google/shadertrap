@@ -83,20 +83,20 @@ layout(std430, binding = 1) buffer result {
 shared int shared_memory[16];
 
 void main() {
-  // This example is making count for all input_data after divide it as chunks,
-  // work_group_offset works as chunk head, and invocation_id counting values in
-  // each chunk.
+  // In this example, we divide the input data into work group-sized chunks.
+  // Each work group computes a mini histogram for a chunk of input data, and
+  // then combines the mini histogram with the overall result.
 
-  // gl_WorkGroupID.x range from 0:15.
+  // gl_WorkGroupID.x ranges from 0 to 15.
   int work_group_offset = 16 * int(gl_WorkGroupID.x);
 
-  // Initialize shared memory.
+  // Initialize a mini histogram in shared memory.
   int invocation_id = int(gl_LocalInvocationID.x);
   shared_memory[invocation_id] = 0;
   barrier();
 
-  // Invocation_id with work_group_offset works as a moving arrow depends on the
-  // current invocation_id value.
+  // Each invocation (thread) takes care of incrementing the mini-histogram for
+  // a particular input data element.
   atomicAdd(shared_memory[input_data[work_group_offset + invocation_id]], 1);
   barrier();
 

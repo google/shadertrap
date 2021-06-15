@@ -84,7 +84,7 @@ void main() {
   // This version uses 4 parallel invocations (threads) each one responsible for
   // counting a range of values.
 
-  // gl_LocalInvocationID range from 0:3.
+  // gl_LocalInvocationID ranges from 0 to 3.
   uint invocation_id_offset = 4 * gl_LocalInvocationID.x;
 
   uvec4 values = uvec4(invocation_id_offset, invocation_id_offset + 1,
