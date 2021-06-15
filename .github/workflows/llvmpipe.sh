@@ -97,5 +97,5 @@ popd
 
 for f in `find ./examples -name "*.shadertrap"`
 do
-    env LD_LIBRARY_PATH="${HOME}/mesa/${MESA_VERSION}/install" ./temp/build-Debug/src/shadertrap/shadertrap $f --require-vendor-renderer-substring llvmpipe
+    env ./temp/build-Debug/src/shadertrap/shadertrap $f --require-vendor-renderer-substring llvmpipe
 done
