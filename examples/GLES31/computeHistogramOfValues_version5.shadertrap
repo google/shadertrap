@@ -87,7 +87,7 @@ void main() {
   // Id range from 0 to 15.
   uint id = gl_LocalInvocationID.x;
 
-  // Divide input_data into chunks each one manage by current Id.
+  // Divide input_data into chunks, each managed by a single thread.
   int chunkStart = int(id * 16);
 
   for (int i = chunkStart; i < chunkStart + 16; i++) {
