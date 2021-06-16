@@ -40,19 +40,19 @@ void main() {
   // Same as version 3 but we are using shared memory instead of global memory.
   uint id = uint(gl_LocalInvocationID.x);
   uint depth = findMSB(data.length());
-  
+
   // Data is copied over to shared memory by 256 threads in a work group.
   shared_memory[id] = data[id];
   barrier();
-  
+
   for(uint i = 1; i <= depth; ++i) {
-  	if(id % (1 << i) == 0) shared_memory[id] = max(shared_memory[id], shared_memory[id + (1<<(i-1))]);
-  	barrier();  	 
+    if(id % (1 << i) == 0) shared_memory[id] = max(shared_memory[id], shared_memory[id + (1<<(i-1))]);
+    barrier();  	 
   }
-  
+
   // Update global buffer with shared memory. 
   data[id] = shared_memory[id];
-  
+
   if(gl_LocalInvocationID.x == 0) res = shared_memory[0];
 }
 END

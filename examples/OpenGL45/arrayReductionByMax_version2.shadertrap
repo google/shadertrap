@@ -31,11 +31,11 @@ DECLARE_SHADER shader KIND COMPUTE
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
 layout(std430, binding = 0) buffer input_array {
-  uint[256] data1;
+  uint[256] data;
 };
 
 layout(std430, binding = 1) buffer partial_max {
-  uint[16] data2;
+  uint[16] partial_results;
 };
 
 layout(std430, binding = 2) buffer result {
@@ -44,10 +44,10 @@ layout(std430, binding = 2) buffer result {
 
 
 void main() {
-	for(uint i = gl_WorkGroupID[0]*16; i < gl_WorkGroupID[0]*16 + 16; ++i) {
-		data2[gl_WorkGroupID[0]] = max(data2[gl_WorkGroupID[0]], data1[i]);
-	}
-	atomicMax(res, data2[gl_WorkGroupID[0]]);
+  for(uint i = gl_WorkGroupID[0]*16; i < gl_WorkGroupID[0]*16 + 16; ++i) {
+    partial_results[gl_WorkGroupID[0]] = max(partial_results[gl_WorkGroupID[0]], data[i]);
+  }
+  atomicMax(res, partial_results[gl_WorkGroupID[0]]);
 }
 END
 

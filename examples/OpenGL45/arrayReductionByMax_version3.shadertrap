@@ -40,7 +40,7 @@ void main() {
   uint id = uint(gl_LocalInvocationID.x);
   // depth of the tree where we perform reduction. 
   uint Depth = findMSB(data.length());
-  
+
   // At each step, half of invocations drop out of the computation. 
   // Index corresponding to active invocations will update with max value while
   // the rest will set to corresponding id in case race condition between multiple threads occurs.
@@ -48,11 +48,11 @@ void main() {
   // by the corresponding invocation.  
   // Each active invocation will take the max between its value and that of a neighboring invocatiion. 
   for(uint i = 1; i <= Depth; ++i) {
-  	if(id % (1 << i) == 0) {
-  		data[id] = max(data[id], data[id + (1<<(i-1))]);
-  		data[id + (1<<(i-1))] = id + (1<<(i-1)); 
-  	}
-  	barrier(); 
+    if(id % (1 << i) == 0) {
+      data[id] = max(data[id], data[id + (1<<(i-1))]);
+      data[id + (1<<(i-1))] = id + (1<<(i-1)); 
+    }
+    barrier(); 
   }
   // Eventually the first value contains the maximum value of the array.
   if(gl_LocalInvocationID.x == 0) res = data[0];
