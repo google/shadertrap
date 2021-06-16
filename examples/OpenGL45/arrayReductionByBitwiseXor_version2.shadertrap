@@ -45,10 +45,10 @@ layout(std430, binding = 2) buffer result {
 };
 
 void main() {
-	for(uint i = gl_WorkGroupID[0]*16; i < gl_WorkGroupID[0]*16 + 16; ++i) {
-		data2[gl_WorkGroupID[0]] ^= data1[i];
-	}
-	atomicXor(res, data2[gl_WorkGroupID[0]]);
+  for(uint i = gl_WorkGroupID[0]*16; i < gl_WorkGroupID[0]*16 + 16; ++i) {
+    data2[gl_WorkGroupID[0]] ^= data1[i];
+  }
+  atomicXor(res, data2[gl_WorkGroupID[0]]);
 }
 END
 

@@ -36,23 +36,23 @@ layout(std430, binding = 1) buffer result {
 };
 
 void main() {
-  // id range: [0, 255].
+  // Id range: [0, 255].
   uint id = uint(gl_LocalInvocationID.x);
-  // depth of the tree where we perform reduction. 
-  uint Depth = findMSB(data.length());
-  
+  // Depth of the tree where we perform reduction. 
+  uint depth = findMSB(data.length());
+
   // At each step, half of invocations drop out of the computation. 
   // Index corresponding to active invocations will update with bitwise and operation while
   // the rest will set to corresponding id in case race condition between multiple threads occurs.
   // This way each position in the input array other than index 0 should be set to its index value
   // by the corresponding invocation.  
-  // Each active invocation will add its value to that of a neighboring invocatiion. 
-  for(uint i = 1; i <= Depth; ++i) {
-  	if(id % (1 << i) == 0) {
-  		data[id] &= data[id + (1<<(i-1))];
-  		data[id + (1<<(i-1))] = id + (1<<(i-1)) ; 
-  	}
-  	barrier(); 
+  // Each active invocation will perform bitwise and operation of its value to that of a neighboring invocatiion. 
+  for(uint i = 1; i <= depth; ++i) {
+    if(id % (1 << i) == 0) {
+      data[id] &= data[id + (1<<(i-1))];
+      data[id + (1<<(i-1))] = id + (1<<(i-1)); 
+    }
+    barrier(); 
   }
   // Eventually the first value contains the bitwise and result of all values.
   if(gl_LocalInvocationID.x == 0) res = data[0];

@@ -39,28 +39,28 @@ shared uint shared_memory[256];
 void main() {
  
   // The partition size is the number of elements in data to be handled for each work group. 
-  uint partitionSize = data.length() / gl_NumWorkGroups[0];
-  
+  uint partition_size = data.length() / gl_NumWorkGroups[0];
+
   // Depth of reduction tree for the current partition.  
-  uint Depth = findMSB(partitionSize);
-  
+  uint Depth = findMSB(partition_size);
+
   // Number of previous elements before the current working group. 
-  uint n_prev = partitionSize*gl_WorkGroupID[0];
-  
+  uint n_prev = partition_size*gl_WorkGroupID[0];
+
   uint id = uint(gl_LocalInvocationID.x) + n_prev;
-  
+
   // Data is copied over to shared memory by 256 threads in a work group.
   shared_memory[id] = data[id];
   barrier();
-  
+
   for(uint i = 1; i <= Depth; ++i) {
-  	if(id % (1 << i) == 0) shared_memory[id] ^= shared_memory[id + (1<<(i-1))];
-  	barrier();  	 
+    if(id % (1 << i) == 0) shared_memory[id] ^= shared_memory[id + (1<<(i-1))];
+    barrier();  	 
   }
-  
+
   // Update global buffer with shared memory. 
   data[id] = shared_memory[id];
-  
+
   // The first value in each group will be the result of bitwise xor operation on all values in the group.
   if(id == n_prev) atomicXor(res, shared_memory[n_prev]);
 }
