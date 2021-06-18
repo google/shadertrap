@@ -66,7 +66,7 @@ template <typename T>
 void DumpFormatEntry(const char* data,
                      const CommandDumpBufferText::FormatEntry& format_entry,
                      std::ofstream* text_file, size_t* index) {
-  std::vector<int32_t> values(format_entry.count);
+  std::vector<T> values(format_entry.count);
   const size_t size_bytes = format_entry.count * sizeof(T);
   memcpy(values.data(), &data[*index], size_bytes);
   for (auto it = values.begin(); it != values.end(); it++) {
