@@ -1,0 +1,110 @@
+# Copyright 2021 The ShaderTrap Project Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+GL 4.5
+
+CREATE_BUFFER data_values
+            SIZE_BYTES 1024 
+            INIT_VALUES
+                uint 4 10 14 3 3 13 8 2 10 7 0 0 0 2 5 0 
+                uint 13 7 8 12 9 2 11 14 2 2 8 6 15 0 15 6 
+                uint 2 2 0 3 6 10 7 11 7 11 2 4 11 5 15 12 
+                uint 1 15 11 1 13 12 5 1 11 3 11 1 2 1 6 1 
+                uint 15 15 13 2 7 2 12 8 4 5 11 7 11 4 10 15 
+                uint 7 14 3 2 15 7 12 12 6 13 4 12 3 5 5 10 
+                uint 7 13 1 6 3 12 3 3 11 0 2 12 14 13 10 15 
+                uint 3 1 11 0 8 4 15 13 4 14 8 5 7 10 8 6 
+                uint 10 9 0 7 15 11 13 5 7 2 9 11 2 15 14 12 
+                uint 6 14 11 0 2 14 5 12 15 11 8 10 9 11 3 14 
+                uint 9 13 9 6 10 2 7 13 10 3 11 1 9 10 6 4 
+                uint 8 14 10 7 2 2 5 7 11 6 5 13 2 3 10 11 
+                uint 12 3 14 3 1 3 9 14 8 5 13 2 15 12 15 11 
+                uint 0 10 9 0 7 15 9 4 0 6 13 14 14 6 13 11 
+                uint 10 7 14 7 8 10 13 10 13 7 7 10 13 0 3 15 
+                uint 5 12 1 1 5 2 2 2 4 9 11 2 10 1 7 9
+
+CREATE_BUFFER original_data_values
+            SIZE_BYTES 1024 
+            INIT_VALUES
+                uint 4 10 14 3 3 13 8 2 10 7 0 0 0 2 5 0 
+                uint 13 7 8 12 9 2 11 14 2 2 8 6 15 0 15 6 
+                uint 2 2 0 3 6 10 7 11 7 11 2 4 11 5 15 12 
+                uint 1 15 11 1 13 12 5 1 11 3 11 1 2 1 6 1 
+                uint 15 15 13 2 7 2 12 8 4 5 11 7 11 4 10 15 
+                uint 7 14 3 2 15 7 12 12 6 13 4 12 3 5 5 10 
+                uint 7 13 1 6 3 12 3 3 11 0 2 12 14 13 10 15 
+                uint 3 1 11 0 8 4 15 13 4 14 8 5 7 10 8 6 
+                uint 10 9 0 7 15 11 13 5 7 2 9 11 2 15 14 12 
+                uint 6 14 11 0 2 14 5 12 15 11 8 10 9 11 3 14 
+                uint 9 13 9 6 10 2 7 13 10 3 11 1 9 10 6 4 
+                uint 8 14 10 7 2 2 5 7 11 6 5 13 2 3 10 11 
+                uint 12 3 14 3 1 3 9 14 8 5 13 2 15 12 15 11 
+                uint 0 10 9 0 7 15 9 4 0 6 13 14 14 6 13 11 
+                uint 10 7 14 7 8 10 13 10 13 7 7 10 13 0 3 15 
+                uint 5 12 1 1 5 2 2 2 4 9 11 2 10 1 7 9
+
+CREATE_BUFFER result 
+            SIZE_BYTES 64 
+            INIT_VALUES
+                uint 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+CREATE_BUFFER expected 
+            SIZE_BYTES 64 
+            INIT_VALUES
+                uint 14 13 25 17 10 14 13 21 11 12 20 22 14 18 15 17
+
+BIND_SHADER_STORAGE_BUFFER BUFFER data_values BINDING 0 
+BIND_SHADER_STORAGE_BUFFER BUFFER result BINDING 1 
+BIND_SHADER_STORAGE_BUFFER BUFFER expected BINDING 2
+
+DECLARE_SHADER shader KIND COMPUTE
+#version 450
+
+layout(local_size_x = 4, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) readonly buffer data_values { 
+  uint[256] input_data; 
+};
+layout(std430, binding = 1) buffer result { 
+  uvec4[4] res;
+};
+
+void main() {
+  // This version uses 4 parallel invocations (threads) each one responsible for
+  // counting a range of values.
+
+  // gl_LocalInvocationID ranges from 0 to 3.
+  uint invocation_id_offset = 4 * gl_LocalInvocationID.x;
+
+  uvec4 values = uvec4(invocation_id_offset, invocation_id_offset + 1,
+                       invocation_id_offset + 2, invocation_id_offset + 3);
+
+  for (int j = 0; j < 256; j++) {
+    bvec4 match = equal(uvec4(input_data[j]), values);
+    uvec4 increment = mix(uvec4(0, 0, 0, 0), uvec4(1, 1, 1, 1), match);
+    res[gl_LocalInvocationID.x] += increment;
+  }
+}
+END
+
+COMPILE_SHADER shader_compiled SHADER shader 
+CREATE_PROGRAM compute_prog SHADERS shader_compiled
+
+RUN_COMPUTE PROGRAM compute_prog NUM_GROUPS 1 1 1
+
+DUMP_BUFFER_TEXT BUFFER result FILE "out_v4.txt" FORMAT "contents: " uint 16
+
+ASSERT_EQUAL BUFFERS data_values original_data_values
+
+ASSERT_EQUAL BUFFERS expected result
