@@ -413,4 +413,32 @@ Sets a uniform according to its location.
 SET_UNIFORM PROGRAM program NAME name TYPE type VALUES value+
 ```
 
-Sets a uniform according to its name. The parameters have the same meaning as in the previous version of `SET_UNIFORM`, except that instead of the `location`, `name` is used to specify which uniform should be set. This must correspond to the name of a uniform declared in the shader(s) associated with `program`.
+Sets a uniform according to its name. The parameters have the same meaning as in the previous version of `SET_UNIFORM`, except that instead of the `location`, `name` is a string specifying which uniform should be set. This must correspond to the name of a uniform declared in the shader(s) associated with `program`.
+
+For example, suppose a shader contains the following declarations:
+
+```
+struct S {
+  ivec2 a[3];
+  int b;
+};
+
+struct T {
+  S c[2];
+  int d;
+};
+
+uniform T e[2];
+```
+
+Then we can use the following command to set `e[0].c[1].b` to the value 42 (assuming that `prog` is a compiled program):
+
+```
+SET_UNIFORM PROGRAM prog NAME "e[0].c[1].b" TYPE int VALUES 42
+```
+
+and the following command to set `e[1].c[1].a` to the array of vectors `[(1, 2), (3, 4), (5, 6)]`:
+
+```
+SET_UNIFORM PROGRAM prog NAME "e[1].c[1].a" TYPE ivec2[3] VALUES 1 2 3 4 5 6
+```

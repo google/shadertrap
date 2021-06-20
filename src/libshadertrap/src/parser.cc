@@ -1393,10 +1393,10 @@ bool Parser::ParseCommandSetUniform() {
            {Token::Type::kKeywordName,
             [this, &name]() -> bool {
               auto token = tokenizer_->NextToken();
-              if (!token->IsIdentifier()) {
+              if (!token->IsString()) {
                 message_consumer_->Message(
                     MessageConsumer::Severity::kError, token.get(),
-                    "Expected identifier for uniform name, got '" +
+                    "Expected string for uniform name, got '" +
                         token->GetText() + "'");
                 return false;
               }
@@ -1459,11 +1459,10 @@ bool Parser::ParseCommandSetUniform() {
               }
               if (tokenizer_->PeekNextToken()->GetText() == "[") {
                 tokenizer_->NextToken();
-                auto maybe_size = ParseUint32("array size");
-                if (!maybe_size.first) {
+                maybe_array_size = ParseUint32("array size");
+                if (!maybe_array_size.first) {
                   return false;
                 }
-                maybe_array_size = {true, maybe_array_size.second};
                 token = tokenizer_->NextToken();
                 if (token->GetText() != "]") {
                   message_consumer_->Message(
