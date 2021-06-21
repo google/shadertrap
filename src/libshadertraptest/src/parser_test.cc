@@ -85,7 +85,7 @@ void main() {
 END
 COMPILE_SHADER shader_compiled SHADER shader
 CREATE_PROGRAM compute_program SHADERS shader_compiled
-SET_UNIFORM PROGRAM compute_program LOCATION 1 NAME f TYPE float VALUES 1.0
+SET_UNIFORM PROGRAM compute_program LOCATION 1 NAME "f" TYPE float VALUES 1.0
 )";
 
   CollectingMessageConsumer message_consumer;
