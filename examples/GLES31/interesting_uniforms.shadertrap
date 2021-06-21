@@ -1,0 +1,124 @@
+# Copyright 2020 The ShaderTrap Project Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+GLES 3.1
+
+DECLARE_SHADER compute_shader KIND COMPUTE
+#version 310 es
+
+struct S {
+  int a;
+  int b;
+};
+
+struct T {
+  int c;
+  int d;
+};
+
+struct U {
+  ivec3 e;
+  S f[2];
+  T g;
+};
+
+uniform S u1;
+
+uniform ivec2 u2[2];
+
+uniform U u3;
+
+uniform U u4[2];
+
+layout(std430, binding = 0) buffer SSBO {
+  int data[];
+};
+
+layout(local_size_x = 1) in;
+
+void main() {
+  data[0] = u1.a;
+  data[1] = u1.b;
+  data[2] = u2[0].x;
+  data[3] = u2[0].y;
+  data[4] = u2[1].x;
+  data[5] = u2[1].y;
+  data[6] = u3.e.x;
+  data[7] = u3.e.y;
+  data[8] = u3.e.z;
+  data[9] = u3.f[0].a;
+  data[10] = u3.f[0].b;
+  data[11] = u3.f[1].a;
+  data[12] = u3.f[1].b;
+  data[13] = u3.g.c;
+  data[14] = u3.g.d;
+  data[15] = u4[0].e.x;
+  data[16] = u4[0].e.y;
+  data[17] = u4[0].e.z;
+  data[18] = u4[0].f[0].a;
+  data[19] = u4[0].f[0].b;
+  data[20] = u4[0].f[1].a;
+  data[21] = u4[0].f[1].b;
+  data[22] = u4[0].g.c;
+  data[23] = u4[0].g.d;
+  data[24] = u4[1].e.x;
+  data[25] = u4[1].e.y;
+  data[26] = u4[1].e.z;
+  data[27] = u4[1].f[0].a;
+  data[28] = u4[1].f[0].b;
+  data[29] = u4[1].f[1].a;
+  data[30] = u4[1].f[1].b;
+  data[31] = u4[1].g.c;
+  data[32] = u4[1].g.d;
+}
+END
+
+COMPILE_SHADER compute_shader_compiled SHADER compute_shader
+
+CREATE_PROGRAM compute_program SHADERS compute_shader_compiled
+
+SET_UNIFORM PROGRAM compute_program NAME "u1.a" TYPE int VALUES 1
+SET_UNIFORM PROGRAM compute_program NAME "u1.b" TYPE int VALUES 2
+SET_UNIFORM PROGRAM compute_program NAME "u2" TYPE ivec2[2] VALUES 3 4 5 6
+SET_UNIFORM PROGRAM compute_program NAME "u3.e" TYPE ivec3 VALUES 7 8 9
+SET_UNIFORM PROGRAM compute_program NAME "u3.f[0].a" TYPE int VALUES 10
+SET_UNIFORM PROGRAM compute_program NAME "u3.f[0].b" TYPE int VALUES 11
+SET_UNIFORM PROGRAM compute_program NAME "u3.f[1].a" TYPE int VALUES 12
+SET_UNIFORM PROGRAM compute_program NAME "u3.f[1].b" TYPE int VALUES 13
+SET_UNIFORM PROGRAM compute_program NAME "u3.g.c" TYPE int VALUES 14
+SET_UNIFORM PROGRAM compute_program NAME "u3.g.d" TYPE int VALUES 15
+SET_UNIFORM PROGRAM compute_program NAME "u4[0].e" TYPE ivec3 VALUES 16 17 18
+SET_UNIFORM PROGRAM compute_program NAME "u4[0].f[0].a" TYPE int VALUES 19
+SET_UNIFORM PROGRAM compute_program NAME "u4[0].f[0].b" TYPE int VALUES 20
+SET_UNIFORM PROGRAM compute_program NAME "u4[0].f[1].a" TYPE int VALUES 21
+SET_UNIFORM PROGRAM compute_program NAME "u4[0].f[1].b" TYPE int VALUES 22
+SET_UNIFORM PROGRAM compute_program NAME "u4[0].g.c" TYPE int VALUES 23
+SET_UNIFORM PROGRAM compute_program NAME "u4[0].g.d" TYPE int VALUES 24
+SET_UNIFORM PROGRAM compute_program NAME "u4[1].e" TYPE ivec3 VALUES 25 26 27
+SET_UNIFORM PROGRAM compute_program NAME "u4[1].f[0].a" TYPE int VALUES 28
+SET_UNIFORM PROGRAM compute_program NAME "u4[1].f[0].b" TYPE int VALUES 29
+SET_UNIFORM PROGRAM compute_program NAME "u4[1].f[1].a" TYPE int VALUES 30
+SET_UNIFORM PROGRAM compute_program NAME "u4[1].f[1].b" TYPE int VALUES 31
+SET_UNIFORM PROGRAM compute_program NAME "u4[1].g.c" TYPE int VALUES 32
+SET_UNIFORM PROGRAM compute_program NAME "u4[1].g.d" TYPE int VALUES 33
+
+CREATE_BUFFER expected SIZE_BYTES 132 INIT_VALUES int 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33
+
+CREATE_BUFFER output SIZE_BYTES 132 INIT_VALUES int -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+
+BIND_SHADER_STORAGE_BUFFER BUFFER output BINDING 0
+
+RUN_COMPUTE PROGRAM compute_program NUM_GROUPS 1 1 1
+
+ASSERT_EQUAL BUFFERS expected output
