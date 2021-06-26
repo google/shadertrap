@@ -12,46 +12,82 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-// Parallelized matrix multiplication example with 4x4 submatrices and shared memory. 
+# Parallel matrix multiplication using shared memory and a kernel of size 4x4.
 
 GL 4.5
 
+CREATE_BUFFER array1_mat_buf SIZE_BYTES 1024 INIT_VALUES  
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          
 CREATE_BUFFER array1 SIZE_BYTES 1024 INIT_VALUES  
-    float 1. 3. 5. 7. 1. 3. 5. 7. 1. 3. 5. 7. 1. 3. 5. 7.
-          9. 11. 13. 15. 9. 11. 13. 15. 9. 11. 13. 15. 9. 11. 13. 15.
-          17. 19. 21. 23. 17. 19. 21. 23. 17. 19. 21. 23. 17. 19. 21. 23.
-          25. 27. 29. 31. 25. 27. 29. 31. 25. 27. 29. 31. 25. 27. 29. 31.
-    float 1. 3. 5. 7. 1. 3. 5. 7. 1. 3. 5. 7. 1. 3. 5. 7.
-          9. 11. 13. 15. 9. 11. 13. 15. 9. 11. 13. 15. 9. 11. 13. 15.
-          17. 19. 21. 23. 17. 19. 21. 23. 17. 19. 21. 23. 17. 19. 21. 23.
-          25. 27. 29. 31. 25. 27. 29. 31. 25. 27. 29. 31. 25. 27. 29. 31.
-    float 1. 3. 5. 7. 1. 3. 5. 7. 1. 3. 5. 7. 1. 3. 5. 7.
-          9. 11. 13. 15. 9. 11. 13. 15. 9. 11. 13. 15. 9. 11. 13. 15.
-          17. 19. 21. 23. 17. 19. 21. 23. 17. 19. 21. 23. 17. 19. 21. 23.
-          25. 27. 29. 31. 25. 27. 29. 31. 25. 27. 29. 31. 25. 27. 29. 31.
-    float 1. 3. 5. 7. 1. 3. 5. 7. 1. 3. 5. 7. 1. 3. 5. 7.
-          9. 11. 13. 15. 9. 11. 13. 15. 9. 11. 13. 15. 9. 11. 13. 15.
-          17. 19. 21. 23. 17. 19. 21. 23. 17. 19. 21. 23. 17. 19. 21. 23.
-          25. 27. 29. 31. 25. 27. 29. 31. 25. 27. 29. 31. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+    float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
+
+
+CREATE_BUFFER array2_mat_buf SIZE_BYTES 1024 INIT_VALUES 
+    float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+          0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
 
 CREATE_BUFFER array2 SIZE_BYTES 1024 INIT_VALUES 
-    float 2. 4. 6. 8. 2. 4. 6. 8. 2. 4. 6. 8. 2. 4. 6. 8.
-          10. 12. 14. 16. 10. 12. 14. 16. 10. 12. 14. 16. 10. 12. 14. 16.
-          18. 20. 22. 24. 18. 20. 22. 24. 18. 20. 22. 24. 18. 20. 22. 24.
-          26. 28. 30. 32. 26. 28. 30. 32. 26. 28. 30. 32. 26. 28. 30. 32.
-    float 2. 4. 6. 8. 2. 4. 6. 8. 2. 4. 6. 8. 2. 4. 6. 8.
-          10. 12. 14. 16. 10. 12. 14. 16. 10. 12. 14. 16. 10. 12. 14. 16.
-          18. 20. 22. 24. 18. 20. 22. 24. 18. 20. 22. 24. 18. 20. 22. 24.
-          26. 28. 30. 32. 26. 28. 30. 32. 26. 28. 30. 32. 26. 28. 30. 32.
-    float 2. 4. 6. 8. 2. 4. 6. 8. 2. 4. 6. 8. 2. 4. 6. 8.
-          10. 12. 14. 16. 10. 12. 14. 16. 10. 12. 14. 16. 10. 12. 14. 16.
-          18. 20. 22. 24. 18. 20. 22. 24. 18. 20. 22. 24. 18. 20. 22. 24.
-          26. 28. 30. 32. 26. 28. 30. 32. 26. 28. 30. 32. 26. 28. 30. 32.
-    float 2. 4. 6. 8. 2. 4. 6. 8. 2. 4. 6. 8. 2. 4. 6. 8.
-          10. 12. 14. 16. 10. 12. 14. 16. 10. 12. 14. 16. 10. 12. 14. 16.
-          18. 20. 22. 24. 18. 20. 22. 24. 18. 20. 22. 24. 18. 20. 22. 24.
-          26. 28. 30. 32. 26. 28. 30. 32. 26. 28. 30. 32. 26. 28. 30. 32.
-
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
+    float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
 
 CREATE_BUFFER result SIZE_BYTES 1024 INIT_VALUES 
     float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
@@ -70,7 +106,7 @@ CREATE_BUFFER result SIZE_BYTES 1024 INIT_VALUES
     float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
     float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
     float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
-
+    
 CREATE_BUFFER mat_mul_expected SIZE_BYTES 1024 INIT_VALUES 
     float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
     float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
@@ -92,10 +128,51 @@ CREATE_BUFFER mat_mul_expected SIZE_BYTES 1024 INIT_VALUES
 BIND_SHADER_STORAGE_BUFFER BUFFER array1 BINDING 0
 BIND_SHADER_STORAGE_BUFFER BUFFER array2 BINDING 1
 BIND_SHADER_STORAGE_BUFFER BUFFER result BINDING 2
+BIND_SHADER_STORAGE_BUFFER BUFFER array1_mat_buf BINDING 3
+BIND_SHADER_STORAGE_BUFFER BUFFER array2_mat_buf BINDING 4
+
+
+
+DECLARE_SHADER shader_1 KIND COMPUTE
+#version 450
+#define KERNEL_SIZE 4
+#define MAT_SIZE  16
+
+
+layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
+
+layout(std430, binding = 0) buffer array1 {
+  float[16][16] data1;
+};
+layout(std430, binding=1) buffer array2 {
+  float[16][16] data2;
+};
+layout(std430, binding=3) buffer array1_mat_buf{
+  mat4x4 array1_mat[4][4];
+};
+layout(std430, binding=4) buffer array2_mat_buf{
+  mat4x4 array2_mat[4][4];
+};
+
+
+void main() {
+    uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
+    array1_mat[row/KERNEL_SIZE][col/KERNEL_SIZE][col%KERNEL_SIZE][row%KERNEL_SIZE] = data1[row][col];
+    array2_mat[row/KERNEL_SIZE][col/KERNEL_SIZE][col%KERNEL_SIZE][row%KERNEL_SIZE] = data2[row][col];
+}
+END
+
+COMPILE_SHADER shader_compiled_1 SHADER shader_1
+CREATE_PROGRAM compute_prog_1 SHADERS shader_compiled_1
+
+RUN_COMPUTE
+    PROGRAM compute_prog_1
+    NUM_GROUPS 16 16 1
+
+
 
 DECLARE_SHADER shader KIND COMPUTE
 #version 450
-
 #define KERNEL_SIZE 4
 #define MAT_SIZE  16
 
@@ -103,44 +180,25 @@ DECLARE_SHADER shader KIND COMPUTE
 layout(local_size_x=4, local_size_y=4, local_size_z=1) in;
 
 layout(std430,binding = 0) buffer array1 {
-  mat4x4[4][4] data1;
+  float[16][16] data1;
 };
 layout(std430,binding=1) buffer array2 {
-  mat4x4[4][4] data2;
+  float[16][16] data2;
 };
 layout(std430,binding=2) buffer result{
   float[16][16] res;
 };
-
-
-
-float[KERNEL_SIZE][KERNEL_SIZE] submatrix_mul(mat4x4 a, mat4x4 b){
-    float[KERNEL_SIZE][KERNEL_SIZE] tmp_buf;
-    int i, j, k;
-
-    for(i = 0; i < KERNEL_SIZE; i++){
-        for(j = 0; j < KERNEL_SIZE; j++)
-        tmp_buf[i][j] = 0;
-    }
-
-    for(i = 0; i < KERNEL_SIZE; i++){
-        for(j = 0; j < KERNEL_SIZE; j++){
-            for(k = 0; k < KERNEL_SIZE; k++){
-                tmp_buf[i][j] += (a[i][k] * b[k][j]);
-            }
-        }
-    }
-    return tmp_buf;
-}
-
-mat4x4 take_submatrix(mat4x4[4][4] mat, uint x_a, uint y_a){
-    return mat[x_a][y_a];
-}
+layout(std430,binding=3) buffer array1_mat_buf{
+  mat4x4 array1_mat[4][4];
+};
+layout(std430,binding=4) buffer array2_mat_buf{
+  mat4x4 array2_mat[4][4];
+};
 
 float[KERNEL_SIZE][KERNEL_SIZE] zero_matrix(float[KERNEL_SIZE][KERNEL_SIZE] mat){
-    int i,j;
+    int i, j;
     for(i = 0; i < KERNEL_SIZE; i++){
-        for(j = 0;j < KERNEL_SIZE; j++){
+        for(j = 0; j < KERNEL_SIZE; j++){
             mat[i][j] = 0;
         }
     }
@@ -153,14 +211,13 @@ void main() {
     
     int i,j,k;
     float[KERNEL_SIZE][KERNEL_SIZE] C, tmp_res;
-    mat4x4 data1_sub, data2_sub;
-    uint row = gl_WorkGroupID[0], col = gl_WorkGroupID[1];
-    uint x = gl_LocalInvocationID[0], y = gl_LocalInvocationID[1];
+    mat4x4 data1_sub, data2_sub, tmp_mult;
+    uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
+    uint x = uint(gl_LocalInvocationID[0]), y = uint(gl_LocalInvocationID[1]);
     C = zero_matrix(C);
-
-    for(k = 0;k < MAT_SIZE/KERNEL_SIZE; k++){
-        data1_sub = take_submatrix(data1, row, k);
-        data2_sub = take_submatrix(data2, k, col);
+    for(k = 0; k < MAT_SIZE/KERNEL_SIZE; k++){
+        data1_sub = array1_mat[row][k];
+        data2_sub = array2_mat[k][col];
 
         // Each thread reads one element of the submatrix
         data1_1_sub[x][y] = data1_sub[x][y];
@@ -168,13 +225,13 @@ void main() {
         
         // Wait until each thread has read its corresponding element         
         barrier();
-
-        tmp_res = submatrix_mul(data1_1_sub, data2_1_sub);
+        tmp_mult = data1_1_sub * data2_1_sub;
         
         // Each thread writes to one element of the resulting matrix
-        C[x][y] += tmp_res[x][y];
+        C[x][y] += tmp_mult[y][x];
 
         barrier();
+
     }
 
     res[row * KERNEL_SIZE + x][col * KERNEL_SIZE + y] = C[x][y];
