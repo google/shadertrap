@@ -52,6 +52,24 @@ CREATE_BUFFER array1 SIZE_BYTES 1024 INIT_VALUES
     float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
     float 1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
 
+CREATE_BUFFER correct_array1_mat_buf SIZE_BYTES 1024 INIT_VALUES  
+    float 1. 1. 1. 1. 3. 3. 3. 3. 5. 5. 5. 5. 7. 7. 7. 7.
+          9. 9. 9. 9. 11. 11. 11. 11. 13. 13. 13. 13. 15. 15. 15. 15.
+          17. 17. 17. 17. 19. 19. 19. 19. 21. 21. 21. 21. 23. 23. 23. 23.
+          25. 25. 25. 25. 27. 27. 27. 27. 29. 29. 29. 29. 31. 31. 31. 31.
+          1. 1. 1. 1. 3. 3. 3. 3. 5. 5. 5. 5. 7. 7. 7. 7.
+          9. 9. 9. 9. 11. 11. 11. 11. 13. 13. 13. 13. 15. 15. 15. 15.
+          17. 17. 17. 17. 19. 19. 19. 19. 21. 21. 21. 21. 23. 23. 23. 23.
+          25. 25. 25. 25. 27. 27. 27. 27. 29. 29. 29. 29. 31. 31. 31. 31.
+          1. 1. 1. 1. 3. 3. 3. 3. 5. 5. 5. 5. 7. 7. 7. 7.
+          9. 9. 9. 9. 11. 11. 11. 11. 13. 13. 13. 13. 15. 15. 15. 15.
+          17. 17. 17. 17. 19. 19. 19. 19. 21. 21. 21. 21. 23. 23. 23. 23.
+          25. 25. 25. 25. 27. 27. 27. 27. 29. 29. 29. 29. 31. 31. 31. 31.
+          1. 1. 1. 1. 3. 3. 3. 3. 5. 5. 5. 5. 7. 7. 7. 7.
+          9. 9. 9. 9. 11. 11. 11. 11. 13. 13. 13. 13. 15. 15. 15. 15.
+          17. 17. 17. 17. 19. 19. 19. 19. 21. 21. 21. 21. 23. 23. 23. 23.
+          25. 25. 25. 25. 27. 27. 27. 27. 29. 29. 29. 29. 31. 31. 31. 31.
+
 
 CREATE_BUFFER array2_mat_buf SIZE_BYTES 1024 INIT_VALUES 
     float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
@@ -89,6 +107,24 @@ CREATE_BUFFER array2 SIZE_BYTES 1024 INIT_VALUES
     float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
     float 2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
 
+CREATE_BUFFER correct_array2_mat_buf SIZE_BYTES 1024 INIT_VALUES 
+    float 2. 2. 2. 2. 4. 4. 4. 4. 6. 6. 6. 6. 8. 8. 8. 8.
+          10. 10. 10. 10. 12. 12. 12. 12. 14. 14. 14. 14. 16. 16. 16. 16.
+          18. 18. 18. 18. 20. 20. 20. 20. 22. 22. 22. 22. 24. 24. 24. 24.
+          26. 26. 26. 26. 28. 28. 28. 28. 30. 30. 30. 30. 32. 32. 32. 32.
+          2. 2. 2. 2. 4. 4. 4. 4. 6. 6. 6. 6. 8. 8. 8. 8.
+          10. 10. 10. 10. 12. 12. 12. 12. 14. 14. 14. 14. 16. 16. 16. 16.
+          18. 18. 18. 18. 20. 20. 20. 20. 22. 22. 22. 22. 24. 24. 24. 24.
+          26. 26. 26. 26. 28. 28. 28. 28. 30. 30. 30. 30. 32. 32. 32. 32.
+          2. 2. 2. 2. 4. 4. 4. 4. 6. 6. 6. 6. 8. 8. 8. 8.
+          10. 10. 10. 10. 12. 12. 12. 12. 14. 14. 14. 14. 16. 16. 16. 16.
+          18. 18. 18. 18. 20. 20. 20. 20. 22. 22. 22. 22. 24. 24. 24. 24.
+          26. 26. 26. 26. 28. 28. 28. 28. 30. 30. 30. 30. 32. 32. 32. 32.
+          2. 2. 2. 2. 4. 4. 4. 4. 6. 6. 6. 6. 8. 8. 8. 8.
+          10. 10. 10. 10. 12. 12. 12. 12. 14. 14. 14. 14. 16. 16. 16. 16.
+          18. 18. 18. 18. 20. 20. 20. 20. 22. 22. 22. 22. 24. 24. 24. 24.
+          26. 26. 26. 26. 28. 28. 28. 28. 30. 30. 30. 30. 32. 32. 32. 32.
+
 CREATE_BUFFER result SIZE_BYTES 1024 INIT_VALUES 
     float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
     float 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
@@ -125,13 +161,6 @@ CREATE_BUFFER mat_mul_expected SIZE_BYTES 1024 INIT_VALUES
     float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
     float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
 
-BIND_SHADER_STORAGE_BUFFER BUFFER array1 BINDING 0
-BIND_SHADER_STORAGE_BUFFER BUFFER array2 BINDING 1
-BIND_SHADER_STORAGE_BUFFER BUFFER result BINDING 2
-BIND_SHADER_STORAGE_BUFFER BUFFER array1_mat_buf BINDING 3
-BIND_SHADER_STORAGE_BUFFER BUFFER array2_mat_buf BINDING 4
-
-
 
 DECLARE_SHADER shader_1 KIND COMPUTE
 #version 450
@@ -142,36 +171,30 @@ DECLARE_SHADER shader_1 KIND COMPUTE
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
 layout(std430, binding = 0) buffer array1 {
-  float[16][16] data1;
+  float[MAT_SIZE][MAT_SIZE] data1;
 };
-layout(std430, binding=1) buffer array2 {
-  float[16][16] data2;
-};
-layout(std430, binding=3) buffer array1_mat_buf{
+layout(std430, binding=1) buffer array1_mat_buf{
   mat4x4 array1_mat[4][4];
 };
-layout(std430, binding=4) buffer array2_mat_buf{
-  mat4x4 array2_mat[4][4];
-};
-
-
 void main() {
     uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
     array1_mat[row/KERNEL_SIZE][col/KERNEL_SIZE][col%KERNEL_SIZE][row%KERNEL_SIZE] = data1[row][col];
-    array2_mat[row/KERNEL_SIZE][col/KERNEL_SIZE][col%KERNEL_SIZE][row%KERNEL_SIZE] = data2[row][col];
 }
 END
 
 COMPILE_SHADER shader_compiled_1 SHADER shader_1
 CREATE_PROGRAM compute_prog_1 SHADERS shader_compiled_1
 
+BIND_SHADER_STORAGE_BUFFER BUFFER array1 BINDING 0
+BIND_SHADER_STORAGE_BUFFER BUFFER array1_mat_buf BINDING 1
+
 RUN_COMPUTE
     PROGRAM compute_prog_1
     NUM_GROUPS 16 16 1
 
+ASSERT_EQUAL BUFFERS array1_mat_buf correct_array1_mat_buf
 
-
-DECLARE_SHADER shader KIND COMPUTE
+DECLARE_SHADER shader_2 KIND COMPUTE
 #version 450
 #define KERNEL_SIZE 4
 #define MAT_SIZE  16
@@ -179,62 +202,83 @@ DECLARE_SHADER shader KIND COMPUTE
 
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
-layout(std430, binding = 0) buffer array1 {
-  float[16][16] data1;
+layout(std430, binding = 0) buffer array2 {
+  float[MAT_SIZE][MAT_SIZE] data2;
 };
-layout(std430, binding=1) buffer array2 {
-  float[16][16] data2;
-};
-layout(std430, binding=2) buffer result{
-  float[16][16] res;
-};
-layout(std430, binding=3) buffer array1_mat_buf{
-  mat4x4 array1_mat[4][4];
-};
-layout(std430, binding=4) buffer array2_mat_buf{
+layout(std430, binding=1) buffer array2_mat_buf{
   mat4x4 array2_mat[4][4];
 };
-
-float[KERNEL_SIZE][KERNEL_SIZE] zero_matrix(float[KERNEL_SIZE][KERNEL_SIZE] mat){
-    int i, j;
-    for(i = 0; i < KERNEL_SIZE; i++){
-        for(j = 0; j < KERNEL_SIZE; j++){
-            mat[i][j] = 0;
-        }
-    }
-    return mat;
+void main() {
+    uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
+    array2_mat[row/KERNEL_SIZE][col/KERNEL_SIZE][col%KERNEL_SIZE][row%KERNEL_SIZE] = data2[row][col];
 }
+END
+
+COMPILE_SHADER shader_compiled_2 SHADER shader_2
+CREATE_PROGRAM compute_prog_2 SHADERS shader_compiled_2
+
+BIND_SHADER_STORAGE_BUFFER BUFFER array2 BINDING 0
+BIND_SHADER_STORAGE_BUFFER BUFFER array2_mat_buf BINDING 1
+
+RUN_COMPUTE
+    PROGRAM compute_prog_2
+    NUM_GROUPS 16 16 1
+
+ASSERT_EQUAL BUFFERS array2_mat_buf correct_array2_mat_buf
+
+DECLARE_SHADER shader_3 KIND COMPUTE
+#version 450
+#define KERNEL_SIZE 4
+#define MAT_SIZE  16
+
+layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
+
+layout(std430, binding = 0) buffer array1 {
+  float[MAT_SIZE][MAT_SIZE] data1;
+};
+layout(std430, binding=1) buffer array2 {
+  float[MAT_SIZE][MAT_SIZE] data2;
+};
+layout(std430, binding=2) buffer array1_mat_buf{
+  mat4x4 array1_mat[4][4];
+};
+layout(std430, binding=3) buffer array2_mat_buf{
+  mat4x4 array2_mat[4][4];
+};
+layout(std430, binding=4) buffer result{
+  float[MAT_SIZE][MAT_SIZE] res;
+};
 
 void main() {
-    int i,j,k,p,q;
-    float[KERNEL_SIZE][KERNEL_SIZE] C;
-    mat4x4 data1_sub, data2_sub, tmp_mult;
-    uint x = uint(gl_WorkGroupID[0]), y = uint(gl_WorkGroupID[1]);
 
-    C = zero_matrix(C);
-    for(k = 0; k < MAT_SIZE/KERNEL_SIZE; k++){
-        data1_sub = array1_mat[x][k];
-        data2_sub = array2_mat[k][y];
-        tmp_mult = data1_sub * data2_sub;
-        for(p = 0; p < KERNEL_SIZE; p++){
-            for(q = 0; q < KERNEL_SIZE; q++){
-                C[p][q] += tmp_mult[p][q];
-            }
-        }
-    }
-    for(p = 0; p < KERNEL_SIZE; p++){
-        for(q = 0; q < KERNEL_SIZE; q++){
+    uint x = uint(gl_WorkGroupID[0]), y = uint(gl_WorkGroupID[1]);
+    mat4x4 C = mat4x4(0);
+
+    // The submatrix at position (i,j) is equal to the multiplication
+    // of all the submatrices (i,k) and (k,j) where k = 0....(MAT_SIZE/KERNEL_SIZE)
+    for(int k = 0; k < MAT_SIZE/KERNEL_SIZE; k++)
+        C += array1_mat[x][k] * array2_mat[k][y];
+    
+    // Convert the 4x4 array of 4x4 submatrices to 16x16 array
+    for(int p = 0; p < KERNEL_SIZE; p++){
+        for(int q = 0; q < KERNEL_SIZE; q++){
             res[x * KERNEL_SIZE + p][y * KERNEL_SIZE + q] = C[q][p];
         }
     }
 }
 END
 
-COMPILE_SHADER shader_compiled SHADER shader
-CREATE_PROGRAM compute_prog SHADERS shader_compiled
+COMPILE_SHADER shader_compiled_3 SHADER shader_3
+CREATE_PROGRAM compute_prog_3 SHADERS shader_compiled_3
+
+BIND_SHADER_STORAGE_BUFFER BUFFER array1 BINDING 0
+BIND_SHADER_STORAGE_BUFFER BUFFER array2 BINDING 1
+BIND_SHADER_STORAGE_BUFFER BUFFER array1_mat_buf BINDING 2
+BIND_SHADER_STORAGE_BUFFER BUFFER array2_mat_buf BINDING 3
+BIND_SHADER_STORAGE_BUFFER BUFFER result BINDING 4
 
 RUN_COMPUTE
-    PROGRAM compute_prog
+    PROGRAM compute_prog_3
     NUM_GROUPS 4 4 1
 
 ASSERT_EQUAL BUFFERS result mat_mul_expected
