@@ -52,7 +52,6 @@ CREATE_BUFFER array1 SIZE_BYTES 1024 INIT_VALUES
           1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
           1. 3. 5. 7. 9. 11. 13. 15. 17. 19. 21. 23. 25. 27. 29. 31.
     
-
 CREATE_BUFFER correct_array1_mat_buf SIZE_BYTES 1024 INIT_VALUES  
     float 1. 1. 1. 1. 3. 3. 3. 3. 5. 5. 5. 5. 7. 7. 7. 7.
           9. 9. 9. 9. 11. 11. 11. 11. 13. 13. 13. 13. 15. 15. 15. 15.
@@ -106,8 +105,6 @@ CREATE_BUFFER array2 SIZE_BYTES 1024 INIT_VALUES
           2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
           2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
           2. 4. 6. 8. 10. 12. 14. 16. 18. 20. 22. 24. 26. 28. 30. 32.
-
-   
 
 CREATE_BUFFER correct_array2_mat_buf SIZE_BYTES 1024 INIT_VALUES 
     float 2. 2. 2. 2. 4. 4. 4. 4. 6. 6. 6. 6. 8. 8. 8. 8.
@@ -258,16 +255,14 @@ layout(std430, binding=2) buffer blocked_result{
 };
 
 void main() {
-    mat4x4 C;
     for(int i = 0;i < MAT_SIZE/KERNEL_SIZE; i++){
         for(int j = 0; j < MAT_SIZE/KERNEL_SIZE; j++){
-            C = mat4x4(0);
+            blocked_res[i][j] = mat4x4(0);
             for(int k = 0; k < MAT_SIZE/KERNEL_SIZE; k++){
                  // The submatrix at position (i,j) is equal to the multiplication
                 // of all the submatrices (i,k) and (k,j) where k = 0....(MAT_SIZE/KERNEL_SIZE).
-                C += array1_mat[i][k] * array2_mat[k][j];
+                blocked_res[i][j] += array1_mat[i][k] * array2_mat[k][j];
             }
-            blocked_res[i][j] = C;
         }
     }
 }
