@@ -100,13 +100,13 @@ DECLARE_SHADER mat_mul KIND COMPUTE
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
 layout(std430, binding = 0) buffer array1 {
-  float[MAT_SIZE][MAT_SIZE] data1;
+  float data1[MAT_SIZE][MAT_SIZE];
 };
 layout(std430, binding=1) buffer array2 {
-  float[MAT_SIZE][MAT_SIZE] data2;
+  float data2[MAT_SIZE][MAT_SIZE];
 };
 layout(std430, binding=2) buffer result{
-  float[MAT_SIZE][MAT_SIZE] res;
+  float res[MAT_SIZE][MAT_SIZE];
 };
 
 void main() {

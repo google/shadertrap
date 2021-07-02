@@ -205,7 +205,7 @@ DECLARE_SHADER array_to_blocked_array KIND COMPUTE
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
 layout(std430, binding = 0) buffer array1 {
-  float[MAT_SIZE][MAT_SIZE] data;
+  float data[MAT_SIZE][MAT_SIZE];
 };
 layout(std430, binding=1) buffer array1_mat_buf{
   mat4x4 array_mat[MAT_SIZE/KERNEL_SIZE][MAT_SIZE/KERNEL_SIZE];
