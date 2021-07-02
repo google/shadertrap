@@ -245,13 +245,13 @@ DECLARE_SHADER mat_mul KIND COMPUTE
 
 layout(local_size_x=4, local_size_y=4, local_size_z=1) in;
 
-layout(std430,binding=0) buffer array1_mat_buf{
+layout(std430, binding=0) buffer array1_mat_buf{
   mat4x4 array1_mat[MAT_SIZE/KERNEL_SIZE][MAT_SIZE/KERNEL_SIZE];
 };
-layout(std430,binding=1) buffer array2_mat_buf{
+layout(std430, binding=1) buffer array2_mat_buf{
   mat4x4 array2_mat[MAT_SIZE/KERNEL_SIZE][MAT_SIZE/KERNEL_SIZE];
 };
-layout(std430,binding=2) buffer blocked_result{
+layout(std430, binding=2) buffer blocked_result{
   mat4x4 blocked_res[MAT_SIZE/KERNEL_SIZE][MAT_SIZE/KERNEL_SIZE];
 };
 
