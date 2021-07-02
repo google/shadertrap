@@ -95,7 +95,7 @@ BIND_SHADER_STORAGE_BUFFER BUFFER result BINDING 2
 DECLARE_SHADER mat_mul KIND COMPUTE
 #version 450
 
-#define  MAT_SIZE 16
+#define MAT_SIZE 16
 
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
