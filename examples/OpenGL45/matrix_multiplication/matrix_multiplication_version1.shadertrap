@@ -69,7 +69,7 @@ CREATE_BUFFER result SIZE_BYTES 1024 INIT_VALUES
           0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
           0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
           0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.  
-    
+          
 CREATE_BUFFER expected SIZE_BYTES 1024 INIT_VALUES
     float 512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
           512. 1024. 1536. 2048. 2560. 3072. 3584. 4096. 4608. 5120. 5632. 6144. 6656. 7168. 7680. 8192.
@@ -92,7 +92,7 @@ BIND_SHADER_STORAGE_BUFFER BUFFER array1 BINDING 0
 BIND_SHADER_STORAGE_BUFFER BUFFER array2 BINDING 1
 BIND_SHADER_STORAGE_BUFFER BUFFER result BINDING 2
 
-DECLARE_SHADER shader KIND COMPUTE
+DECLARE_SHADER mat_mul KIND COMPUTE
 #version 450
 
 #define  MAT_SIZE 16
@@ -100,13 +100,13 @@ DECLARE_SHADER shader KIND COMPUTE
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
 layout(std430, binding = 0) buffer array1 {
-  float[16][16] data1;
+  float[MAT_SIZE][MAT_SIZE] data1;
 };
 layout(std430, binding=1) buffer array2 {
-  float[16][16] data2;
+  float[MAT_SIZE][MAT_SIZE] data2;
 };
 layout(std430, binding=2) buffer result{
-  float[16][16] res;
+  float[MAT_SIZE][MAT_SIZE] res;
 };
 
 void main() {
@@ -117,15 +117,14 @@ void main() {
             }
         }
     }
-  
 }
 END
 
-COMPILE_SHADER shader_compiled SHADER shader
-CREATE_PROGRAM compute_prog SHADERS shader_compiled
+COMPILE_SHADER mat_mul_compiled SHADER mat_mul
+CREATE_PROGRAM mat_mul_prog SHADERS mat_mul_compiled
 
 RUN_COMPUTE
-    PROGRAM compute_prog
+    PROGRAM mat_mul_prog
     NUM_GROUPS 1 1 1
 
 ASSERT_EQUAL BUFFERS expected result

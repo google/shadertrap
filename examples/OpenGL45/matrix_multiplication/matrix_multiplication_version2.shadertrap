@@ -200,7 +200,7 @@ DECLARE_SHADER array_to_blocked_array KIND COMPUTE
 #version 450
 
 #define KERNEL_SIZE 4
-#define MAT_SIZE  16
+#define MAT_SIZE 16
 
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
@@ -241,7 +241,7 @@ DECLARE_SHADER mat_mul KIND COMPUTE
 #version 450
 
 #define KERNEL_SIZE 4
-#define MAT_SIZE  16
+#define MAT_SIZE 16
 
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
@@ -286,7 +286,7 @@ DECLARE_SHADER blocked_array_to_array KIND COMPUTE
 #version 450
 
 #define KERNEL_SIZE 4
-#define MAT_SIZE  16
+#define MAT_SIZE 16
 
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
