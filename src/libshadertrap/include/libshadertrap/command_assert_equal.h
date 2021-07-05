@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "libshadertrap/command.h"
 #include "libshadertrap/token.h"
@@ -25,6 +26,18 @@ namespace shadertrap {
 
 class CommandAssertEqual : public Command {
  public:
+ struct FormatEntry {
+    enum class Kind { kByte, kFloat, kInt, kUint, kSkip, kString };
+    std::unique_ptr<Token> token;
+    Kind kind;
+    size_t count;  // Unused if kind is kString
+  };
+  CommandAssertEqual(std::unique_ptr<Token> start_token,
+                     bool arguments_are_renderbuffers,
+                     std::unique_ptr<Token> argument_identifier_1,
+                     std::unique_ptr<Token> argument_identifier_2,
+                     std::vector<FormatEntry> format_entries);
+  
   CommandAssertEqual(std::unique_ptr<Token> start_token,
                      bool arguments_are_renderbuffers,
                      std::unique_ptr<Token> argument_identifier_1,
@@ -52,11 +65,17 @@ class CommandAssertEqual : public Command {
     return *argument_identifier_2_;
   }
 
+  const std::vector<FormatEntry>& GetFormatEntries() const {
+    return format_entries_;
+  }
+
+
  private:
   // true if arguments are renderbuffers, false if arguments are buffers
   bool arguments_are_renderbuffers_;
   std::unique_ptr<Token> argument_identifier_1_;
   std::unique_ptr<Token> argument_identifier_2_;
+  std::vector<FormatEntry> format_entries_;
 };
 
 }  // namespace shadertrap

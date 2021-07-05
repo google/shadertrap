@@ -33,6 +33,7 @@
 #include "libshadertrap/token.h"
 #include "libshadertrap/uniform_value.h"
 #include "libshadertrap/vertex_attribute_info.h"
+#include "libshadertrap/tokenizer.h"
 #ifdef SHADERTRAP_LODEPNG
 #include "lodepng/lodepng.h"
 #endif
@@ -66,7 +67,7 @@ template <typename T>
 void DumpFormatEntry(const char* data,
                      const CommandDumpBufferText::FormatEntry& format_entry,
                      std::ofstream* text_file, size_t* index) {
-  std::vector<int32_t> values(format_entry.count);
+  std::vector<T> values(format_entry.count);
   const size_t size_bytes = format_entry.count * sizeof(T);
   memcpy(values.data(), &data[*index], size_bytes);
   for (auto it = values.begin(); it != values.end(); it++) {
@@ -114,7 +115,36 @@ bool Executor::VisitAssertEqual(CommandAssertEqual* assert_equal) {
   if (assert_equal->GetArgumentsAreRenderbuffers()) {
     return CheckEqualRenderbuffers(assert_equal);
   }
-  return CheckEqualBuffers(assert_equal);
+  else{
+    if(assert_equal->GetFormatEntries().size() != 0){
+      for (const auto& format_entry : assert_equal->GetFormatEntries()) {
+        switch (format_entry.kind) {
+          case CommandAssertEqual::FormatEntry::Kind::kSkip:
+            return true;
+            break;
+          case CommandAssertEqual::FormatEntry::Kind::kString:
+            return true;
+            break;
+          case CommandAssertEqual::FormatEntry::Kind::kByte:
+            return CheckEqualBuffers<uint8_t>(assert_equal);
+            break;
+          case CommandAssertEqual::FormatEntry::Kind::kInt:
+            return CheckEqualBuffers<int32_t>(assert_equal);
+            break;
+          case CommandAssertEqual::FormatEntry::Kind::kUint:
+            return CheckEqualBuffers<uint32_t>(assert_equal);
+            break;
+          case CommandAssertEqual::FormatEntry::Kind::kFloat:
+            return CheckEqualBuffers<float>(assert_equal);
+            break;
+        }
+      }
+    }
+    else{
+      return CheckEqualBuffers<uint8_t>(assert_equal);
+    }
+  }
+  return false;
 }
 
 bool Executor::VisitAssertPixels(CommandAssertPixels* assert_pixels) {
@@ -1169,6 +1199,7 @@ bool Executor::CheckEqualRenderbuffers(CommandAssertEqual* assert_equal) {
   return result;
 }
 
+template <typename T>
 bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
   assert(!assert_equal->GetArgumentsAreRenderbuffers() &&
          "Arguments must be buffers");
@@ -1201,12 +1232,12 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
     return false;
   }
 
-  uint8_t* mapped_buffer[2]{nullptr, nullptr};
+  T* mapped_buffer[2]{nullptr, nullptr};
   for (auto index : {0, 1}) {
     GL_SAFECALL(&assert_equal->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
                 buffers[index]);
     mapped_buffer[index] =
-        static_cast<uint8_t*>(gl_functions_->glMapBufferRange_(
+        static_cast<T*>(gl_functions_->glMapBufferRange_(
             GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size[index]),
             GL_MAP_READ_BIT));
     if (mapped_buffer[index] == nullptr) {
@@ -1221,9 +1252,9 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
   for (size_t index = 0; index < static_cast<size_t>(buffer_size[0]); index++) {
     // We only get here if the calls to glMapBufferRange succeeded, in which
     // case the contents of |mapped_buffer| cannot be null.
-    uint8_t value_1 =
+    T value_1 =
         mapped_buffer[0][index];  // NOLINT(clang-analyzer-core.NullDereference)
-    uint8_t value_2 =
+    T value_2 =
         mapped_buffer[1][index];  // NOLINT(clang-analyzer-core.NullDereference)
     if (value_1 != value_2) {
       std::stringstream stringstream;

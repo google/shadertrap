@@ -114,6 +114,7 @@ class Executor : public CommandVisitor {
   bool VisitSetUniform(CommandSetUniform* set_uniform) override;
 
  private:
+ template <typename T>
   bool CheckEqualBuffers(CommandAssertEqual* assert_equal);
 
   bool CheckEqualRenderbuffers(CommandAssertEqual* assert_equal);
