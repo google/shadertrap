@@ -211,13 +211,10 @@ layout(std430, binding=1) buffer array1_mat_buf{
   mat4x4 array_mat[MAT_SIZE/KERNEL_SIZE][MAT_SIZE/KERNEL_SIZE];
 };
 void main() {
-    uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);    
-    for(int i = 0; i < KERNEL_SIZE; i++){
-      for(int j = 0; j < KERNEL_SIZE; j++){
-          // Converts the 4x4 array of 4x4 matrices to a 16x16array
-          array_mat[row][col][j][i] = data[row * KERNEL_SIZE + i][col * KERNEL_SIZE + j];
-      }
-    }
+  uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
+  // Converts a MAT_SIZE x MAT_SIZE array to a (MAT_SIZE/KERNEL_SIZE) x (MAT_SIZE/KERNEL_SIZE) 
+  // array of KERNEL_SIZE x KERNEL_SIZE matrices
+  array_mat[row/KERNEL_SIZE][col/KERNEL_SIZE][col%KERNEL_SIZE][row%KERNEL_SIZE] = data[row][col];
 }
 END
 
@@ -238,7 +235,7 @@ BIND_SHADER_STORAGE_BUFFER BUFFER array2_mat_buf BINDING 1
 
 RUN_COMPUTE
     PROGRAM array_to_blocked_array_prog
-    NUM_GROUPS 4 4 1
+    NUM_GROUPS 16 16 1
 
 ASSERT_EQUAL BUFFERS array2_mat_buf correct_array2_mat_buf
 
@@ -304,12 +301,9 @@ layout(std430, binding=1) buffer blocked_result{
 
 void main(){
   uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
-  for(int i = 0; i < KERNEL_SIZE; i++){
-    for(int j = 0; j < KERNEL_SIZE; j++){
-        // Converts the 4x4 array of 4x4 matrices to a 16x16array
-        res[row * KERNEL_SIZE + i][col * KERNEL_SIZE + j] = blocked_res[row][col][j][i];
-    }
-  }
+  // Converts a (MAT_SIZE/KERNEL_SIZE) x (MAT_SIZE/KERNEL_SIZE) array
+  // of KERNEL_SIZE x KERNEL_SIZE matrices to a MAT_SIZE x MAT_SIZE array
+  res[row][col] = blocked_res[row/KERNEL_SIZE][col/KERNEL_SIZE][col%KERNEL_SIZE][row%KERNEL_SIZE];
 }
 END
 
@@ -321,6 +315,6 @@ BIND_SHADER_STORAGE_BUFFER BUFFER blocked_result BINDING 1
 
 RUN_COMPUTE
     PROGRAM blocked_array_to_array_prog
-    NUM_GROUPS 4 4 1
+    NUM_GROUPS 16 16 1
 
 ASSERT_EQUAL BUFFERS result mat_mul_expected
