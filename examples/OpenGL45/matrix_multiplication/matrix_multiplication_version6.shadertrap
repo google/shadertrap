@@ -210,9 +210,12 @@ layout(std430, binding = 0) buffer array1 {
 layout(std430, binding=1) buffer array1_mat_buf{
   mat2x2 array_mat[MAT_SIZE/KERNEL_SIZE][MAT_SIZE/KERNEL_SIZE];
 };
+
 void main() {
-    uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
-    array_mat[row/KERNEL_SIZE][col/KERNEL_SIZE][col%KERNEL_SIZE][row%KERNEL_SIZE] = data[row][col];
+  // Converts a MAT_SIZE x MAT_SIZE array to a (MAT_SIZE/KERNEL_SIZE) x (MAT_SIZE/KERNEL_SIZE) 
+  // array of KERNEL_SIZE x KERNEL_SIZE matrices
+  uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
+  array_mat[row/KERNEL_SIZE][col/KERNEL_SIZE][col%KERNEL_SIZE][row%KERNEL_SIZE] = data[row][col];
 }
 END
 
@@ -295,12 +298,10 @@ layout(std430, binding=1) buffer blocked_result{
 };
 
 void main(){
-  for(int i = 0; i < MAT_SIZE; i++){
-    for(int j = 0; j < MAT_SIZE; j++){
-        // Converts the 8x8 array of 2x2 matrices to a 16x16 array
-        res[i][j] = blocked_res[i/KERNEL_SIZE][j/KERNEL_SIZE][j%KERNEL_SIZE][i%KERNEL_SIZE];
-    }
-  }
+  // Converts a (MAT_SIZE/KERNEL_SIZE) x (MAT_SIZE/KERNEL_SIZE) array
+  // of KERNEL_SIZE x KERNEL_SIZE matrices to a MAT_SIZE x MAT_SIZE array
+  uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
+  res[row][col] = blocked_res[row/KERNEL_SIZE][col/KERNEL_SIZE][col%KERNEL_SIZE][row%KERNEL_SIZE];
 }
 END
 
