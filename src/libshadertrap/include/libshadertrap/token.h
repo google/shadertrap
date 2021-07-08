@@ -55,6 +55,7 @@ class Token {
     kKeywordExpected,
     kKeywordFile,
     kKeywordFormat,
+    kKeywordDummy,
     kKeywordFragment,
     kKeywordFramebufferAttachments,
     kKeywordGl,

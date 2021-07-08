@@ -21,6 +21,7 @@
 #include <type_traits>  // IWYU pragma: keep
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include "libshadertrap/make_unique.h"
 #include "libshadertrap/tokenizer.h"
@@ -191,61 +192,62 @@ bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
     }
   }
   size_t total_count_bytes = 0;
-  for (const auto& format_entry : command_assert_equal->GetFormatEntries()) {
-    switch (format_entry.kind) {
-      case CommandAssertEqual::FormatEntry::Kind::kString:
-        break;
-      case CommandAssertEqual::FormatEntry::Kind::kByte:
-      case CommandAssertEqual::FormatEntry::Kind::kSkip:
-        if (format_entry.count == 0) {
-          message_consumer_->Message(
-              MessageConsumer::Severity::kError, format_entry.token.get(),
-              "The count for a formatting entry must be positive");
-          found_errors = true;
+  auto& format_entries = command_assert_equal->GetFormatEntries();
+  if(format_entries.size() != 0){
+    for (const auto& format_entry : format_entries) {
+        switch (format_entry.kind) {
+          case CommandAssertEqual::FormatEntry::Kind::kByte:
+          case CommandAssertEqual::FormatEntry::Kind::kSkip:
+            if (format_entry.count == 0) {
+              message_consumer_->Message(
+                  MessageConsumer::Severity::kError, format_entry.token.get(),
+                  "The count for a formatting entry must be positive");
+              found_errors = true;
+            }
+            if (format_entry.count % 4 != 0) {
+              message_consumer_->Message(
+                  MessageConsumer::Severity::kError, format_entry.token.get(),
+                  "The count for a '" +
+                      Tokenizer::KeywordToString(
+                          format_entry.kind ==
+                                  CommandAssertEqual::FormatEntry::Kind::kByte
+                              ? Token::Type::kKeywordTypeByte
+                              : Token::Type::kKeywordSkipBytes) +
+                      "' formatting entry must be a multiple of 4; found " +
+                      std::to_string(format_entry.count));
+              found_errors = true;
+            }
+            total_count_bytes += format_entry.count;
+            break;
+          case CommandAssertEqual::FormatEntry::Kind::kFloat:
+          case CommandAssertEqual::FormatEntry::Kind::kInt:
+          case CommandAssertEqual::FormatEntry::Kind::kUint:
+            if (format_entry.count == 0) {
+              message_consumer_->Message(
+                  MessageConsumer::Severity::kError, format_entry.token.get(),
+                  "The count for a formatting entry must be positive");
+              found_errors = true;
+            }
+            total_count_bytes += format_entry.count * 4;
+            break;
         }
-        if (format_entry.count % 4 != 0) {
-          message_consumer_->Message(
-              MessageConsumer::Severity::kError, format_entry.token.get(),
-              "The count for a '" +
-                  Tokenizer::KeywordToString(
-                      format_entry.kind ==
-                              CommandAssertEqual::FormatEntry::Kind::kByte
-                          ? Token::Type::kKeywordTypeByte
-                          : Token::Type::kKeywordSkipBytes) +
-                  "' formatting entry must be a multiple of 4; found " +
-                  std::to_string(format_entry.count));
-          found_errors = true;
-        }
-        total_count_bytes += format_entry.count;
-        break;
-      case CommandAssertEqual::FormatEntry::Kind::kFloat:
-      case CommandAssertEqual::FormatEntry::Kind::kInt:
-      case CommandAssertEqual::FormatEntry::Kind::kUint:
-        if (format_entry.count == 0) {
-          message_consumer_->Message(
-              MessageConsumer::Severity::kError, format_entry.token.get(),
-              "The count for a formatting entry must be positive");
-          found_errors = true;
-        }
-        total_count_bytes += format_entry.count * 4;
-        break;
+      }
+    auto* buffer1 = created_buffers_.at(operand1_token.GetText());
+    auto* buffer2 = created_buffers_.at(operand2_token.GetText());
+    const size_t expected_bytes = buffer1->GetSizeBytes();
+    if (total_count_bytes != expected_bytes) {
+      message_consumer_->Message(
+          MessageConsumer::Severity::kError,
+          command_assert_equal->GetFormatEntries()[0].token.get(),
+          "The number of bytes specified in the formatting of '" +
+              buffer1->GetResultIdentifier() +"(" + buffer2->GetResultIdentifier()+")" + "' is " +
+              std::to_string(total_count_bytes) + ", but '" +
+              buffer1->GetResultIdentifier() + "(" + buffer2->GetResultIdentifier() + ")" +  "' was declared with size " +
+              std::to_string(expected_bytes) + " byte" +
+              (expected_bytes > 1 ? "s" : "") + " at " +
+              buffer1->GetStartToken().GetLocationString());
+      found_errors = true;
     }
-  }
-  auto* buffer1 = created_buffers_.at(operand1_token.GetText());
-  auto* buffer2 = created_buffers_.at(operand2_token.GetText());
-  const size_t expected_bytes = buffer1->GetSizeBytes();
-  if (total_count_bytes != expected_bytes) {
-    message_consumer_->Message(
-        MessageConsumer::Severity::kError,
-        command_assert_equal->GetFormatEntries()[0].token.get(),
-        "The number of bytes specified in the formatting of '" +
-            buffer1->GetResultIdentifier() +"(" + buffer2->GetResultIdentifier()+")" + "' is " +
-            std::to_string(total_count_bytes) + ", but '" +
-            buffer1->GetResultIdentifier() + "(" + buffer2->GetResultIdentifier() + ")" +  "' was declared with size " +
-            std::to_string(expected_bytes) + " byte" +
-            (expected_bytes > 1 ? "s" : "") + " at " +
-            buffer1->GetStartToken().GetLocationString());
-    found_errors = true;
   }
   return !found_errors;
 }

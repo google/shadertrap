@@ -21,22 +21,22 @@
 namespace shadertrap {
 
 CommandAssertEqual::CommandAssertEqual(
-    std::unique_ptr<Token> start_token, bool arguments_are_renderbuffers,
+    std::unique_ptr<Token> start_token,
     std::unique_ptr<Token> argument_identifier_1,
     std::unique_ptr<Token> argument_identifier_2,
     std::vector<FormatEntry> format_entries)
     : Command(std::move(start_token)),
-      arguments_are_renderbuffers_(arguments_are_renderbuffers),
+      arguments_are_renderbuffers_(false),
       argument_identifier_1_(std::move(argument_identifier_1)),
       argument_identifier_2_(std::move(argument_identifier_2)),
       format_entries_(std::move(format_entries)) {}
 
 CommandAssertEqual::CommandAssertEqual(
-    std::unique_ptr<Token> start_token, bool arguments_are_renderbuffers,
+    std::unique_ptr<Token> start_token,
     std::unique_ptr<Token> argument_identifier_1,
     std::unique_ptr<Token> argument_identifier_2)
     : Command(std::move(start_token)),
-      arguments_are_renderbuffers_(arguments_are_renderbuffers),
+      arguments_are_renderbuffers_(true),
       argument_identifier_1_(std::move(argument_identifier_1)),
       argument_identifier_2_(std::move(argument_identifier_2)) {}
 

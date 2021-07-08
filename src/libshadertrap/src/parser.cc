@@ -22,6 +22,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <iostream>
 
 #include "libshadertrap/command_assert_equal.h"
 #include "libshadertrap/command_assert_pixels.h"
@@ -279,34 +280,42 @@ bool Parser::ParseCommandAssertEqual() {
             case Token::Type::kKeywordTypeUint: {
               kind = CommandAssertEqual::FormatEntry::Kind::kUint;
               break;
-              case Token::Type::kString:
-                kind = CommandAssertEqual::FormatEntry::Kind::kString;
-                break;
               default:
                 return true;
             }
           }
           auto format_start_token = tokenizer_->NextToken();
           size_t count;
-          if (kind == CommandAssertEqual::FormatEntry::Kind::kString) {
-            count = 0;
-          } else {
-            auto maybe_count = ParseUint32("count");
-            if (!maybe_count.first) {
-              return false;
-            }
-            count = maybe_count.second;
+          auto maybe_count = ParseUint32("count");
+          if (!maybe_count.first) {
+            return false;
           }
+          count = maybe_count.second;
           format_entries.push_back(
               {std::move(format_start_token), kind, count});
+          
         }
       }}})) {
     return false;
   }
+  if(arguments_are_renderbuffers){
+    if(format_entries.size() != 0){
+      message_consumer_->Message(
+                    MessageConsumer::Severity::kError,NULL,
+                    "FORMAT specifier cannot be set"
+                    "for renderbuffers arguments");
+      return false;
+    }
+    parsed_commands_.push_back(MakeUnique<CommandAssertEqual>(
+    std::move(start_token),
+    std::move(argument_identifier_1), std::move(argument_identifier_2)));
+    return true;
+  }
   parsed_commands_.push_back(MakeUnique<CommandAssertEqual>(
-      std::move(start_token), arguments_are_renderbuffers,
-      std::move(argument_identifier_1), std::move(argument_identifier_2),
-      std::move(format_entries)));
+    std::move(start_token),
+    std::move(argument_identifier_1), std::move(argument_identifier_2),
+    std::move(format_entries)));
+
   return true;
 }
 

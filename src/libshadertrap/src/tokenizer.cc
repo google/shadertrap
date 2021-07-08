@@ -278,6 +278,7 @@ const std::unordered_map<std::string, Token::Type>
         {"EXPECTED", Token::Type::kKeywordExpected},
         {"FILE", Token::Type::kKeywordFile},
         {"FORMAT", Token::Type::kKeywordFormat},
+        {"Dummy", Token::Type::kKeywordDummy},
         {"FRAGMENT", Token::Type::kKeywordFragment},
         {"FRAMEBUFFER_ATTACHMENTS",
          Token::Type::kKeywordFramebufferAttachments},
