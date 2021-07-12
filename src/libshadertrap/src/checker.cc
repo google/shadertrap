@@ -21,7 +21,6 @@
 #include <type_traits>  // IWYU pragma: keep
 #include <utility>
 #include <vector>
-#include <iostream>
 
 #include "libshadertrap/make_unique.h"
 #include "libshadertrap/tokenizer.h"
@@ -195,15 +194,15 @@ bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
   auto& format_entries = command_assert_equal->GetFormatEntries();
   if(format_entries.size() != 0){
     for (const auto& format_entry : format_entries) {
+      if (format_entry.count == 0) {
+          message_consumer_->Message(
+              MessageConsumer::Severity::kError, format_entry.token.get(),
+              "The count for a formatting entry must be positive");
+          found_errors = true;
+        }
         switch (format_entry.kind) {
           case CommandAssertEqual::FormatEntry::Kind::kByte:
           case CommandAssertEqual::FormatEntry::Kind::kSkip:
-            if (format_entry.count == 0) {
-              message_consumer_->Message(
-                  MessageConsumer::Severity::kError, format_entry.token.get(),
-                  "The count for a formatting entry must be positive");
-              found_errors = true;
-            }
             if (format_entry.count % 4 != 0) {
               message_consumer_->Message(
                   MessageConsumer::Severity::kError, format_entry.token.get(),
@@ -222,12 +221,6 @@ bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
           case CommandAssertEqual::FormatEntry::Kind::kFloat:
           case CommandAssertEqual::FormatEntry::Kind::kInt:
           case CommandAssertEqual::FormatEntry::Kind::kUint:
-            if (format_entry.count == 0) {
-              message_consumer_->Message(
-                  MessageConsumer::Severity::kError, format_entry.token.get(),
-                  "The count for a formatting entry must be positive");
-              found_errors = true;
-            }
             total_count_bytes += format_entry.count * 4;
             break;
         }

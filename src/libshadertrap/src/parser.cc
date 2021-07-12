@@ -22,7 +22,6 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
-#include <iostream>
 
 #include "libshadertrap/command_assert_equal.h"
 #include "libshadertrap/command_assert_pixels.h"

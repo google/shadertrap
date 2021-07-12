@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <unordered_set>
 
 #include "libshadertrap/api_version.h"
 #include "libshadertrap/command.h"

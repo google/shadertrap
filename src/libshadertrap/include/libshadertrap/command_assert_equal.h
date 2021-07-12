@@ -32,11 +32,13 @@ class CommandAssertEqual : public Command {
     Kind kind;
     size_t count;
   };
+  // Constructor used for an assertion about the equality of two buffers.
   CommandAssertEqual(std::unique_ptr<Token> start_token,
                      std::unique_ptr<Token> argument_identifier_1,
                      std::unique_ptr<Token> argument_identifier_2,
                      std::vector<FormatEntry> format_entries);
   
+  // Constructor used for an assertion about the equality of two renderbuffers.
   CommandAssertEqual(std::unique_ptr<Token> start_token,
                      std::unique_ptr<Token> argument_identifier_1,
                      std::unique_ptr<Token> argument_identifier_2);

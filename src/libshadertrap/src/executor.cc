@@ -28,13 +28,11 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <iostream>
 
 #include "libshadertrap/texture_parameter.h"
 #include "libshadertrap/token.h"
 #include "libshadertrap/uniform_value.h"
 #include "libshadertrap/vertex_attribute_info.h"
-#include "libshadertrap/tokenizer.h"
 #ifdef SHADERTRAP_LODEPNG
 #include "lodepng/lodepng.h"
 #endif
@@ -1210,7 +1208,21 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
   std::unique_ptr<Token> tmp(std::move(new Token(t)));
   if(format_entries.size() == 0){
      format_entries.push_back(
-              {std::move(tmp), CommandAssertEqual::FormatEntry::Kind::kByte, (size_t)buffer_size[0]});
+              {std::move(tmp), CommandAssertEqual::FormatEntry::Kind::kByte, static_cast<size_t>(buffer_size[0])});
+  }
+
+  uint8_t* mapped_buffer[2]{nullptr, nullptr};
+  for (auto index : {0, 1}){
+    GL_SAFECALL(&assert_equal->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
+        buffers[index]);
+    mapped_buffer[index] =
+        static_cast<uint8_t*>(gl_functions_->glMapBufferRange_(
+            GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size[index]),
+            GL_MAP_READ_BIT));
+    if (mapped_buffer[index] == nullptr) {
+      GL_CHECKERR(&assert_equal->GetStartToken(), "glMapBufferRange");
+      return false;
+    }
   }
 
   for(auto& format_entry: format_entries){
@@ -1220,20 +1232,6 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
           break;
       case CommandAssertEqual::FormatEntry::Kind::kByte:
       {
-        uint8_t* mapped_buffer[2]{nullptr, nullptr};
-        for (auto index : {0, 1}) {
-          GL_SAFECALL(&assert_equal->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
-                      buffers[index]);
-          mapped_buffer[index] =
-              static_cast<uint8_t*>(gl_functions_->glMapBufferRange_(
-                  GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size[index]),
-                  GL_MAP_READ_BIT));
-          if (mapped_buffer[index] == nullptr) {
-            GL_CHECKERR(&assert_equal->GetStartToken(), "glMapBufferRange");
-            return false;
-          }
-        }
-
         for (size_t index = start_index; index < static_cast<size_t>(format_entry.count);index++) {
           uint8_t value_1 =
               mapped_buffer[0][index];  // NOLINT(clang-analyzer-core.NullDereference)
@@ -1257,34 +1255,23 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
       break;
       case CommandAssertEqual::FormatEntry::Kind::kFloat:
       {
-  
-        float* mapped_buffer[2]{nullptr, nullptr};
-          for (auto index : {0, 1}) {
-            GL_SAFECALL(&assert_equal->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
-                        buffers[index]);
-            mapped_buffer[index] =
-                static_cast<float*>(gl_functions_->glMapBufferRange_(
-                    GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size[index]),
-                    GL_MAP_READ_BIT));
-            if (mapped_buffer[index] == nullptr) {
-             GL_CHECKERR(&assert_equal->GetStartToken(), "glMapBufferRange");
-             return false;
-            }
-
+        float* mapped_buffer_float[2]{nullptr, nullptr};
+        for (auto index : {0, 1}){
+          mapped_buffer_float[index] = reinterpret_cast<float*>(mapped_buffer[index]); 
         }
 
         for (size_t index = start_index; index < static_cast<size_t>(format_entry.count * sizeof(float)); index++) {
           float value_1 =
-              mapped_buffer[0][index];  // NOLINT(clang-analyzer-core.NullDereference)
+              mapped_buffer_float[0][index];  // NOLINT(clang-analyzer-core.NullDereference)
           float value_2 =
-              mapped_buffer[1][index];  // NOLINT(clang-analyzer-core.NullDereference)
+              mapped_buffer_float[1][index];  // NOLINT(clang-analyzer-core.NullDereference)
           if (value_1 != value_2) {
             std::stringstream stringstream;
-            stringstream << "Byte mismatch at index " << index << ": "
+            stringstream << "Float mismatch at index " << index << ": "
                         << assert_equal->GetArgumentIdentifier1() << "[" << index
-                        << "] == " << static_cast<uint32_t>(value_1) << ", "
+                        << "] == " << static_cast<float>(value_1) << ", "
                         << assert_equal->GetArgumentIdentifier2() << "[" << index
-                        << "] == " << static_cast<uint32_t>(value_2);
+                        << "] == " << static_cast<float>(value_2);
             message_consumer_->Message(MessageConsumer::Severity::kError,
                                       &assert_equal->GetStartToken(),
                                       stringstream.str());
@@ -1296,32 +1283,23 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
       break;
       case CommandAssertEqual::FormatEntry::Kind::kInt:
       {
-        int32_t* mapped_buffer[2]{nullptr, nullptr};
-        for (auto index : {0, 1}) {
-          GL_SAFECALL(&assert_equal->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
-                      buffers[index]);
-          mapped_buffer[index] =
-              static_cast<int32_t*>(gl_functions_->glMapBufferRange_(
-                  GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size[index]),
-                  GL_MAP_READ_BIT));
-          if (mapped_buffer[index] == nullptr) {
-            GL_CHECKERR(&assert_equal->GetStartToken(), "glMapBufferRange");
-            return false;
-          }
+        int32_t* mapped_buffer_int[2]{nullptr, nullptr};
+        for (auto index : {0, 1}){
+          mapped_buffer_int[index] = reinterpret_cast<int32_t*>(mapped_buffer[index]); 
         }
 
         for (size_t index = start_index; index < static_cast<size_t>(format_entry.count * sizeof(int32_t)); index++) {
           int32_t value_1 =
-              mapped_buffer[0][index];  // NOLINT(clang-analyzer-core.NullDereference)
+              mapped_buffer_int[0][index];  // NOLINT(clang-analyzer-core.NullDereference)
           int32_t value_2 =
-              mapped_buffer[1][index];  // NOLINT(clang-analyzer-core.NullDereference)
+              mapped_buffer_int[1][index];  // NOLINT(clang-analyzer-core.NullDereference)
           if (value_1 != value_2) {
             std::stringstream stringstream;
-            stringstream << "Byte mismatch at index " << index << ": "
+            stringstream << "Integer mismatch at index " << index << ": "
                         << assert_equal->GetArgumentIdentifier1() << "[" << index
-                        << "] == " << static_cast<uint32_t>(value_1) << ", "
+                        << "] == " << static_cast<int32_t>(value_1) << ", "
                         << assert_equal->GetArgumentIdentifier2() << "[" << index
-                        << "] == " << static_cast<uint32_t>(value_2);
+                        << "] == " << static_cast<int32_t>(value_2);
             message_consumer_->Message(MessageConsumer::Severity::kError,
                                       &assert_equal->GetStartToken(),
                                       stringstream.str());
@@ -1333,28 +1311,19 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
       break;
       case CommandAssertEqual::FormatEntry::Kind::kUint:
       {
-        uint32_t* mapped_buffer[2]{nullptr, nullptr};
-        for (auto index : {0, 1}) {
-          GL_SAFECALL(&assert_equal->GetStartToken(), glBindBuffer, GL_ARRAY_BUFFER,
-                      buffers[index]);
-          mapped_buffer[index] =
-              static_cast<uint32_t*>(gl_functions_->glMapBufferRange_(
-                  GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(buffer_size[index]),
-                  GL_MAP_READ_BIT));
-          if (mapped_buffer[index] == nullptr) {
-            GL_CHECKERR(&assert_equal->GetStartToken(), "glMapBufferRange");
-            return false;
-          }
+        uint32_t* mapped_buffer_uint[2]{nullptr, nullptr};
+        for (auto index : {0, 1}){
+          mapped_buffer_uint[index] = reinterpret_cast<uint32_t*>(mapped_buffer[index]); 
         }
 
         for (size_t index = start_index; index < static_cast<size_t>(format_entry.count * sizeof(uint32_t)); index++) {
           uint32_t value_1 =
-              mapped_buffer[0][index];  // NOLINT(clang-analyzer-core.NullDereference)
+              mapped_buffer_uint[0][index];  // NOLINT(clang-analyzer-core.NullDereference)
           uint32_t value_2 =
-              mapped_buffer[1][index];  // NOLINT(clang-analyzer-core.NullDereference)
+              mapped_buffer_uint[1][index];  // NOLINT(clang-analyzer-core.NullDereference)
           if (value_1 != value_2) {
             std::stringstream stringstream;
-            stringstream << "Byte mismatch at index " << index << ": "
+            stringstream << "Unsigned Integer mismatch at index " << index << ": "
                         << assert_equal->GetArgumentIdentifier1() << "[" << index
                         << "] == " << static_cast<uint32_t>(value_1) << ", "
                         << assert_equal->GetArgumentIdentifier2() << "[" << index
