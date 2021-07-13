@@ -64,7 +64,7 @@ class Parser {
   bool ParseParameters(
       const std::map<Token::Type, std::function<bool()>>& parameter_parsers,
       const std::map<Token::Type, Token::Type>& mutually_exclusive,
-      const std::map<Token::Type, std::function<bool()>>& optional_params);
+      const std::unordered_set<Token::Type>& optional_params);
   
   bool ParseParameters(
       const std::map<Token::Type, std::function<bool()>>& parameter_parsers);

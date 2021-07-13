@@ -21,6 +21,7 @@
 #include <sstream>
 #include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 #include "libshadertrap/command_assert_equal.h"
@@ -255,46 +256,48 @@ bool Parser::ParseCommandAssertEqual() {
               }
               argument_identifier_2 = std::move(token);
               return true;
+            }},
+            
+            {Token::Type::kKeywordFormat, [this, &format_entries]() -> bool {
+              while (true) {
+                CommandAssertEqual::FormatEntry::Kind kind;
+                switch (tokenizer_->PeekNextToken()->GetType()) {
+                  case Token::Type::kKeywordSkipBytes:
+                    kind = CommandAssertEqual::FormatEntry::Kind::kSkip;
+                    break;
+                  case Token::Type::kKeywordTypeByte:
+                    kind = CommandAssertEqual::FormatEntry::Kind::kByte;
+                    break;
+                  case Token::Type::kKeywordTypeFloat:
+                    kind = CommandAssertEqual::FormatEntry::Kind::kFloat;
+                    break;
+                  case Token::Type::kKeywordTypeInt:
+                    kind = CommandAssertEqual::FormatEntry::Kind::kInt;
+                    break;
+                  case Token::Type::kKeywordTypeUint: {
+                    kind = CommandAssertEqual::FormatEntry::Kind::kUint;
+                    break;
+                    default:
+                      return true;
+                }
+              }
+              auto format_start_token = tokenizer_->NextToken();
+              size_t count;
+              auto maybe_count = ParseUint32("count");
+              if (!maybe_count.first) {
+                return false;
+              }
+              count = maybe_count.second;
+              format_entries.push_back(
+                  {std::move(format_start_token), kind, count});
+          
+              }
             }}},
           // BUFFERS and RENDERBUFFERS are mutually exclusive parameters
           {{Token::Type::kKeywordBuffers,
             Token::Type::kKeywordRenderbuffers}},
-
-          {{Token::Type::kKeywordFormat, [this, &format_entries]() -> bool {
-        while (true) {
-          CommandAssertEqual::FormatEntry::Kind kind;
-          switch (tokenizer_->PeekNextToken()->GetType()) {
-            case Token::Type::kKeywordSkipBytes:
-              kind = CommandAssertEqual::FormatEntry::Kind::kSkip;
-              break;
-            case Token::Type::kKeywordTypeByte:
-              kind = CommandAssertEqual::FormatEntry::Kind::kByte;
-              break;
-            case Token::Type::kKeywordTypeFloat:
-              kind = CommandAssertEqual::FormatEntry::Kind::kFloat;
-              break;
-            case Token::Type::kKeywordTypeInt:
-              kind = CommandAssertEqual::FormatEntry::Kind::kInt;
-              break;
-            case Token::Type::kKeywordTypeUint: {
-              kind = CommandAssertEqual::FormatEntry::Kind::kUint;
-              break;
-              default:
-                return true;
-            }
-          }
-          auto format_start_token = tokenizer_->NextToken();
-          size_t count;
-          auto maybe_count = ParseUint32("count");
-          if (!maybe_count.first) {
-            return false;
-          }
-          count = maybe_count.second;
-          format_entries.push_back(
-              {std::move(format_start_token), kind, count});
           
-        }
-      }}})) {
+          {{Token::Type::kKeywordFormat}})) {
     return false;
   }
   if(arguments_are_renderbuffers){
@@ -1637,7 +1640,7 @@ std::pair<bool, UniformValue> Parser::ProcessUniformValue(
 bool Parser::ParseParameters(
     const std::map<Token::Type, std::function<bool()>>& parameter_parsers,
     const std::map<Token::Type, Token::Type>& mutually_exclusive,
-    const std::map<Token::Type, std::function<bool()>>& optional_params) {
+    const std::unordered_set<Token::Type>& optional_params) {
   // Check that any token types that are regarded as mutually exclusive do have
   // associated parser entries.
   for (const auto& entry : mutually_exclusive) {
@@ -1647,16 +1650,12 @@ bool Parser::ParseParameters(
            "Mutual exclusion specified for parameter for which there is no "
            "parser");
   }
-  
-  std::map<Token::Type, std::function<bool()>> concat_params;
-  concat_params.insert(parameter_parsers.begin(), parameter_parsers.end());
-  concat_params.insert(optional_params.begin(), optional_params.end());
 
   std::map<Token::Type, std::unique_ptr<Token>> observed;
   while (true) {
     auto token = tokenizer_->PeekNextToken();
     auto token_type = token->GetType();
-    if ((parameter_parsers.count(token_type) == 0) && (optional_params.count(token_type) == 0)) {
+    if (parameter_parsers.count(token_type) == 0) {
       break;
     }
     if (observed.count(token_type) > 0) {
@@ -1667,7 +1666,7 @@ bool Parser::ParseParameters(
     }
     observed.insert({token_type, std::move(token)});
     tokenizer_->NextToken();
-    if (!concat_params.at(token_type)()) {
+    if (!parameter_parsers.at(token_type)()) {
       return false;
     }
   }
@@ -1704,6 +1703,7 @@ bool Parser::ParseParameters(
 
   for (const auto& entry : parameter_parsers) {
     if (already_handled.count(entry.first) == 0 &&
+        optional_params.count(entry.first) == 0 &&
         observed.count(entry.first) == 0) {
       message_consumer_->Message(
           MessageConsumer::Severity::kError, tokenizer_->PeekNextToken().get(),
