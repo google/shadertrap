@@ -14,6 +14,7 @@
 
 #include "libshadertrap/parser.h"
 
+#include <algorithm>
 #include <cassert>
 #include <initializer_list>
 #include <numeric>
@@ -212,6 +213,11 @@ bool Parser::ParseCommandAssertEqual() {
   std::unique_ptr<Token> argument_identifier_2;
   bool arguments_are_renderbuffers = false;
   std::vector<CommandAssertEqual::FormatEntry> format_entries;
+  std::vector<CommandAssertEqual::FormatEntry::Kind> numeric_types = {
+      CommandAssertEqual::FormatEntry::Kind::kByte,
+      CommandAssertEqual::FormatEntry::Kind::kFloat,
+      CommandAssertEqual::FormatEntry::Kind::kUint,
+      CommandAssertEqual::FormatEntry::Kind::kInt};
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffers,
             [this, &arguments_are_renderbuffers, &argument_identifier_1,
@@ -259,36 +265,55 @@ bool Parser::ParseCommandAssertEqual() {
             }},
 
            {Token::Type::kKeywordFormat,
-            [this, &format_entries]() -> bool {
+            [this, &format_entries, &start_token, &numeric_types]() -> bool {
+              bool seen_correct_identifier = false;
               while (true) {
                 CommandAssertEqual::FormatEntry::Kind kind;
                 switch (tokenizer_->PeekNextToken()->GetType()) {
                   case Token::Type::kKeywordSkipBytes:
+                    seen_correct_identifier = true;
                     kind = CommandAssertEqual::FormatEntry::Kind::kSkip;
                     break;
                   case Token::Type::kKeywordTypeByte:
+                    seen_correct_identifier = true;
                     kind = CommandAssertEqual::FormatEntry::Kind::kByte;
                     break;
                   case Token::Type::kKeywordTypeFloat:
+                    seen_correct_identifier = true;
                     kind = CommandAssertEqual::FormatEntry::Kind::kFloat;
                     break;
                   case Token::Type::kKeywordTypeInt:
+                    seen_correct_identifier = true;
                     kind = CommandAssertEqual::FormatEntry::Kind::kInt;
                     break;
-                  case Token::Type::kKeywordTypeUint: {
+                  case Token::Type::kKeywordTypeUint:
+                    seen_correct_identifier = true;
                     kind = CommandAssertEqual::FormatEntry::Kind::kUint;
                     break;
-                    default:
-                      return true;
-                  }
+                  default:
+                    // Handles the case when no identifier is specified after
+                    // FORMAT.
+                    if (!seen_correct_identifier) {
+                      message_consumer_->Message(
+                          MessageConsumer::Severity::kError, start_token.get(),
+                          "Missing identifier after FORMAT");
+                    }
+                    return seen_correct_identifier;
                 }
                 auto format_start_token = tokenizer_->NextToken();
                 size_t count;
                 auto maybe_count = ParseUint32("count");
+
+                // Handles the case when the cound after the FORMAT option is 0
+                // or is not specified
                 if (!maybe_count.first) {
+                  message_consumer_->Message(
+                      MessageConsumer::Severity::kError, start_token.get(),
+                      "Empty sequence of format entries not allowed");
                   return false;
                 }
                 count = maybe_count.second;
+
                 format_entries.push_back(
                     {std::move(format_start_token), kind, count});
               }
@@ -301,7 +326,8 @@ bool Parser::ParseCommandAssertEqual() {
   }
   if (arguments_are_renderbuffers) {
     if (!format_entries.empty()) {
-      message_consumer_->Message(MessageConsumer::Severity::kError, NULL,
+      message_consumer_->Message(MessageConsumer::Severity::kError,
+                                 start_token.get(),
                                  "FORMAT specifier cannot be set"
                                  "for renderbuffers arguments");
       return false;

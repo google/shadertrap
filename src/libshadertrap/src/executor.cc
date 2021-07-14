@@ -1210,8 +1210,7 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
   if (format_entries.empty()) {
     const Token start_token = assert_equal->GetStartToken();
     format_entries.push_back(
-        {MakeUnique<Token>(start_token.GetType(),
-                           static_cast<int>(start_token.GetLine()), 0),
+        {MakeUnique<Token>(start_token.GetType(), start_token.GetLine(), 0U),
          CommandAssertEqual::FormatEntry::Kind::kByte,
          static_cast<size_t>(buffer_size[0])});
   }

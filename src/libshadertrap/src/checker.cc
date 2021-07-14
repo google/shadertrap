@@ -229,6 +229,7 @@ bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
     auto* buffer1 = created_buffers_.at(operand1_token.GetText());
     auto* buffer2 = created_buffers_.at(operand2_token.GetText());
     const size_t expected_bytes = buffer1->GetSizeBytes();
+
     if (total_count_bytes != expected_bytes) {
       message_consumer_->Message(
           MessageConsumer::Severity::kError,
