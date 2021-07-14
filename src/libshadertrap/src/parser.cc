@@ -213,11 +213,6 @@ bool Parser::ParseCommandAssertEqual() {
   std::unique_ptr<Token> argument_identifier_2;
   bool arguments_are_renderbuffers = false;
   std::vector<CommandAssertEqual::FormatEntry> format_entries;
-  std::vector<CommandAssertEqual::FormatEntry::Kind> numeric_types = {
-      CommandAssertEqual::FormatEntry::Kind::kByte,
-      CommandAssertEqual::FormatEntry::Kind::kFloat,
-      CommandAssertEqual::FormatEntry::Kind::kUint,
-      CommandAssertEqual::FormatEntry::Kind::kInt};
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffers,
             [this, &arguments_are_renderbuffers, &argument_identifier_1,
@@ -265,7 +260,7 @@ bool Parser::ParseCommandAssertEqual() {
             }},
 
            {Token::Type::kKeywordFormat,
-            [this, &format_entries, &start_token, &numeric_types]() -> bool {
+            [this, &format_entries, &start_token]() -> bool {
               bool seen_correct_identifier = false;
               while (true) {
                 CommandAssertEqual::FormatEntry::Kind kind;
