@@ -21,9 +21,9 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
-#include <unordered_set>
 
 #include "libshadertrap/api_version.h"
 #include "libshadertrap/command.h"
@@ -65,7 +65,7 @@ class Parser {
       const std::map<Token::Type, std::function<bool()>>& parameter_parsers,
       const std::map<Token::Type, Token::Type>& mutually_exclusive,
       const std::unordered_set<Token::Type>& optional_params);
-  
+
   bool ParseParameters(
       const std::map<Token::Type, std::function<bool()>>& parameter_parsers);
 

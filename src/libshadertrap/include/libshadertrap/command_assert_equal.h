@@ -26,8 +26,8 @@ namespace shadertrap {
 
 class CommandAssertEqual : public Command {
  public:
- struct FormatEntry {
-    enum class Kind { kByte, kFloat, kInt, kUint, kSkip};
+  struct FormatEntry {
+    enum class Kind { kByte, kFloat, kInt, kUint, kSkip };
     std::unique_ptr<Token> token;
     Kind kind;
     size_t count;
@@ -37,7 +37,7 @@ class CommandAssertEqual : public Command {
                      std::unique_ptr<Token> argument_identifier_1,
                      std::unique_ptr<Token> argument_identifier_2,
                      std::vector<FormatEntry> format_entries);
-  
+
   // Constructor used for an assertion about the equality of two renderbuffers.
   CommandAssertEqual(std::unique_ptr<Token> start_token,
                      std::unique_ptr<Token> argument_identifier_1,
@@ -65,10 +65,7 @@ class CommandAssertEqual : public Command {
     return *argument_identifier_2_;
   }
 
-  std::vector<FormatEntry>& GetFormatEntries(){
-    return format_entries_;
-  }
-
+  std::vector<FormatEntry>& GetFormatEntries() { return format_entries_; }
 
  private:
   // true if arguments are renderbuffers, false if arguments are buffers

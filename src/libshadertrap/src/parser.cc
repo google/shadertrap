@@ -257,8 +257,9 @@ bool Parser::ParseCommandAssertEqual() {
               argument_identifier_2 = std::move(token);
               return true;
             }},
-            
-            {Token::Type::kKeywordFormat, [this, &format_entries]() -> bool {
+
+           {Token::Type::kKeywordFormat,
+            [this, &format_entries]() -> bool {
               while (true) {
                 CommandAssertEqual::FormatEntry::Kind kind;
                 switch (tokenizer_->PeekNextToken()->GetType()) {
@@ -279,48 +280,44 @@ bool Parser::ParseCommandAssertEqual() {
                     break;
                     default:
                       return true;
+                  }
                 }
-              }
-              auto format_start_token = tokenizer_->NextToken();
-              size_t count;
-              auto maybe_count = ParseUint32("count");
-              if (!maybe_count.first) {
-                return false;
-              }
-              count = maybe_count.second;
-              format_entries.push_back(
-                  {std::move(format_start_token), kind, count});
-          
+                auto format_start_token = tokenizer_->NextToken();
+                size_t count;
+                auto maybe_count = ParseUint32("count");
+                if (!maybe_count.first) {
+                  return false;
+                }
+                count = maybe_count.second;
+                format_entries.push_back(
+                    {std::move(format_start_token), kind, count});
               }
             }}},
           // BUFFERS and RENDERBUFFERS are mutually exclusive parameters
-          {{Token::Type::kKeywordBuffers,
-            Token::Type::kKeywordRenderbuffers}},
-          
+          {{Token::Type::kKeywordBuffers, Token::Type::kKeywordRenderbuffers}},
+
           {{Token::Type::kKeywordFormat}})) {
     return false;
   }
-  if(arguments_are_renderbuffers){
-    if(format_entries.size() != 0){
-      message_consumer_->Message(
-                    MessageConsumer::Severity::kError,NULL,
-                    "FORMAT specifier cannot be set"
-                    "for renderbuffers arguments");
+  if (arguments_are_renderbuffers) {
+    if (!format_entries.empty()) {
+      message_consumer_->Message(MessageConsumer::Severity::kError, NULL,
+                                 "FORMAT specifier cannot be set"
+                                 "for renderbuffers arguments");
       return false;
     }
     parsed_commands_.push_back(MakeUnique<CommandAssertEqual>(
-    std::move(start_token),
-    std::move(argument_identifier_1), std::move(argument_identifier_2)));
+        std::move(start_token), std::move(argument_identifier_1),
+        std::move(argument_identifier_2)));
     return true;
   }
+
   parsed_commands_.push_back(MakeUnique<CommandAssertEqual>(
-    std::move(start_token),
-    std::move(argument_identifier_1), std::move(argument_identifier_2),
-    std::move(format_entries)));
+      std::move(start_token), std::move(argument_identifier_1),
+      std::move(argument_identifier_2), std::move(format_entries)));
 
   return true;
 }
-
 
 bool Parser::ParseCommandAssertPixels() {
   auto start_token = tokenizer_->NextToken();
@@ -1540,7 +1537,7 @@ bool Parser::ParseCommandSetUniform() {
               return true;
             }}},
           // LOCATION and NAME are mutually exclusive
-          {{Token::Type::kKeywordLocation, Token::Type::kKeywordName}},{})) {
+          {{Token::Type::kKeywordLocation, Token::Type::kKeywordName}}, {})) {
     return false;
   }
   auto maybe_uniform_value =
