@@ -68,13 +68,13 @@ Checks whether `buffer_1` and `buffer_2`, which must be buffers produced by `CRE
 
 - If `format_entry_i` is `SKIP_BYTES count` then offset is incremented by `count`. This allows padding or irrelevant data to be skipped.
 
-- If `format_entry_i` is `byte count` then `count` bytes from the buffer are output as non-negative integers, separated by spaces, starting from position `offset`, after which `offset` is incremented by `count`.
+- If `format_entry_i` is byte count then count successive bytes from the buffers are compared, starting from position offset, with any byte-level differences reported, after which offset is incremented by `count`.
 
-- If `format_entry_i` is `int count` then `count` 32-bit signed integers are output, each constructed from the next 4 bytes in the buffer, separated by spaces, starting from position `offset`, after which `offset` is incremented by 4*`count`.
+- If `format_entry_i` is int count then count successive 4-byte sequences from the buffers are compared, starting from position offset, after which offset is incremented by 4* `count`. Any mismatches between 4-byte sequences are reported as differences between 32-bit signed integers.
 
-- If `format_entry_i` is `uint count` then the effect is the same as for the `int` case, except that 32-bit unsigned integers are output.
+- If format_entry_i is `uint count` then the effect is the same as for the `int` case, except that mismatches are reported as differences between 32-bit unsigned integers.
 
-- If `format_entry_i` is `float count` then the effect is the same as for the `int` case, except that 32-bit floating-point values are output.
+- If `format_entry_i` is `float count` then the effect is the same as for the `int` case, except that mismatches are reported as differences between 32-bit floating-point values. Note that this does not involve comparing floating-point numbers: comparisons are made at the byte level.
 
 The sum of `count` for all `byte` and `SKIP_BYTES` entries, plus the sum of 4*`count` for all `int`, `uint` and `float` entries, must equal the buffer size in bytes - i.e., every byte in the buffer must be accounted for.
 

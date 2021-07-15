@@ -14,7 +14,6 @@
 
 #include "libshadertrap/parser.h"
 
-#include <algorithm>
 #include <cassert>
 #include <initializer_list>
 #include <numeric>
@@ -22,7 +21,6 @@
 #include <sstream>
 #include <type_traits>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 
 #include "libshadertrap/command_assert_equal.h"
@@ -261,39 +259,39 @@ bool Parser::ParseCommandAssertEqual() {
 
            {Token::Type::kKeywordFormat,
             [this, &format_entries, &start_token]() -> bool {
-              bool seen_correct_identifier = false;
+              bool seen_at_least_one_format_entry = false;
               while (true) {
                 CommandAssertEqual::FormatEntry::Kind kind;
                 switch (tokenizer_->PeekNextToken()->GetType()) {
                   case Token::Type::kKeywordSkipBytes:
-                    seen_correct_identifier = true;
+                    seen_at_least_one_format_entry = true;
                     kind = CommandAssertEqual::FormatEntry::Kind::kSkip;
                     break;
                   case Token::Type::kKeywordTypeByte:
-                    seen_correct_identifier = true;
+                    seen_at_least_one_format_entry = true;
                     kind = CommandAssertEqual::FormatEntry::Kind::kByte;
                     break;
                   case Token::Type::kKeywordTypeFloat:
-                    seen_correct_identifier = true;
+                    seen_at_least_one_format_entry = true;
                     kind = CommandAssertEqual::FormatEntry::Kind::kFloat;
                     break;
                   case Token::Type::kKeywordTypeInt:
-                    seen_correct_identifier = true;
+                    seen_at_least_one_format_entry = true;
                     kind = CommandAssertEqual::FormatEntry::Kind::kInt;
                     break;
                   case Token::Type::kKeywordTypeUint:
-                    seen_correct_identifier = true;
+                    seen_at_least_one_format_entry = true;
                     kind = CommandAssertEqual::FormatEntry::Kind::kUint;
                     break;
                   default:
                     // Handles the case when no identifier is specified after
                     // FORMAT.
-                    if (!seen_correct_identifier) {
+                    if (!seen_at_least_one_format_entry) {
                       message_consumer_->Message(
                           MessageConsumer::Severity::kError, start_token.get(),
                           "Missing identifier after FORMAT");
                     }
-                    return seen_correct_identifier;
+                    return seen_at_least_one_format_entry;
                 }
                 auto format_start_token = tokenizer_->NextToken();
                 size_t count;

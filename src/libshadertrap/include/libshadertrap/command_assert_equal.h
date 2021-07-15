@@ -15,6 +15,7 @@
 #ifndef LIBSHADERTRAP_COMMAND_ASSERT_EQUAL_H
 #define LIBSHADERTRAP_COMMAND_ASSERT_EQUAL_H
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
