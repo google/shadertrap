@@ -299,12 +299,9 @@ bool Parser::ParseCommandAssertEqual() {
                 size_t count;
                 auto maybe_count = ParseUint32("count");
 
-                // Handles the case when the cound after the FORMAT option is 0
+                // Handles the case when the count after the FORMAT option is 0
                 // or is not specified
                 if (!maybe_count.first) {
-                  message_consumer_->Message(
-                      MessageConsumer::Severity::kError, start_token.get(),
-                      "Empty sequence of format entries not allowed");
                   return false;
                 }
                 count = maybe_count.second;

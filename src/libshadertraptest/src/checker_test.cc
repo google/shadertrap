@@ -1571,5 +1571,82 @@ DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 0 float 12
             message_consumer.GetMessageString(0));
 }
 
+TEST_F(CheckerTestFixture, AssertEqualFailCheckerTest1) {
+  std::string program =
+      R"(GL 4.5
+CREATE_BUFFER buf1 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+CREATE_BUFFER buf2 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+ASSERT_EQUAL BUFFERS buf1 buf2 FORMAT float 3
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 4:39: The number of bytes specified in the formatting of "
+      "'buf1(buf2)' is 12, but 'buf1(buf2)' was declared with size 16 bytes at "
+      "2:1",
+      message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, AssertEqualFailCheckerTest2) {
+  std::string program =
+      R"(GL 4.5
+CREATE_BUFFER buf1 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+CREATE_BUFFER buf2 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+ASSERT_EQUAL BUFFERS buf1 buf2 FORMAT float 0 float 4
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 4:39: The count for a formatting entry must be positive",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, AssertEqualFailCheckerTest3) {
+  std::string program =
+      R"(GL 4.5
+CREATE_BUFFER buf1 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+CREATE_BUFFER buf2 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+ASSERT_EQUAL BUFFERS buf1 buf2 FORMAT SKIP_BYTES 0 float 4
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 4:39: The count for a formatting entry must be positive",
+            message_consumer.GetMessageString(0));
+}
+
+TEST_F(CheckerTestFixture, AssertEqualFailCheckerTest4) {
+  std::string program =
+      R"(GL 4.5
+CREATE_BUFFER buf1 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+CREATE_BUFFER buf2 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+ASSERT_EQUAL BUFFERS buf1 buf2 FORMAT SKIP_BYTES 3 float 4
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_TRUE(parser.Parse());
+  auto parsed_program = parser.GetParsedProgram();
+  Checker checker(&message_consumer, parsed_program->GetApiVersion());
+  ASSERT_FALSE(checker.VisitCommands(parsed_program.get()));
+  ASSERT_EQ(2, message_consumer.GetNumMessages());
+  ASSERT_EQ(
+      "ERROR: 4:39: The count for a 'SKIP_BYTES' formatting entry must be a "
+      "multiple of 4; found 3",
+      message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap

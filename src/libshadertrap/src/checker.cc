@@ -190,9 +190,9 @@ bool Checker::VisitAssertEqual(CommandAssertEqual* command_assert_equal) {
       found_errors = true;
     }
   }
-  size_t total_count_bytes = 0;
   auto& format_entries = command_assert_equal->GetFormatEntries();
   if (!format_entries.empty()) {
+    size_t total_count_bytes = 0;
     for (const auto& format_entry : format_entries) {
       if (format_entry.count == 0) {
         message_consumer_->Message(

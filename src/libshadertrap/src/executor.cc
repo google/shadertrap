@@ -1237,22 +1237,24 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
       case CommandAssertEqual::FormatEntry::Kind::kByte: {
         for (size_t index = start_index;
              index < static_cast<size_t>(format_entry.count); index++) {
-          uint8_t value_1 = mapped_buffer
-              [0][index];  // NOLINT(clang-analyzer-core.NullDereference)
-          uint8_t value_2 = mapped_buffer
-              [1][index];  // NOLINT(clang-analyzer-core.NullDereference)
-          if (value_1 != value_2) {
-            std::stringstream stringstream;
-            stringstream << "Byte mismatch at index " << index << ": "
-                         << assert_equal->GetArgumentIdentifier1() << "["
-                         << index << "] == " << static_cast<uint32_t>(value_1)
-                         << ", " << assert_equal->GetArgumentIdentifier2()
-                         << "[" << index
-                         << "] == " << static_cast<uint32_t>(value_2);
-            message_consumer_->Message(MessageConsumer::Severity::kError,
-                                       &assert_equal->GetStartToken(),
-                                       stringstream.str());
-            result = false;
+          if (mapped_buffer[0] != nullptr && mapped_buffer[1] != nullptr) {
+            uint8_t value_1 = mapped_buffer
+                [0][index];  // NOLINT(clang-analyzer-core.NullDereference)
+            uint8_t value_2 = mapped_buffer
+                [1][index];  // NOLINT(clang-analyzer-core.NullDereference)
+            if (value_1 != value_2) {
+              std::stringstream stringstream;
+              stringstream << "Byte mismatch at index " << index << ": "
+                           << assert_equal->GetArgumentIdentifier1() << "["
+                           << index << "] == " << static_cast<uint32_t>(value_1)
+                           << ", " << assert_equal->GetArgumentIdentifier2()
+                           << "[" << index
+                           << "] == " << static_cast<uint32_t>(value_2);
+              message_consumer_->Message(MessageConsumer::Severity::kError,
+                                         &assert_equal->GetStartToken(),
+                                         stringstream.str());
+              result = false;
+            }
           }
         }
       }
@@ -1267,25 +1269,27 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
 
         for (size_t index = 0; index < static_cast<size_t>(format_entry.count);
              index++) {
-          float value_1 = float_region
-              [0][index];  // NOLINT(clang-analyzer-core.NullDereference)
-          float value_2 = float_region
-              [1][index];  // NOLINT(clang-analyzer-core.NullDereference)
-          if (std::memcmp(&float_region[0][index], &float_region[1][index],
-                          sizeof(float)) != 0) {
-            std::stringstream stringstream;
-            size_t float_index = sizeof(float) * index + start_index;
-            stringstream << "Float mismatch at byte index " << float_index
-                         << ": " << assert_equal->GetArgumentIdentifier1()
-                         << "[" << float_index
-                         << "] == " << static_cast<float>(value_1) << ", "
-                         << assert_equal->GetArgumentIdentifier2() << "["
-                         << float_index
-                         << "] == " << static_cast<float>(value_2);
-            message_consumer_->Message(MessageConsumer::Severity::kError,
-                                       &assert_equal->GetStartToken(),
-                                       stringstream.str());
-            result = false;
+          if (float_region[0] != nullptr && float_region[1] != nullptr) {
+            float value_1 = float_region
+                [0][index];  // NOLINT(clang-analyzer-core.NullDereference)
+            float value_2 = float_region
+                [1][index];  // NOLINT(clang-analyzer-core.NullDereference)
+            if (std::memcmp(&float_region[0][index], &float_region[1][index],
+                            sizeof(float)) != 0) {
+              std::stringstream stringstream;
+              size_t float_index = sizeof(float) * index + start_index;
+              stringstream << "Float mismatch at byte index " << float_index
+                           << ": " << assert_equal->GetArgumentIdentifier1()
+                           << "[" << float_index
+                           << "] == " << static_cast<float>(value_1) << ", "
+                           << assert_equal->GetArgumentIdentifier2() << "["
+                           << float_index
+                           << "] == " << static_cast<float>(value_2);
+              message_consumer_->Message(MessageConsumer::Severity::kError,
+                                         &assert_equal->GetStartToken(),
+                                         stringstream.str());
+              result = false;
+            }
           }
         }
       }
@@ -1300,26 +1304,26 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
 
         for (size_t index = 0; index < static_cast<size_t>(format_entry.count);
              index++) {
-          int32_t value_1 =
-              int_region[0]
-                        [index];  // NOLINT(clang-analyzer-core.NullDereference)
-          int32_t value_2 =
-              int_region[1]
-                        [index];  // NOLINT(clang-analyzer-core.NullDereference)
-          if (value_1 != value_2) {
-            size_t int_index = index * sizeof(int32_t) + start_index;
-            std::stringstream stringstream;
-            stringstream << "Integer mismatch at byte_index " << int_index
-                         << ": " << assert_equal->GetArgumentIdentifier1()
-                         << "[" << int_index
-                         << "] == " << static_cast<int32_t>(value_1) << ", "
-                         << assert_equal->GetArgumentIdentifier2() << "["
-                         << int_index
-                         << "] == " << static_cast<int32_t>(value_2);
-            message_consumer_->Message(MessageConsumer::Severity::kError,
-                                       &assert_equal->GetStartToken(),
-                                       stringstream.str());
-            result = false;
+          if (int_region[0] != nullptr && int_region[1] != nullptr) {
+            int32_t value_1 = int_region
+                [0][index];  // NOLINT(clang-analyzer-core.NullDereference)
+            int32_t value_2 = int_region
+                [1][index];  // NOLINT(clang-analyzer-core.NullDereference)
+            if (value_1 != value_2) {
+              size_t int_index = index * sizeof(int32_t) + start_index;
+              std::stringstream stringstream;
+              stringstream << "Integer mismatch at byte_index " << int_index
+                           << ": " << assert_equal->GetArgumentIdentifier1()
+                           << "[" << int_index
+                           << "] == " << static_cast<int32_t>(value_1) << ", "
+                           << assert_equal->GetArgumentIdentifier2() << "["
+                           << int_index
+                           << "] == " << static_cast<int32_t>(value_2);
+              message_consumer_->Message(MessageConsumer::Severity::kError,
+                                         &assert_equal->GetStartToken(),
+                                         stringstream.str());
+              result = false;
+            }
           }
         }
       }
@@ -1336,24 +1340,26 @@ bool Executor::CheckEqualBuffers(CommandAssertEqual* assert_equal) {
              index < static_cast<size_t>(format_entry.count * sizeof(uint32_t));
              index++) {
           size_t uint_index = index * sizeof(uint32_t) + start_index;
-          uint32_t value_1 = uint_region
-              [0][index];  // NOLINT(clang-analyzer-core.NullDereference)
-          uint32_t value_2 = uint_region
-              [1][index];  // NOLINT(clang-analyzer-core.NullDereference)
-          if (value_1 != value_2) {
-            std::stringstream stringstream;
-            stringstream << "Unsigned Integer mismatch at byte index "
-                         << uint_index << ": "
-                         << assert_equal->GetArgumentIdentifier1() << "["
-                         << uint_index
-                         << "] == " << static_cast<uint32_t>(value_1) << ", "
-                         << assert_equal->GetArgumentIdentifier2() << "["
-                         << uint_index
-                         << "] == " << static_cast<uint32_t>(value_2);
-            message_consumer_->Message(MessageConsumer::Severity::kError,
-                                       &assert_equal->GetStartToken(),
-                                       stringstream.str());
-            result = false;
+          if (uint_region[0] != nullptr && uint_region[1] != nullptr) {
+            uint32_t value_1 = uint_region
+                [0][index];  // NOLINT(clang-analyzer-core.NullDereference)
+            uint32_t value_2 = uint_region
+                [1][index];  // NOLINT(clang-analyzer-core.NullDereference)
+            if (value_1 != value_2) {
+              std::stringstream stringstream;
+              stringstream << "Unsigned Integer mismatch at byte index "
+                           << uint_index << ": "
+                           << assert_equal->GetArgumentIdentifier1() << "["
+                           << uint_index
+                           << "] == " << static_cast<uint32_t>(value_1) << ", "
+                           << assert_equal->GetArgumentIdentifier2() << "["
+                           << uint_index
+                           << "] == " << static_cast<uint32_t>(value_2);
+              message_consumer_->Message(MessageConsumer::Severity::kError,
+                                         &assert_equal->GetStartToken(),
+                                         stringstream.str());
+              result = false;
+            }
           }
         }
       }

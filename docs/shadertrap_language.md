@@ -54,11 +54,31 @@ A brief description of each ShaderTrap command now follows. The commands are pre
 This command has two forms.
 
 ```
-ASSERT_EQUAL BUFFERS buffer_1 buffer_2
+ASSERT_EQUAL BUFFERS buffer_1 buffer_2 [FORMAT format_entry_1 ... format_entry_n]
 ```
 
 Checks whether `buffer_1` and `buffer_2`, which must be buffers produced by `CREATE_BUFFER`, contain equal contents. Performs a byte-level comparison of the buffers. Yields an error if the buffers have different sizes, or if they have the same size but differ at any single byte.
 
+- `buffer_1` and `buffer_2` are the buffers to be compared
+- Each `format_entry_i` is either:
+    - `SKIP_BYTES count` for some positive integer `count` that must be a multiple of 4
+    - `type count` for some positive integer `count`, where `type` is one of `byte`, `int`, `uint` or `float`, and where `count` is a multiple of 4 if `type` is `byte`
+
+`FORMAT` is an optional parameter that specifies the format of the data that will be compared. If `FORMAT` is specified, it should be followed by at least 1 `format_entry_i` componen. The data is then  formatted by processing the `format_entry_i` components as follows, with respect to `offset`, a byte offset into the buffer, initialised to 0:
+
+- If `format_entry_i` is `SKIP_BYTES count` then offset is incremented by `count`. This allows padding or irrelevant data to be skipped.
+
+- If `format_entry_i` is `byte count` then `count` bytes from the buffer are output as non-negative integers, separated by spaces, starting from position `offset`, after which `offset` is incremented by `count`.
+
+- If `format_entry_i` is `int count` then `count` 32-bit signed integers are output, each constructed from the next 4 bytes in the buffer, separated by spaces, starting from position `offset`, after which `offset` is incremented by 4*`count`.
+
+- If `format_entry_i` is `uint count` then the effect is the same as for the `int` case, except that 32-bit unsigned integers are output.
+
+- If `format_entry_i` is `float count` then the effect is the same as for the `int` case, except that 32-bit floating-point values are output.
+
+The sum of `count` for all `byte` and `SKIP_BYTES` entries, plus the sum of 4*`count` for all `int`, `uint` and `float` entries, must equal the buffer size in bytes - i.e., every byte in the buffer must be accounted for.
+
+If `FORMAT` is not explicitly specified in the command we assumed it to be `FORMAT byte n` where `n` is the size of `buffer_1` and `buffer_2`.
 ```
 ASSERT_EQUAL RENDERBUFFERS renderbuffer_1 renderbuffer_2
 ```
