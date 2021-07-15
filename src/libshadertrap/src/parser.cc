@@ -316,7 +316,7 @@ bool Parser::ParseCommandAssertEqual() {
           // BUFFERS and RENDERBUFFERS are mutually exclusive parameters
           {{Token::Type::kKeywordBuffers, Token::Type::kKeywordRenderbuffers}},
 
-          {{Token::Type::kKeywordFormat}})) {
+          {Token::Type::kKeywordFormat})) {
     return false;
   }
   if (arguments_are_renderbuffers) {
@@ -1658,7 +1658,7 @@ std::pair<bool, UniformValue> Parser::ProcessUniformValue(
 bool Parser::ParseParameters(
     const std::map<Token::Type, std::function<bool()>>& parameter_parsers,
     const std::map<Token::Type, Token::Type>& mutually_exclusive,
-    const std::unordered_set<Token::Type>& optional_params) {
+    const std::set<Token::Type>& optional_params) {
   // Check that any token types that are regarded as mutually exclusive do have
   // associated parser entries.
   for (const auto& entry : mutually_exclusive) {
