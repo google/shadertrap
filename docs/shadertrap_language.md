@@ -64,9 +64,9 @@ Checks whether `buffer_1` and `buffer_2`, which must be buffers produced by `CRE
     - `SKIP_BYTES count` for some positive integer `count` that must be a multiple of 4
     - `type count` for some positive integer `count`, where `type` is one of `byte`, `int`, `uint` or `float`, and where `count` is a multiple of 4 if `type` is `byte`
 
-`FORMAT` is an optional parameter that specifies the format of the data that will be compared. If `FORMAT` is specified, it should be followed by at least 1 `format_entry_i` componen. The data is then  formatted by processing the `format_entry_i` components as follows, with respect to `offset`, a byte offset into the buffer, initialised to 0:
+`FORMAT` is an optional parameter that specifies the format of the data that will be compared. If `FORMAT` is specified, it should be followed by at least 1 `format_entry_i` component. The data is then  formatted by processing the `format_entry_i` components as follows, with respect to `offset`, a byte offset into the buffer, initialised to 0:
 
-- If `format_entry_i` is `SKIP_BYTES count` then offset is incremented by `count`. This allows padding or irrelevant data to be skipped.
+- If `format_entry_i` is `SKIP_BYTES count` then `offset` is incremented by `count`. This allows padding or irrelevant data to be ignored.
 
 - If `format_entry_i` is byte count then count successive bytes from the buffers are compared, starting from position offset, with any byte-level differences reported, after which offset is incremented by `count`.
 
