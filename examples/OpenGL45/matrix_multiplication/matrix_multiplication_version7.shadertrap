@@ -264,20 +264,27 @@ void main() {
     uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
     uint x = uint(gl_LocalInvocationID[0]), y = uint(gl_LocalInvocationID[1]);
     blocked_res[row][col] = mat4x4(0);
-    
+    float Cvalue = 0;
+        
     for(int i = 0; i < MAT_SIZE/KERNEL_SIZE; i++){
 
-        // Each thread reads one element of the submatrix
-        data1_sub[x][y] = array1_mat[row][i][x][y];
-        data2_sub[x][y] = array2_mat[i][col][x][y];
-        
-        // Wait until each thread has read its corresponding element         
-        barrier();
+      // Load matrices from device memory to shared memory
+      data1_sub[x][y] = array1_mat[row][i][y][x];
+      data2_sub[x][y] = array2_mat[i][col][y][x];
+      barrier();
 
-        // Each thread writes to one element of the resulting matrix
-        blocked_res[row][col] += (data1_sub * data2_sub);
-        barrier();
+      for(int k=0; k < KERNEL_SIZE; k++){
+        Cvalue += data1_sub[x][k] * data2_sub[k][y];
+      }
+
+      // Synchronize to make sure that the preceding
+      // computation is done before loading two new matrices
+      barrier();
     }
+
+    // Each thread writes one element to the result array
+    blocked_res[row][col][y][x] = Cvalue;
+
 }
 END
 
@@ -327,4 +334,4 @@ RUN_COMPUTE
     PROGRAM blocked_array_to_array_prog
     NUM_GROUPS 16 16 1
 
-ASSERT_EQUAL BUFFERS result mat_mul_expected
+ASSERT_EQUAL BUFFERS result mat_mul_expected FORMAT float 256
