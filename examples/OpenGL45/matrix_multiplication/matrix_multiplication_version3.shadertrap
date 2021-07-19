@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Parallel matrix multiplication by splitting the matrices into 2x2 submatrices.
+# Matrix multiplication by splitting the matrices into 2x2 submatrices.
 
 GL 4.5
 
@@ -259,7 +259,6 @@ layout(std430, binding=2) buffer blocked_result{
 };
 
 void main() {
-    uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
     for(int i = 0; i < MAT_SIZE/KERNEL_SIZE; i++){
         for(int j = 0; j < MAT_SIZE/KERNEL_SIZE; j++){
            blocked_res[i][j] = mat2x2(0);
@@ -279,7 +278,7 @@ BIND_SHADER_STORAGE_BUFFER BUFFER blocked_result BINDING 2
 
 RUN_COMPUTE
     PROGRAM mat_mul_prog
-    NUM_GROUPS 8 8 1
+    NUM_GROUPS 1 1 1
 
 ASSERT_EQUAL BUFFERS blocked_result correct_blocked_result
 

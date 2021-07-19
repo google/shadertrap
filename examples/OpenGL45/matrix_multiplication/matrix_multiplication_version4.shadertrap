@@ -105,8 +105,9 @@ layout(std430, binding=2) buffer result{
   float res[MAT_SIZE][MAT_SIZE];
 };
 void main() {
+  uint row = uint(gl_WorkGroupID[0]), col = uint(gl_WorkGroupID[1]);
   for(int i = 0; i < gl_NumWorkGroups[0]; i++){
-    res[gl_WorkGroupID[0]][gl_WorkGroupID[1]] += data1[gl_WorkGroupID[0]][i] * data2[i][gl_WorkGroupID[1]];
+    res[row][col] += data1[row][i] * data2[i][col];
   }
 }
 END
