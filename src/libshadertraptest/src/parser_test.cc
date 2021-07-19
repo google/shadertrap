@@ -388,5 +388,50 @@ DUMP_BUFFER_TEXT BUFFER buf FILE "temp.txt" FORMAT float 4 4
             message_consumer.GetMessageString(0));
 }
 
+TEST(ParserTest, AssertEqualMissingIdentifier) {
+  std::string program =
+      R"(GL 4.5
+CREATE_BUFFER buf1 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+CREATE_BUFFER buf2 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+ASSERT_EQUAL BUFFERS buf1 buf2 FORMAT
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 4:1: Missing identifier after FORMAT",
+            message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, AssertEqualMissingCount) {
+  std::string program =
+      R"(GL 4.5
+CREATE_BUFFER buf1 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+CREATE_BUFFER buf2 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+ASSERT_EQUAL BUFFERS buf1 buf2 FORMAT float
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 5:1: Expected integer count, got ''",
+            message_consumer.GetMessageString(0));
+}
+
+TEST(ParserTest, AssertEqualNegativeCount) {
+  std::string program =
+      R"(GL 4.5
+CREATE_BUFFER buf1 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+CREATE_BUFFER buf2 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
+ASSERT_EQUAL BUFFERS buf1 buf2 FORMAT float -1
+)";
+  CollectingMessageConsumer message_consumer;
+  Parser parser(program, &message_consumer);
+  ASSERT_FALSE(parser.Parse());
+  ASSERT_EQ(1, message_consumer.GetNumMessages());
+  ASSERT_EQ("ERROR: 4:45: Expected non-negative integer count, got '-1'",
+            message_consumer.GetMessageString(0));
+}
+
 }  // namespace
 }  // namespace shadertrap
