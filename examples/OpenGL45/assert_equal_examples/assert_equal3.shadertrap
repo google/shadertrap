@@ -14,10 +14,10 @@
 
 GL 4.5
 
-# Skips the first 2 unequal values.
+# Skips unequal values in between equal ones.
 
-CREATE_BUFFER buf1 SIZE_BYTES 16 INIT_VALUES float 5.0 6.0 3.0 4.0
+CREATE_BUFFER buf1 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 5.0 4.0
 
 CREATE_BUFFER buf2 SIZE_BYTES 16 INIT_VALUES float 1.0 2.0 3.0 4.0
 
-ASSERT_EQUAL BUFFERS buf1 buf2 FORMAT SKIP_BYTES 8 float 2
+ASSERT_EQUAL BUFFERS buf1 buf2 FORMAT float 2 SKIP_BYTES 4 float 1
