@@ -210,6 +210,7 @@ bool Parser::ParseCommandAssertEqual() {
   std::unique_ptr<Token> argument_identifier_1;
   std::unique_ptr<Token> argument_identifier_2;
   bool arguments_are_renderbuffers = false;
+  std::vector<CommandAssertEqual::FormatEntry> format_entries;
   if (!ParseParameters(
           {{Token::Type::kKeywordBuffers,
             [this, &arguments_are_renderbuffers, &argument_identifier_1,
@@ -254,15 +255,83 @@ bool Parser::ParseCommandAssertEqual() {
               }
               argument_identifier_2 = std::move(token);
               return true;
+            }},
+
+           {Token::Type::kKeywordFormat,
+            [this, &format_entries, &start_token]() -> bool {
+              bool seen_at_least_one_format_entry = false;
+              while (true) {
+                CommandAssertEqual::FormatEntry::Kind kind;
+                switch (tokenizer_->PeekNextToken()->GetType()) {
+                  case Token::Type::kKeywordSkipBytes:
+                    seen_at_least_one_format_entry = true;
+                    kind = CommandAssertEqual::FormatEntry::Kind::kSkip;
+                    break;
+                  case Token::Type::kKeywordTypeByte:
+                    seen_at_least_one_format_entry = true;
+                    kind = CommandAssertEqual::FormatEntry::Kind::kByte;
+                    break;
+                  case Token::Type::kKeywordTypeFloat:
+                    seen_at_least_one_format_entry = true;
+                    kind = CommandAssertEqual::FormatEntry::Kind::kFloat;
+                    break;
+                  case Token::Type::kKeywordTypeInt:
+                    seen_at_least_one_format_entry = true;
+                    kind = CommandAssertEqual::FormatEntry::Kind::kInt;
+                    break;
+                  case Token::Type::kKeywordTypeUint:
+                    seen_at_least_one_format_entry = true;
+                    kind = CommandAssertEqual::FormatEntry::Kind::kUint;
+                    break;
+                  default:
+                    // Handles the case when no identifier is specified after
+                    // FORMAT.
+                    if (!seen_at_least_one_format_entry) {
+                      message_consumer_->Message(
+                          MessageConsumer::Severity::kError, start_token.get(),
+                          "Missing identifier after FORMAT");
+                    }
+                    return seen_at_least_one_format_entry;
+                }
+                auto format_start_token = tokenizer_->NextToken();
+                size_t count;
+                auto maybe_count = ParseUint32("count");
+
+                // Handles the case when the count after the FORMAT option is 0
+                // or is not specified
+                if (!maybe_count.first) {
+                  return false;
+                }
+                count = maybe_count.second;
+
+                format_entries.push_back(
+                    {std::move(format_start_token), kind, count});
+              }
             }}},
           // BUFFERS and RENDERBUFFERS are mutually exclusive parameters
-          {{Token::Type::kKeywordBuffers,
-            Token::Type::kKeywordRenderbuffers}})) {
+          {{Token::Type::kKeywordBuffers, Token::Type::kKeywordRenderbuffers}},
+
+          {Token::Type::kKeywordFormat})) {
     return false;
   }
+  if (arguments_are_renderbuffers) {
+    if (!format_entries.empty()) {
+      message_consumer_->Message(MessageConsumer::Severity::kError,
+                                 start_token.get(),
+                                 "FORMAT specifier cannot be set"
+                                 "for renderbuffers arguments");
+      return false;
+    }
+    parsed_commands_.push_back(MakeUnique<CommandAssertEqual>(
+        std::move(start_token), std::move(argument_identifier_1),
+        std::move(argument_identifier_2)));
+    return true;
+  }
+
   parsed_commands_.push_back(MakeUnique<CommandAssertEqual>(
-      std::move(start_token), arguments_are_renderbuffers,
-      std::move(argument_identifier_1), std::move(argument_identifier_2)));
+      std::move(start_token), std::move(argument_identifier_1),
+      std::move(argument_identifier_2), std::move(format_entries)));
+
   return true;
 }
 
@@ -1483,7 +1552,7 @@ bool Parser::ParseCommandSetUniform() {
               return true;
             }}},
           // LOCATION and NAME are mutually exclusive
-          {{Token::Type::kKeywordLocation, Token::Type::kKeywordName}})) {
+          {{Token::Type::kKeywordLocation, Token::Type::kKeywordName}}, {})) {
     return false;
   }
   auto maybe_uniform_value =
@@ -1582,7 +1651,8 @@ std::pair<bool, UniformValue> Parser::ProcessUniformValue(
 
 bool Parser::ParseParameters(
     const std::map<Token::Type, std::function<bool()>>& parameter_parsers,
-    const std::map<Token::Type, Token::Type>& mutually_exclusive) {
+    const std::map<Token::Type, Token::Type>& mutually_exclusive,
+    const std::set<Token::Type>& optional_params) {
   // Check that any token types that are regarded as mutually exclusive do have
   // associated parser entries.
   for (const auto& entry : mutually_exclusive) {
@@ -1645,6 +1715,7 @@ bool Parser::ParseParameters(
 
   for (const auto& entry : parameter_parsers) {
     if (already_handled.count(entry.first) == 0 &&
+        optional_params.count(entry.first) == 0 &&
         observed.count(entry.first) == 0) {
       message_consumer_->Message(
           MessageConsumer::Severity::kError, tokenizer_->PeekNextToken().get(),
@@ -1658,7 +1729,7 @@ bool Parser::ParseParameters(
 
 bool Parser::ParseParameters(
     const std::map<Token::Type, std::function<bool()>>& parameter_parsers) {
-  return ParseParameters(parameter_parsers, {});
+  return ParseParameters(parameter_parsers, {}, {});
 }
 
 std::pair<bool, VertexAttributeInfo> Parser::ParseVertexAttributeInfo() {

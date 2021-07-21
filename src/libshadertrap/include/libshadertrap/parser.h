@@ -20,6 +20,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -62,7 +63,8 @@ class Parser {
 
   bool ParseParameters(
       const std::map<Token::Type, std::function<bool()>>& parameter_parsers,
-      const std::map<Token::Type, Token::Type>& mutually_exclusive);
+      const std::map<Token::Type, Token::Type>& mutually_exclusive,
+      const std::set<Token::Type>& optional_params);
 
   bool ParseParameters(
       const std::map<Token::Type, std::function<bool()>>& parameter_parsers);

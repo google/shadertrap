@@ -15,8 +15,10 @@
 #ifndef LIBSHADERTRAP_COMMAND_ASSERT_EQUAL_H
 #define LIBSHADERTRAP_COMMAND_ASSERT_EQUAL_H
 
+#include <cstddef>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "libshadertrap/command.h"
 #include "libshadertrap/token.h"
@@ -25,8 +27,20 @@ namespace shadertrap {
 
 class CommandAssertEqual : public Command {
  public:
+  struct FormatEntry {
+    enum class Kind { kByte, kFloat, kInt, kUint, kSkip };
+    std::unique_ptr<Token> token;
+    Kind kind;
+    size_t count;
+  };
+  // Constructor used for an assertion about the equality of two buffers.
   CommandAssertEqual(std::unique_ptr<Token> start_token,
-                     bool arguments_are_renderbuffers,
+                     std::unique_ptr<Token> argument_identifier_1,
+                     std::unique_ptr<Token> argument_identifier_2,
+                     std::vector<FormatEntry> format_entries);
+
+  // Constructor used for an assertion about the equality of two renderbuffers.
+  CommandAssertEqual(std::unique_ptr<Token> start_token,
                      std::unique_ptr<Token> argument_identifier_1,
                      std::unique_ptr<Token> argument_identifier_2);
 
@@ -52,11 +66,14 @@ class CommandAssertEqual : public Command {
     return *argument_identifier_2_;
   }
 
+  std::vector<FormatEntry>& GetFormatEntries() { return format_entries_; }
+
  private:
   // true if arguments are renderbuffers, false if arguments are buffers
   bool arguments_are_renderbuffers_;
   std::unique_ptr<Token> argument_identifier_1_;
   std::unique_ptr<Token> argument_identifier_2_;
+  std::vector<FormatEntry> format_entries_;
 };
 
 }  // namespace shadertrap
