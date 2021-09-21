@@ -1042,64 +1042,64 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
     case UniformValue::ElementType::kMat2x2: {
       size_t count = uniform_value.IsArray() ? uniform_value.GetArraySize() : 1;
       GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniformMatrix2fv,
-                  program, uniform_location, count, GL_FALSE,
-                  uniform_value.GetFloatData());
+                  program, uniform_location, static_cast<GLsizei>(count),
+                  GL_FALSE, uniform_value.GetFloatData());
       break;
     }
     case UniformValue::ElementType::kMat2x3: {
       size_t count = uniform_value.IsArray() ? uniform_value.GetArraySize() : 1;
       GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniformMatrix2x3fv,
-                  program, uniform_location, count, GL_FALSE,
-                  uniform_value.GetFloatData());
+                  program, uniform_location, static_cast<GLsizei>(count),
+                  GL_FALSE, uniform_value.GetFloatData());
       break;
     }
     case UniformValue::ElementType::kMat2x4: {
       size_t count = uniform_value.IsArray() ? uniform_value.GetArraySize() : 1;
       GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniformMatrix2x4fv,
-                  program, uniform_location, count, GL_FALSE,
-                  uniform_value.GetFloatData());
+                  program, uniform_location, static_cast<GLsizei>(count),
+                  GL_FALSE, uniform_value.GetFloatData());
       break;
     }
     case UniformValue::ElementType::kMat3x2: {
       size_t count = uniform_value.IsArray() ? uniform_value.GetArraySize() : 1;
       GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniformMatrix3x2fv,
-                  program, uniform_location, count, GL_FALSE,
-                  uniform_value.GetFloatData());
+                  program, uniform_location, static_cast<GLsizei>(count),
+                  GL_FALSE, uniform_value.GetFloatData());
       break;
     }
     case UniformValue::ElementType::kMat3x3: {
       size_t count = uniform_value.IsArray() ? uniform_value.GetArraySize() : 1;
       GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniformMatrix3fv,
-                  program, uniform_location, count, GL_FALSE,
-                  uniform_value.GetFloatData());
+                  program, uniform_location, static_cast<GLsizei>(count),
+                  GL_FALSE, uniform_value.GetFloatData());
       break;
     }
     case UniformValue::ElementType::kMat3x4: {
       size_t count = uniform_value.IsArray() ? uniform_value.GetArraySize() : 1;
       GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniformMatrix3x4fv,
-                  program, uniform_location, count, GL_FALSE,
-                  uniform_value.GetFloatData());
+                  program, uniform_location, static_cast<GLsizei>(count),
+                  GL_FALSE, uniform_value.GetFloatData());
       break;
     }
     case UniformValue::ElementType::kMat4x2: {
       size_t count = uniform_value.IsArray() ? uniform_value.GetArraySize() : 1;
       GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniformMatrix4x2fv,
-                  program, uniform_location, count, GL_FALSE,
-                  uniform_value.GetFloatData());
+                  program, uniform_location, static_cast<GLsizei>(count),
+                  GL_FALSE, uniform_value.GetFloatData());
       break;
     }
     case UniformValue::ElementType::kMat4x3: {
       size_t count = uniform_value.IsArray() ? uniform_value.GetArraySize() : 1;
       GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniformMatrix4x3fv,
-                  program, uniform_location, count, GL_FALSE,
-                  uniform_value.GetFloatData());
+                  program, uniform_location, static_cast<GLsizei>(count),
+                  GL_FALSE, uniform_value.GetFloatData());
       break;
     }
     case UniformValue::ElementType::kMat4x4: {
       size_t count = uniform_value.IsArray() ? uniform_value.GetArraySize() : 1;
       GL_SAFECALL(&set_uniform->GetStartToken(), glProgramUniformMatrix4fv,
-                  program, uniform_location, count, GL_FALSE,
-                  uniform_value.GetFloatData());
+                  program, uniform_location, static_cast<GLsizei>(count),
+                  GL_FALSE, uniform_value.GetFloatData());
       break;
     }
   }
