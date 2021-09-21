@@ -1102,9 +1102,6 @@ bool Executor::VisitSetUniform(CommandSetUniform* set_uniform) {
                   uniform_value.GetFloatData());
       break;
     }
-    default:
-      assert(false && "Unhandled uniform type.");
-      break;
   }
   return true;
 }
