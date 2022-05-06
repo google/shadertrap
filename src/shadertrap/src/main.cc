@@ -46,7 +46,7 @@ namespace {
 const EGLint kWidth = 256;
 const EGLint kHeight = 256;
 const EGLint kDepthSize = 16;
-const EGLint kRequiredEglMinorVersionForGl = 5;
+const EGLint kRequiredEglMinorVersionForGl = 4;
 
 const char* const kOptionPrefix = "--";
 const char* const kOptionRequiredVendorRendererSubstring =
@@ -267,7 +267,11 @@ int main(int argc, const char** argv) {
             api_version.GetApi() == shadertrap::ApiVersion::Api::GL
                 ? EGL_OPENGL_API
                 : EGL_OPENGL_ES_API)) == EGL_FALSE) {
-      diagnostics << "eglBindAPI failed." << std::endl;
+      diagnostics << "eglBindAPI failed for OpenGL ";
+      if (api_version.GetApi() == shadertrap::ApiVersion::Api::GLES) {
+        diagnostics << "ES ";
+      }
+      diagnostics << api_version.GetMajorVersion() << "." << api_version.GetMajorVersion() << std::endl;
       continue;
     }
     std::vector<EGLint> config_attributes = {
